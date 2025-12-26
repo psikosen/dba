@@ -9,11 +9,16 @@ impl Plugin for UiPlugin {
             .init_resource::<systems::bestiary::BestiaryVisible>()
             .init_resource::<systems::loading_screen::VideoIntroTimer>()
             .init_resource::<systems::shop_ui::ShopVisible>()
+            .init_resource::<systems::dialogue_ui::DialogueUIState>()
+            .init_resource::<systems::minimap::MinimapState>()
             .add_systems(Update, (
                 systems::hud::update_hud,
                 systems::rhythm_ui::display_rhythm_visualizer,
                 systems::bestiary::display_bestiary,
                 systems::shop_ui::display_shop,
+                systems::dialogue_ui::handle_dialogue_events,
+                systems::dialogue_ui::update_dialogue_ui,
+                systems::minimap::update_minimap,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, systems::loading_screen::display_loading_screen.run_if(in_state(GameState::Boot)))
             .add_systems(Update, systems::main_menu::display_main_menu.run_if(in_state(GameState::MainMenu)));
@@ -189,7 +194,7 @@ pub mod systems {
 
     pub mod rhythm_ui {
         use bevy::prelude::*;
-        use bevy_shaman_audio::resources::{BeatClock, TimingQuality};
+        use bevy_shaman_audio::resources::BeatClock;
 
         #[derive(Component)]
         pub struct RhythmVisualizer;
@@ -779,6 +784,466 @@ pub mod systems {
                     commands.entity(entity).despawn_recursive();
                 }
             }
+        }
+    }
+
+    // ============================================================================
+    // CROSSCODE-STYLE DIALOGUE UI
+    // ============================================================================
+    pub mod dialogue_ui {
+        use bevy::prelude::*;
+        use bevy_shaman_core::events::DialogueRequested;
+        use bevy_shaman_story::components::{NpcDialogue, NpcSicknessState, NpcName};
+        use bevy_shaman_story::resources::{PortraitDB, PortraitEmotion};
+
+        #[derive(Component)]
+        pub struct DialogueUIRoot;
+
+        #[derive(Component)]
+        pub struct DialoguePortraitLeft;
+
+        #[derive(Component)]
+        pub struct DialoguePortraitRight;
+
+        #[derive(Component)]
+        pub struct DialogueBox;
+
+        #[derive(Component)]
+        pub struct DialogueSpeakerName;
+
+        #[derive(Component)]
+        pub struct DialogueText;
+
+        #[derive(Component)]
+        pub struct DialogueSpeakerHandle;
+
+        #[derive(Component)]
+        pub struct CinematicGradient;
+
+        #[derive(Component)]
+        pub struct BarkText {
+            pub lifetime: Timer,
+        }
+
+        #[derive(Resource)]
+        pub struct DialogueUIState {
+            pub active: bool,
+            pub npc_entity: Option<Entity>,
+            pub npc_name: String,
+            pub dialogue_text: String,
+            pub npc_portrait_side: PortraitSide,
+        }
+
+        #[derive(Debug, Clone, Copy, PartialEq)]
+        pub enum PortraitSide {
+            Left,
+            Right,
+        }
+
+        impl Default for DialogueUIState {
+            fn default() -> Self {
+                Self {
+                    active: false,
+                    npc_entity: None,
+                    npc_name: String::new(),
+                    dialogue_text: String::new(),
+                    npc_portrait_side: PortraitSide::Left,
+                }
+            }
+        }
+
+        pub fn handle_dialogue_events(
+            mut dialogue_events: EventReader<DialogueRequested>,
+            mut dialogue_state: ResMut<DialogueUIState>,
+            npc_query: Query<(&NpcDialogue, &NpcSicknessState, &NpcName)>,
+            keyboard: Res<ButtonInput<KeyCode>>,
+        ) {
+            // Close dialogue on Escape
+            if keyboard.just_pressed(KeyCode::Escape) && dialogue_state.active {
+                dialogue_state.active = false;
+                dialogue_state.npc_entity = None;
+                return;
+            }
+
+            // Handle new dialogue requests
+            for event in dialogue_events.read() {
+                if let Ok((dialogue, sickness_state, npc_name)) = npc_query.get(event.npc_entity) {
+                    dialogue_state.active = true;
+                    dialogue_state.npc_entity = Some(event.npc_entity);
+                    dialogue_state.npc_name = npc_name.name.clone();
+                    dialogue_state.dialogue_text = dialogue.get_dialogue(*sickness_state).to_string();
+                    // Alternate portrait sides for variety
+                    dialogue_state.npc_portrait_side = PortraitSide::Left;
+                }
+            }
+        }
+
+        pub fn update_dialogue_ui(
+            mut commands: Commands,
+            dialogue_state: Res<DialogueUIState>,
+            portrait_db: Res<PortraitDB>,
+            ui_root_query: Query<Entity, With<DialogueUIRoot>>,
+            npc_query: Query<&NpcName>,
+            asset_server: Res<AssetServer>,
+        ) {
+            // Clean up existing UI if dialogue is closed
+            if !dialogue_state.active {
+                for entity in ui_root_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Only spawn UI once
+            if !ui_root_query.is_empty() {
+                return;
+            }
+
+            // Get NPC info
+            let npc_emotion = if let Some(npc_entity) = dialogue_state.npc_entity {
+                if let Ok(npc_name) = npc_query.get(npc_entity) {
+                    npc_name.current_emotion
+                } else {
+                    PortraitEmotion::Neutral
+                }
+            } else {
+                PortraitEmotion::Neutral
+            };
+
+            // Spawn dialogue UI
+            commands.spawn((
+                DialogueUIRoot,
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                },
+            )).with_children(|parent| {
+                // ====== CINEMATIC GRADIENT (Bottom fade) ======
+                parent.spawn((
+                    CinematicGradient,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(0.0),
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(30.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
+                ));
+
+                // ====== NPC PORTRAIT (Left or Right) ======
+                let portrait_handle = portrait_db.get_portrait(&dialogue_state.npc_name, npc_emotion);
+
+                // Left portrait (NPC speaking)
+                if dialogue_state.npc_portrait_side == PortraitSide::Left {
+                    parent.spawn((
+                        DialoguePortraitLeft,
+                        ImageNode {
+                            image: portrait_handle.cloned().unwrap_or_else(|| {
+                                // Placeholder colored square if no portrait exists
+                                asset_server.load("portraits/npcs/placeholder.png")
+                            }),
+                            ..default()
+                        },
+                        Node {
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(0.0),
+                            left: Val::Px(0.0),
+                            width: Val::Px(512.0),
+                            height: Val::Px(512.0),
+                            ..default()
+                        },
+                    ));
+                }
+
+                // ====== DIALOGUE BOX (Floating, anchored to speaker) ======
+                let box_left = match dialogue_state.npc_portrait_side {
+                    PortraitSide::Left => Val::Px(480.0), // Offset from left portrait
+                    PortraitSide::Right => Val::Px(50.0), // Offset from left edge if portrait on right
+                };
+
+                parent.spawn((
+                    DialogueBox,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(120.0),
+                        left: box_left,
+                        width: Val::Px(700.0),
+                        height: Val::Auto,
+                        padding: UiRect::all(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(10.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.15, 0.15, 0.2, 0.85)), // Dark grey, semi-transparent
+                    BorderColor(Color::srgba(0.4, 0.6, 0.8, 1.0)), // Sci-fi blue border
+                )).with_children(|box_parent| {
+                    // Speaker handle (visual bracket on the side)
+                    box_parent.spawn((
+                        DialogueSpeakerHandle,
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::Px(-10.0),
+                            top: Val::Px(20.0),
+                            width: Val::Px(5.0),
+                            height: Val::Px(60.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.5, 0.7, 0.9, 1.0)), // Light blue handle
+                    ));
+
+                    // NPC Name
+                    box_parent.spawn((
+                        DialogueSpeakerName,
+                        Text::new(&dialogue_state.npc_name),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                    ));
+
+                    // Dialogue text
+                    box_parent.spawn((
+                        DialogueText,
+                        Text::new(&dialogue_state.dialogue_text),
+                        TextFont {
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            max_width: Val::Px(660.0),
+                            ..default()
+                        },
+                    ));
+
+                    // Continue prompt
+                    box_parent.spawn((
+                        Text::new("Press ESC to close"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgba(0.7, 0.7, 0.7, 0.8)),
+                    ));
+                });
+            });
+        }
+
+        // System to spawn bark text (reactions like "[nods]")
+        pub fn spawn_bark_text(
+            mut commands: Commands,
+            _character_name: &str,
+            bark_message: &str,
+            side: PortraitSide,
+        ) {
+            let position_left = match side {
+                PortraitSide::Left => Val::Px(420.0),
+                PortraitSide::Right => Val::Percent(75.0),
+            };
+
+            commands.spawn((
+                BarkText {
+                    lifetime: Timer::from_seconds(2.0, TimerMode::Once),
+                },
+                Node {
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(480.0),
+                    left: position_left,
+                    padding: UiRect::all(Val::Px(8.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+                Text::new(bark_message),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            ));
+        }
+
+        // System to clean up bark text after lifetime
+        pub fn update_bark_text(
+            mut commands: Commands,
+            time: Res<Time>,
+            mut bark_query: Query<(Entity, &mut BarkText)>,
+        ) {
+            for (entity, mut bark) in bark_query.iter_mut() {
+                bark.lifetime.tick(time.delta());
+                if bark.lifetime.finished() {
+                    commands.entity(entity).despawn_recursive();
+                }
+            }
+        }
+    }
+
+    // ============================================================================
+    // MINIMAP SYSTEM
+    // ============================================================================
+    pub mod minimap {
+        use bevy::prelude::*;
+        use bevy_shaman_core::components::{Player, GridPosition};
+        use bevy_shaman_world::components::{WorldTile, BiomeType};
+        use std::collections::HashSet;
+
+        #[derive(Component)]
+        pub struct MinimapRoot;
+
+        #[derive(Component)]
+        pub struct MinimapTile {
+            pub grid_x: i32,
+            pub grid_y: i32,
+        }
+
+        #[derive(Resource)]
+        pub struct MinimapState {
+            pub visible: bool,
+            pub explored_tiles: HashSet<(i32, i32)>, // Fog of war tracking
+            pub view_radius: i32,
+        }
+
+        impl Default for MinimapState {
+            fn default() -> Self {
+                Self {
+                    visible: true,
+                    explored_tiles: HashSet::new(),
+                    view_radius: 10,
+                }
+            }
+        }
+
+        pub fn update_minimap(
+            mut commands: Commands,
+            mut minimap_state: ResMut<MinimapState>,
+            player_query: Query<&GridPosition, With<Player>>,
+            tile_query: Query<(&GridPosition, &WorldTile)>,
+            minimap_root_query: Query<Entity, With<MinimapRoot>>,
+            _keyboard: Res<ButtonInput<KeyCode>>,
+        ) {
+            if !minimap_state.visible {
+                // Clean up minimap if not visible
+                for entity in minimap_root_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Get player position
+            let player_pos = if let Ok(pos) = player_query.get_single() {
+                pos
+            } else {
+                return;
+            };
+
+            // Update explored tiles based on player view radius
+            for x in (player_pos.x - minimap_state.view_radius)..=(player_pos.x + minimap_state.view_radius) {
+                for y in (player_pos.y - minimap_state.view_radius)..=(player_pos.y + minimap_state.view_radius) {
+                    // Check if within circular radius
+                    let dx = x - player_pos.x;
+                    let dy = y - player_pos.y;
+                    if dx * dx + dy * dy <= minimap_state.view_radius * minimap_state.view_radius {
+                        minimap_state.explored_tiles.insert((x, y));
+                    }
+                }
+            }
+
+            // Only spawn minimap once
+            if !minimap_root_query.is_empty() {
+                return;
+            }
+
+            // Spawn minimap UI
+            commands.spawn((
+                MinimapRoot,
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(10.0),
+                    right: Val::Px(10.0),
+                    width: Val::Px(250.0),
+                    height: Val::Px(250.0),
+                    padding: UiRect::all(Val::Px(10.0)),
+                    flex_direction: FlexDirection::Column,
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.1, 0.1, 0.15, 0.9)),
+                BorderColor(Color::srgb(0.3, 0.4, 0.5)),
+            )).with_children(|parent| {
+                // Title
+                parent.spawn((
+                    Text::new("Minimap"),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.8, 0.9, 1.0)),
+                ));
+
+                // Minimap grid container
+                parent.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(100.0),
+                        display: Display::Grid,
+                        grid_template_columns: vec![GridTrack::auto(); 20],
+                        grid_template_rows: vec![GridTrack::auto(); 20],
+                        ..default()
+                    },
+                )).with_children(|grid_parent| {
+                    // Render explored tiles
+                    let map_range = 10; // Show 20x20 grid
+                    for dy in -map_range..=map_range {
+                        for dx in -map_range..=map_range {
+                            let world_x = player_pos.x + dx;
+                            let world_y = player_pos.y + dy;
+
+                            let tile_color = if minimap_state.explored_tiles.contains(&(world_x, world_y)) {
+                                // Find tile type at this position
+                                let mut found_color = Color::srgb(0.2, 0.2, 0.2); // Default unexplored
+                                for (tile_pos, world_tile) in tile_query.iter() {
+                                    if tile_pos.x == world_x && tile_pos.y == world_y {
+                                        found_color = match world_tile.biome {
+                                            BiomeType::Forest => Color::srgb(0.1, 0.4, 0.1),
+                                            BiomeType::Mountains => Color::srgb(0.5, 0.5, 0.5),
+                                            BiomeType::Village => Color::srgb(0.8, 0.6, 0.4),
+                                            BiomeType::SpiritRealm => Color::srgb(0.4, 0.2, 0.8),
+                                        };
+                                        break;
+                                    }
+                                }
+                                found_color
+                            } else {
+                                Color::srgba(0.1, 0.1, 0.1, 0.5) // Fog of war
+                            };
+
+                            // Player position marker
+                            let final_color = if dx == 0 && dy == 0 {
+                                Color::srgb(1.0, 1.0, 0.0) // Yellow for player
+                            } else {
+                                tile_color
+                            };
+
+                            grid_parent.spawn((
+                                MinimapTile {
+                                    grid_x: world_x,
+                                    grid_y: world_y,
+                                },
+                                Node {
+                                    width: Val::Px(10.0),
+                                    height: Val::Px(10.0),
+                                    border: UiRect::all(Val::Px(0.5)),
+                                    ..default()
+                                },
+                                BackgroundColor(final_color),
+                                BorderColor(Color::srgba(0.0, 0.0, 0.0, 0.3)),
+                            ));
+                        }
+                    }
+                });
+            });
         }
     }
 }

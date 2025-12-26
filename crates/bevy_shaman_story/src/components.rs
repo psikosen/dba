@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::resources::PortraitEmotion;
 
 // ============================================================================
 // NPC SICKNESS
@@ -50,6 +51,21 @@ impl NpcDialogue {
 // ============================================================================
 // KEY NPCs
 // ============================================================================
+
+#[derive(Component, Clone)]
+pub struct NpcName {
+    pub name: String,
+    pub current_emotion: PortraitEmotion,
+}
+
+impl Default for NpcName {
+    fn default() -> Self {
+        Self {
+            name: "Villager".to_string(),
+            current_emotion: PortraitEmotion::Neutral,
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct HeadShaman;
