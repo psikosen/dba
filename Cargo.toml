@@ -13,6 +13,7 @@ members = [
     "crates/bevy_shaman_ui",
     "crates/bevy_shaman_story",
     "crates/bevy_shaman_save",
+    "crates/bevy_shaman_shop",
 ]
 
 [workspace.package]

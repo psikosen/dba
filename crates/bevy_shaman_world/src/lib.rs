@@ -20,6 +20,10 @@ impl Plugin for WorldPlugin {
                 systems::purification::process_purification_casts,
                 systems::tiles::update_tile_visuals,
                 systems::progression::update_purification_range,
+                systems::interactions::process_foraging,
+                systems::interactions::spawn_forageable_spots,
+                systems::interactions::process_digging,
+                systems::interactions::spawn_dungeon_dig_spots,
             ).run_if(in_state(GameState::Playing)))
             // Events
             .add_event::<systems::events::TilePurified>()
