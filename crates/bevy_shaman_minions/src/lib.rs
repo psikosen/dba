@@ -114,13 +114,28 @@ pub mod systems {
 
         pub fn update_minion_formation(
             mut commands: Commands,
+            keyboard: Res<ButtonInput<KeyCode>>,
             player: Query<(Entity, &GridPosition), With<Player>>,
             mut minions: Query<
                 (Entity, &mut GridPosition, &mut MovementQueue, Option<&MinionFormation>),
                 With<Tamed>
             >,
-            config: Res<FormationConfig>,
+            mut config: ResMut<FormationConfig>,
         ) {
+            // Switch formation patterns with F1-F4 keys
+            if keyboard.just_pressed(KeyCode::F1) {
+                config.pattern = FormationPattern::VShape;
+                info!("Formation: V-Shape");
+            } else if keyboard.just_pressed(KeyCode::F2) {
+                config.pattern = FormationPattern::Circle;
+                info!("Formation: Circle");
+            } else if keyboard.just_pressed(KeyCode::F3) {
+                config.pattern = FormationPattern::Line;
+                info!("Formation: Line");
+            } else if keyboard.just_pressed(KeyCode::F4) {
+                config.pattern = FormationPattern::Box;
+                info!("Formation: Box");
+            }
             let Ok((player_entity, player_pos)) = player.get_single() else {
                 return;
             };
@@ -191,25 +206,35 @@ pub mod systems {
         pub fn process_minion_commands(
             mut commands: Commands,
             keyboard: Res<ButtonInput<KeyCode>>,
-            player: Query<&GridPosition, With<Player>>,
+            _player: Query<&GridPosition, With<Player>>,
             mut minions: Query<
                 (Entity, &GridPosition, &mut MovementQueue, &mut AiState, Option<&MinionCommand>),
                 With<Tamed>
             >,
+            enemies: Query<(Entity, &GridPosition), (Without<Tamed>, Without<Player>)>,
             mut command_events: EventWriter<MinionCommandIssued>,
         ) {
-            // Issue attack command with '1' key
+            // Issue attack command with '1' key - find nearest enemy
             if keyboard.just_pressed(KeyCode::Digit1) {
-                for (minion_entity, _, _, mut ai_state, _) in minions.iter_mut() {
-                    *ai_state = AiState::Aggressive;
-                    commands.entity(minion_entity).insert(MinionCommand {
-                        command_type: CommandType::Attack(Entity::PLACEHOLDER),
-                    });
-                    command_events.send(MinionCommandIssued {
-                        minion: minion_entity,
-                        command: CommandType::Attack(Entity::PLACEHOLDER),
-                    });
-                    info!("Minion commanded to attack");
+                for (minion_entity, minion_pos, _, mut ai_state, _) in minions.iter_mut() {
+                    // Find nearest enemy
+                    let nearest_enemy = enemies
+                        .iter()
+                        .min_by_key(|(_, enemy_pos)| minion_pos.distance(enemy_pos));
+
+                    if let Some((enemy_entity, _)) = nearest_enemy {
+                        *ai_state = AiState::Aggressive;
+                        commands.entity(minion_entity).insert(MinionCommand {
+                            command_type: CommandType::Attack(enemy_entity),
+                        });
+                        command_events.send(MinionCommandIssued {
+                            minion: minion_entity,
+                            command: CommandType::Attack(enemy_entity),
+                        });
+                        info!("Minion commanded to attack nearest enemy");
+                    } else {
+                        info!("No enemies found to attack");
+                    }
                 }
             }
 
@@ -244,7 +269,7 @@ pub mod systems {
             }
 
             // Execute commands for minions
-            for (minion_entity, minion_pos, mut movement_queue, mut ai_state, command_opt) in minions.iter_mut() {
+            for (_minion_entity, minion_pos, mut movement_queue, mut ai_state, command_opt) in minions.iter_mut() {
                 if let Some(command) = command_opt {
                     match command.command_type {
                         CommandType::Follow => {
@@ -253,7 +278,14 @@ pub mod systems {
                         }
                         CommandType::Attack(target) => {
                             *ai_state = AiState::Aggressive;
-                            // Attack logic would be handled by combat system
+                            // Move toward target if it exists
+                            if let Ok((_, target_pos)) = enemies.get(target) {
+                                let dx = (target_pos.x - minion_pos.x).signum();
+                                let dy = (target_pos.y - minion_pos.y).signum();
+                                if dx != 0 || dy != 0 {
+                                    movement_queue.commands.push(MovementCommand::Move(IVec2::new(dx, dy)));
+                                }
+                            }
                         }
                         CommandType::Stay => {
                             *ai_state = AiState::Idle;
