@@ -15,7 +15,7 @@ pub struct MonsterState {
     pub chaos_output: f32,        // damage multiplier when chaotic
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StateType {
     Stable,
     Chaos,

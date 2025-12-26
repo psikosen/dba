@@ -61,6 +61,12 @@ impl Default for Spirit {
     }
 }
 
+impl Spirit {
+    pub fn heal(&mut self, amount: f32) {
+        self.current = (self.current + amount).min(self.max);
+    }
+}
+
 /// Physical endurance for movement, dodges, sustained rhythm actions
 #[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Stamina {

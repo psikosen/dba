@@ -8,11 +8,11 @@ const PICKUP_RADIUS: f32 = 1.5;
 /// Processes item pickups when player is near
 pub fn process_item_pickups(
     mut commands: Commands,
-    player: Query<(&GridPosition, &mut Inventory), With<Player>>,
+    mut player: Query<(&GridPosition, &mut Inventory), With<Player>>,
     pickupables: Query<(Entity, &GridPosition, &Pickupable)>,
     mut pickup_events: EventWriter<ItemPickedUp>,
 ) {
-    let Ok((player_pos, mut inventory)) = player.get_single() else {
+    let Ok((player_pos, mut inventory)) = player.get_single_mut() else {
         return;
     };
 

@@ -1,5 +1,3 @@
-pub mod systems;
-
 use bevy::prelude::*;
 
 pub struct SavePlugin;

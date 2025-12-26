@@ -1,6 +1,3 @@
-pub mod components;
-pub mod systems;
-
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
 
