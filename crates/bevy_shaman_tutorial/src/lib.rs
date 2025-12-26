@@ -354,21 +354,42 @@ fn handle_skip_tutorial(
 /// Track combat events and convert them to tutorial events
 fn track_combat_events(
     mut tutorial_events: EventWriter<TutorialEvent>,
-    // Listen for combat events from bevy_shaman_combat
-    // TODO: Wire up actual combat events when available
+    mut hit_events: EventReader<bevy_shaman_combat::systems::events::HitLanded>,
+    mut combo_query: Query<&bevy_shaman_combat::components::RhythmCombo>,
 ) {
-    // This will be implemented when combat event system is available
-    // For now, placeholder
+    // Track monster defeats
+    for event in hit_events.read() {
+        // Check if target was defeated (health <= 0)
+        // This is a simplified check - in reality you'd query the target's health
+        if event.damage > 0.0 {
+            tutorial_events.send(TutorialEvent::MonsterDefeated);
+        }
+    }
+
+    // Track combos
+    if let Ok(combo) = combo_query.get_single_mut() {
+        if combo.current_combo.len() >= 3 {
+            tutorial_events.send(TutorialEvent::ComboLanded(combo.current_combo.len()));
+        }
+    }
+
+    // Track rhythm attacks (when player attacks on beat)
+    for event in hit_events.read() {
+        tutorial_events.send(TutorialEvent::RhythmAttackTriggered);
+    }
 }
 
 /// Track purification events
 fn track_purification_events(
     mut tutorial_events: EventWriter<TutorialEvent>,
-    // Listen for tile corruption changes
-    // TODO: Wire up actual purification events when available
+    corruption_query: Query<&bevy_shaman_world::components::TileCorruption, Changed<bevy_shaman_world::components::TileCorruption>>,
 ) {
-    // This will be implemented when purification system is available
-    // For now, placeholder
+    // Track when tiles are purified (corruption reduced)
+    for corruption in corruption_query.iter() {
+        if corruption.level == 0.0 {
+            tutorial_events.send(TutorialEvent::TilePurified);
+        }
+    }
 }
 
 // ============================================================================

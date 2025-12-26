@@ -12,20 +12,38 @@ impl Plugin for UiPlugin {
             .init_resource::<systems::dialogue_ui::DialogueUIState>()
             .init_resource::<systems::minimap::MinimapState>()
             .init_resource::<systems::inventory_ui::InventoryUIState>()
+            .init_resource::<systems::quest_ui::QuestUIState>()
+            .init_resource::<systems::quick_wins::PauseMenuState>()
+            .init_resource::<systems::quick_wins::DeathScreenState>()
+            .init_resource::<systems::quick_wins::SettingsUIState>()
             .add_systems(Update, (
                 systems::hud::update_hud,
                 systems::rhythm_ui::display_rhythm_visualizer,
                 systems::bestiary::display_bestiary,
                 systems::shop_ui::display_shop,
+                systems::inventory_ui::display_inventory,
+                systems::minimap::update_minimap,
+            ).run_if(in_state(GameState::Playing)))
+            .add_systems(Update, (
                 systems::dialogue_ui::handle_dialogue_events,
                 systems::dialogue_ui::update_dialogue_ui,
                 systems::dialogue_ui::update_typewriter_text,
-                systems::minimap::update_minimap,
-                systems::inventory_ui::display_inventory,
+                systems::dialogue_ui::update_dialogue_tree_ui,
+                systems::dialogue_ui::handle_choice_buttons,
+            ).run_if(in_state(GameState::Playing)))
+            .add_systems(Update, (
                 systems::combat_feedback::spawn_damage_numbers,
                 systems::combat_feedback::update_damage_numbers,
                 systems::combat_feedback::spawn_hit_effects,
                 systems::taming_ui::display_taming_progress,
+            ).run_if(in_state(GameState::Playing)))
+            .add_systems(Update, (
+                systems::quest_ui::display_quest_log,
+                systems::quest_ui::display_quest_tracker,
+                systems::quick_wins::display_pause_menu,
+                systems::quick_wins::display_death_screen,
+                systems::quick_wins::display_combo_counter,
+                systems::quick_wins::display_settings_panel,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, systems::loading_screen::display_loading_screen.run_if(in_state(GameState::Boot)))
             .add_systems(Update, systems::main_menu::display_main_menu.run_if(in_state(GameState::MainMenu)));
@@ -1211,6 +1229,309 @@ pub mod systems {
                 **text = displayed_text;
             }
         }
+
+        // ============================================================================
+        // DIALOGUE TREE UI (Multiple Choice System)
+        // ============================================================================
+
+        use bevy_shaman_story::systems::dialogue_tree::{
+            ActiveDialogueState, DialogueTreeRegistry, DialogueFlags, DialogueReputation,
+            DialogueChoiceSelected, DialogueTreeEnded,
+        };
+
+        #[derive(Component)]
+        pub struct DialogueTreeUIRoot;
+
+        #[derive(Component)]
+        pub struct DialogueChoiceButton {
+            pub choice_index: usize,
+            pub next_node_id: String,
+        }
+
+        #[derive(Component)]
+        pub struct DialogueChoicesContainer;
+
+        /// Update dialogue tree UI (multiple choice system)
+        pub fn update_dialogue_tree_ui(
+            mut commands: Commands,
+            dialogue_state: Res<ActiveDialogueState>,
+            registry: Res<DialogueTreeRegistry>,
+            flags: Res<DialogueFlags>,
+            reputation: Res<DialogueReputation>,
+            ui_root_query: Query<Entity, With<DialogueTreeUIRoot>>,
+            npc_query: Query<&bevy_shaman_story::components::NpcName>,
+        ) {
+            // Clean up if no active dialogue
+            if !dialogue_state.active {
+                for entity in ui_root_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Get current tree and node
+            let Some(tree_id) = &dialogue_state.tree_id else { return; };
+            let Some(tree) = registry.get(tree_id) else { return; };
+
+            // Get current node (or start if none)
+            let node_id = dialogue_state.current_node_id.as_deref()
+                .unwrap_or(&tree.starting_node_id);
+            let Some(node) = tree.get_node(node_id) else { return; };
+
+            // Only spawn UI once per node
+            if !ui_root_query.is_empty() {
+                return;
+            }
+
+            // Get NPC name
+            let npc_name = if let Some(npc_entity) = dialogue_state.npc_entity {
+                npc_query.get(npc_entity)
+                    .map(|n| n.name.clone())
+                    .unwrap_or_else(|_| node.speaker.clone())
+            } else {
+                node.speaker.clone()
+            };
+
+            // Spawn dialogue tree UI
+            commands.spawn((
+                DialogueTreeUIRoot,
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                },
+            )).with_children(|parent| {
+                // Cinematic gradient
+                parent.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(0.0),
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(40.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                ));
+
+                // Dialogue box
+                parent.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(200.0),
+                        left: Val::Px(100.0),
+                        width: Val::Px(800.0),
+                        height: Val::Auto,
+                        padding: UiRect::all(Val::Px(20.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(15.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.15, 0.15, 0.2, 0.9)),
+                    BorderColor(Color::srgb(0.5, 0.7, 0.9)),
+                )).with_children(|box_parent| {
+                    // Speaker name
+                    box_parent.spawn((
+                        Text::new(&npc_name),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                    ));
+
+                    // Dialogue text
+                    box_parent.spawn((
+                        Text::new(&node.text),
+                        TextFont {
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            max_width: Val::Px(760.0),
+                            ..default()
+                        },
+                    ));
+
+                    // Choices container
+                    if !node.choices.is_empty() && !node.is_end_node {
+                        box_parent.spawn((
+                            DialogueChoicesContainer,
+                            Node {
+                                width: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                row_gap: Val::Px(10.0),
+                                margin: UiRect::top(Val::Px(15.0)),
+                                ..default()
+                            },
+                        )).with_children(|choices_parent| {
+                            for (idx, choice) in node.choices.iter().enumerate() {
+                                let is_available = choice.is_available(&flags, &reputation);
+                                let button_color = if is_available {
+                                    Color::srgb(0.3, 0.4, 0.5)
+                                } else {
+                                    Color::srgb(0.2, 0.2, 0.25)
+                                };
+
+                                let text_color = if is_available {
+                                    Color::WHITE
+                                } else {
+                                    Color::srgb(0.5, 0.5, 0.5)
+                                };
+
+                                let display_text = if is_available {
+                                    choice.text.clone()
+                                } else {
+                                    choice.disabled_text.clone()
+                                        .unwrap_or_else(|| format!("[Locked] {}", choice.text))
+                                };
+
+                                choices_parent.spawn((
+                                    DialogueChoiceButton {
+                                        choice_index: idx,
+                                        next_node_id: choice.next_node_id.clone(),
+                                    },
+                                    Button,
+                                    Node {
+                                        width: Val::Percent(100.0),
+                                        padding: UiRect::all(Val::Px(12.0)),
+                                        justify_content: JustifyContent::Start,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    BackgroundColor(button_color),
+                                    BorderColor(Color::srgb(0.4, 0.6, 0.8)),
+                                )).with_children(|button_parent| {
+                                    button_parent.spawn((
+                                        Text::new(format!("{}. {}", idx + 1, display_text)),
+                                        TextFont {
+                                            font_size: 16.0,
+                                            ..default()
+                                        },
+                                        TextColor(text_color),
+                                    ));
+                                });
+                            }
+                        });
+                    } else if node.is_end_node {
+                        // End node - show close prompt
+                        box_parent.spawn((
+                            Text::new("Press ESC to close"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgba(0.7, 0.7, 0.7, 0.8)),
+                            Node {
+                                margin: UiRect::top(Val::Px(10.0)),
+                                ..default()
+                            },
+                        ));
+                    }
+                });
+            });
+        }
+
+        /// Handle dialogue choice button clicks
+        pub fn handle_choice_buttons(
+            mut commands: Commands,
+            mut dialogue_state: ResMut<ActiveDialogueState>,
+            mut choice_selected: EventWriter<DialogueChoiceSelected>,
+            mut tree_ended: EventWriter<DialogueTreeEnded>,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            registry: Res<DialogueTreeRegistry>,
+            button_query: Query<
+                (&Interaction, &DialogueChoiceButton),
+                (Changed<Interaction>, With<Button>),
+            >,
+            ui_root: Query<Entity, With<DialogueTreeUIRoot>>,
+        ) {
+            // Close dialogue on escape
+            if keyboard.just_pressed(KeyCode::Escape) && dialogue_state.active {
+                if let Some(tree_id) = dialogue_state.tree_id.clone() {
+                    tree_ended.send(DialogueTreeEnded { tree_id });
+                }
+                dialogue_state.end_dialogue();
+                for entity in ui_root.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Handle button clicks
+            for (interaction, choice_button) in button_query.iter() {
+                if *interaction == Interaction::Pressed {
+                    let Some(tree_id) = dialogue_state.tree_id.clone() else { continue; };
+                    let Some(tree) = registry.get(&tree_id) else { continue; };
+
+                    let node_id = dialogue_state.current_node_id.clone()
+                        .unwrap_or_else(|| tree.starting_node_id.clone());
+
+                    // Send choice selected event
+                    choice_selected.send(DialogueChoiceSelected {
+                        tree_id: tree_id.clone(),
+                        node_id: node_id.clone(),
+                        choice_index: choice_button.choice_index,
+                        next_node_id: choice_button.next_node_id.clone(),
+                    });
+
+                    // Navigate to next node
+                    if let Some(next_node) = tree.get_node(&choice_button.next_node_id) {
+                        dialogue_state.navigate_to_node(choice_button.next_node_id.clone());
+
+                        // Despawn current UI to re-render with new node
+                        for entity in ui_root.iter() {
+                            commands.entity(entity).despawn_recursive();
+                        }
+
+                        // End dialogue if this is an end node
+                        if next_node.is_end_node {
+                            // Don't end immediately, let player read the final message
+                            // They can press ESC to close
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            // Keyboard shortcuts for choices (1-4 keys)
+            if dialogue_state.active {
+                let Some(tree_id) = &dialogue_state.tree_id else { return; };
+                let Some(tree) = registry.get(tree_id) else { return; };
+
+                let node_id = dialogue_state.current_node_id.as_deref()
+                    .unwrap_or(&tree.starting_node_id);
+                let Some(node) = tree.get_node(node_id) else { return; };
+
+                for (idx, key) in [KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3, KeyCode::Digit4]
+                    .iter().enumerate()
+                {
+                    if keyboard.just_pressed(*key) && idx < node.choices.len() {
+                        let choice = &node.choices[idx];
+
+                        // Send choice selected event
+                        choice_selected.send(DialogueChoiceSelected {
+                            tree_id: tree_id.clone(),
+                            node_id: node_id.to_string(),
+                            choice_index: idx,
+                            next_node_id: choice.next_node_id.clone(),
+                        });
+
+                        // Navigate to next node
+                        dialogue_state.navigate_to_node(choice.next_node_id.clone());
+
+                        // Despawn current UI to re-render
+                        for entity in ui_root.iter() {
+                            commands.entity(entity).despawn_recursive();
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     // ============================================================================
@@ -1925,6 +2246,868 @@ pub mod systems {
                     commands.entity(entity).despawn_recursive();
                 }
             }
+        }
+    }
+
+    // ============================================================================
+    // QUEST UI SYSTEM
+    // ============================================================================
+    pub mod quest_ui {
+        use bevy::prelude::*;
+        use bevy_shaman_story::systems::quest_system::{QuestLog, QuestRegistry, QuestStatus};
+
+        #[derive(Component)]
+        pub struct QuestLogUI;
+
+        #[derive(Component)]
+        pub struct QuestTrackerUI;
+
+        #[derive(Resource)]
+        pub struct QuestUIState {
+            pub log_visible: bool,
+        }
+
+        impl Default for QuestUIState {
+            fn default() -> Self {
+                Self {
+                    log_visible: false,
+                }
+            }
+        }
+
+        /// Display quest log panel (toggle with Q key)
+        pub fn display_quest_log(
+            mut commands: Commands,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut ui_state: ResMut<QuestUIState>,
+            quest_log: Res<QuestLog>,
+            quest_registry: Res<QuestRegistry>,
+            log_ui_query: Query<Entity, With<QuestLogUI>>,
+        ) {
+            // Toggle with Q key
+            if keyboard.just_pressed(KeyCode::KeyQ) {
+                ui_state.log_visible = !ui_state.log_visible;
+            }
+
+            // Hide if not visible
+            if !ui_state.log_visible {
+                for entity in log_ui_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Only spawn UI once
+            if !log_ui_query.is_empty() {
+                return;
+            }
+
+            // Spawn quest log UI
+            commands.spawn((
+                QuestLogUI,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(20.0),
+                    top: Val::Percent(10.0),
+                    width: Val::Px(600.0),
+                    height: Val::Percent(80.0),
+                    flex_direction: FlexDirection::Column,
+                    padding: UiRect::all(Val::Px(20.0)),
+                    row_gap: Val::Px(10.0),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.08, 0.08, 0.12, 0.95)),
+                BorderColor(Color::srgb(0.6, 0.7, 0.3)),
+            )).with_children(|parent| {
+                // Header
+                parent.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        padding: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::bottom(Val::Px(10.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.2, 0.25, 0.15, 0.8)),
+                )).with_children(|header| {
+                    header.spawn((
+                        Text::new("QUEST LOG"),
+                        TextFont {
+                            font_size: 28.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 0.5)),
+                    ));
+
+                    header.spawn((
+                        Text::new(format!("\nActive: {} | Completed: {}",
+                            quest_log.active_quests.len(),
+                            quest_log.completed_quests.len()
+                        )),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                    ));
+                });
+
+                // Active quests section
+                if !quest_log.active_quests.is_empty() {
+                    parent.spawn((
+                        Text::new("=== ACTIVE QUESTS ==="),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.7, 0.3)),
+                        Node {
+                            margin: UiRect::vertical(Val::Px(10.0)),
+                            ..default()
+                        },
+                    ));
+
+                    for quest_id in &quest_log.active_quests {
+                        if let Some(quest) = quest_registry.get(quest_id) {
+                            let is_tracked = quest_log.tracked_quest.as_ref() == Some(quest_id);
+
+                            parent.spawn((
+                                Node {
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(12.0)),
+                                    margin: UiRect::bottom(Val::Px(8.0)),
+                                    flex_direction: FlexDirection::Column,
+                                    row_gap: Val::Px(5.0),
+                                    border: UiRect::all(Val::Px(2.0)),
+                                    ..default()
+                                },
+                                BackgroundColor(Color::srgba(0.15, 0.2, 0.1, 0.8)),
+                                BorderColor(if is_tracked {
+                                    Color::srgb(0.9, 0.7, 0.3)
+                                } else {
+                                    Color::srgb(0.3, 0.4, 0.2)
+                                }),
+                            )).with_children(|quest_box| {
+                                // Quest title
+                                quest_box.spawn((
+                                    Text::new(if is_tracked {
+                                        format!("[TRACKED] {}", quest.title)
+                                    } else {
+                                        quest.title.clone()
+                                    }),
+                                    TextFont {
+                                        font_size: 18.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.9, 0.9, 0.6)),
+                                ));
+
+                                // Quest description
+                                quest_box.spawn((
+                                    Text::new(&quest.description),
+                                    TextFont {
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                                    Node {
+                                        margin: UiRect::vertical(Val::Px(5.0)),
+                                        ..default()
+                                    },
+                                ));
+
+                                // Objectives
+                                for (_idx, objective) in quest.objectives.iter().enumerate() {
+                                    let icon = if objective.is_complete() { "✓" } else { "○" };
+                                    let color = if objective.is_complete() {
+                                        Color::srgb(0.3, 0.9, 0.3)
+                                    } else {
+                                        Color::srgb(0.9, 0.9, 0.9)
+                                    };
+
+                                    quest_box.spawn((
+                                        Text::new(format!("  {} {} [{}]",
+                                            icon,
+                                            objective.description,
+                                            objective.progress_text()
+                                        )),
+                                        TextFont {
+                                            font_size: 14.0,
+                                            ..default()
+                                        },
+                                        TextColor(color),
+                                    ));
+                                }
+
+                                // Rewards
+                                quest_box.spawn((
+                                    Text::new(format!("\nRewards: {}", quest.rewards.rewards_text())),
+                                    TextFont {
+                                        font_size: 12.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.9, 0.7, 0.3)),
+                                    Node {
+                                        margin: UiRect::top(Val::Px(5.0)),
+                                        ..default()
+                                    },
+                                ));
+                            });
+                        }
+                    }
+                } else {
+                    parent.spawn((
+                        Text::new("No active quests"),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.5, 0.5, 0.5)),
+                    ));
+                }
+
+                // Footer
+                parent.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        padding: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::top(Val::Px(10.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.15, 0.2, 0.15, 0.8)),
+                )).with_children(|footer| {
+                    footer.spawn((
+                        Text::new("Press [Q] to close"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.6, 0.7, 0.6)),
+                    ));
+                });
+            });
+        }
+
+        /// Display on-screen quest tracker (always visible for tracked quest)
+        pub fn display_quest_tracker(
+            mut commands: Commands,
+            quest_log: Res<QuestLog>,
+            quest_registry: Res<QuestRegistry>,
+            tracker_ui_query: Query<Entity, With<QuestTrackerUI>>,
+        ) {
+            // Get tracked quest
+            let tracked_quest_id = match &quest_log.tracked_quest {
+                Some(id) if quest_log.active_quests.contains(id) => id,
+                _ => {
+                    // No tracked quest, clean up UI
+                    for entity in tracker_ui_query.iter() {
+                        commands.entity(entity).despawn_recursive();
+                    }
+                    return;
+                }
+            };
+
+            let quest = match quest_registry.get(tracked_quest_id) {
+                Some(q) => q,
+                None => {
+                    for entity in tracker_ui_query.iter() {
+                        commands.entity(entity).despawn_recursive();
+                    }
+                    return;
+                }
+            };
+
+            // Clean up old tracker
+            for entity in tracker_ui_query.iter() {
+                commands.entity(entity).despawn_recursive();
+            }
+
+            // Spawn quest tracker UI (top-right corner)
+            commands.spawn((
+                QuestTrackerUI,
+                Node {
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(120.0),
+                    right: Val::Px(10.0),
+                    width: Val::Px(350.0),
+                    height: Val::Auto,
+                    padding: UiRect::all(Val::Px(15.0)),
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(5.0),
+                    border: UiRect::all(Val::Px(2.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.1, 0.12, 0.08, 0.85)),
+                BorderColor(Color::srgb(0.7, 0.6, 0.3)),
+            )).with_children(|parent| {
+                // Quest title
+                parent.spawn((
+                    Text::new(&quest.title),
+                    TextFont {
+                        font_size: 18.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.9, 0.8, 0.4)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(8.0)),
+                        ..default()
+                    },
+                ));
+
+                // Current objective (first incomplete)
+                if let Some(current_obj) = quest.get_current_objective() {
+                    parent.spawn((
+                        Text::new(format!("○ {}", current_obj.description)),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    ));
+
+                    parent.spawn((
+                        Text::new(format!("   Progress: {}", current_obj.progress_text())),
+                        TextFont {
+                            font_size: 13.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.7, 0.9, 0.7)),
+                    ));
+
+                    // Location hint if available
+                    if let Some(hint) = &quest.location_hint {
+                        parent.spawn((
+                            Text::new(format!("   Location: {}", hint)),
+                            TextFont {
+                                font_size: 12.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.6, 0.7, 0.9)),
+                            Node {
+                                margin: UiRect::top(Val::Px(5.0)),
+                                ..default()
+                            },
+                        ));
+                    }
+                } else {
+                    // All objectives complete
+                    parent.spawn((
+                        Text::new("✓ Return to quest giver"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.3, 0.9, 0.3)),
+                    ));
+                }
+
+                // Overall progress
+                parent.spawn((
+                    Text::new(format!("\n{}", quest.progress_summary())),
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                ));
+            });
+        }
+    }
+
+    // ============================================================================
+    // QUICK WIN FEATURES (Death Screen, Pause Menu, Combo Counter, Settings)
+    // ============================================================================
+    pub mod quick_wins {
+        use bevy::prelude::*;
+        use bevy_shaman_core::components::{Player, Health};
+        use bevy_shaman_core::states::GameState;
+        use bevy_shaman_combat::components::RhythmCombo;
+
+        #[derive(Component)]
+        pub struct PauseMenuUI;
+
+        #[derive(Component)]
+        pub struct DeathScreenUI;
+
+        #[derive(Component)]
+        pub struct ComboCounterUI;
+
+        #[derive(Component)]
+        pub struct SettingsPanelUI;
+
+        #[derive(Component)]
+        pub struct ResumeButton;
+
+        #[derive(Component)]
+        pub struct QuitButton;
+
+        #[derive(Component)]
+        pub struct RespawnButton;
+
+        #[derive(Resource)]
+        pub struct PauseMenuState {
+            pub paused: bool,
+        }
+
+        impl Default for PauseMenuState {
+            fn default() -> Self {
+                Self { paused: false }
+            }
+        }
+
+        #[derive(Resource)]
+        pub struct DeathScreenState {
+            pub player_dead: bool,
+        }
+
+        impl Default for DeathScreenState {
+            fn default() -> Self {
+                Self { player_dead: false }
+            }
+        }
+
+        #[derive(Resource)]
+        pub struct SettingsUIState {
+            pub visible: bool,
+        }
+
+        impl Default for SettingsUIState {
+            fn default() -> Self {
+                Self { visible: false }
+            }
+        }
+
+        /// Display pause menu (toggle with ESC key)
+        pub fn display_pause_menu(
+            mut commands: Commands,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut pause_state: ResMut<PauseMenuState>,
+            death_state: Res<DeathScreenState>,
+            pause_ui_query: Query<Entity, With<PauseMenuUI>>,
+            button_query: Query<(&Interaction, Option<&ResumeButton>, Option<&QuitButton>), (Changed<Interaction>, With<Button>)>,
+            mut next_state: ResMut<NextState<GameState>>,
+        ) {
+            // Don't show pause menu if player is dead
+            if death_state.player_dead {
+                pause_state.paused = false;
+                for entity in pause_ui_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Toggle with ESC key
+            if keyboard.just_pressed(KeyCode::Escape) {
+                pause_state.paused = !pause_state.paused;
+            }
+
+            // Hide if not paused
+            if !pause_state.paused {
+                for entity in pause_ui_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Only spawn UI once
+            if !pause_ui_query.is_empty() {
+                // Handle button clicks
+                for (interaction, resume_button, quit_button) in button_query.iter() {
+                    if *interaction == Interaction::Pressed {
+                        if resume_button.is_some() {
+                            pause_state.paused = false;
+                            for entity in pause_ui_query.iter() {
+                                commands.entity(entity).despawn_recursive();
+                            }
+                        } else if quit_button.is_some() {
+                            next_state.set(GameState::MainMenu);
+                            pause_state.paused = false;
+                            for entity in pause_ui_query.iter() {
+                                commands.entity(entity).despawn_recursive();
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Spawn pause menu UI
+            commands.spawn((
+                PauseMenuUI,
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+            )).with_children(|parent| {
+                parent.spawn((
+                    Node {
+                        width: Val::Px(400.0),
+                        height: Val::Auto,
+                        padding: UiRect::all(Val::Px(40.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(20.0),
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(3.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
+                    BorderColor(Color::srgb(0.8, 0.2, 0.2)),
+                )).with_children(|menu| {
+                    // Title
+                    menu.spawn((
+                        Text::new("PAUSED"),
+                        TextFont {
+                            font_size: 48.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.3, 0.3)),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(20.0)),
+                            ..default()
+                        },
+                    ));
+
+                    // Resume button
+                    menu.spawn((
+                        ResumeButton,
+                        Button,
+                        Node {
+                            width: Val::Px(300.0),
+                            height: Val::Px(60.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+                        BorderColor(Color::srgb(0.6, 0.2, 0.2)),
+                    )).with_children(|button| {
+                        button.spawn((
+                            Text::new("RESUME"),
+                            TextFont {
+                                font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+
+                    // Quit button
+                    menu.spawn((
+                        QuitButton,
+                        Button,
+                        Node {
+                            width: Val::Px(300.0),
+                            height: Val::Px(60.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+                        BorderColor(Color::srgb(0.6, 0.2, 0.2)),
+                    )).with_children(|button| {
+                        button.spawn((
+                            Text::new("QUIT TO MENU"),
+                            TextFont {
+                                font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+                });
+            });
+        }
+
+        /// Display death screen
+        pub fn display_death_screen(
+            mut commands: Commands,
+            mut death_state: ResMut<DeathScreenState>,
+            player_query: Query<&Health, With<Player>>,
+            death_ui_query: Query<Entity, With<DeathScreenUI>>,
+            button_query: Query<(&Interaction, &RespawnButton), (Changed<Interaction>, With<Button>)>,
+        ) {
+            // Check if player is dead
+            if let Ok(health) = player_query.get_single() {
+                death_state.player_dead = health.current <= 0.0;
+            } else {
+                death_state.player_dead = false;
+            }
+
+            // Hide if not dead
+            if !death_state.player_dead {
+                for entity in death_ui_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Only spawn UI once
+            if !death_ui_query.is_empty() {
+                // Handle respawn button
+                for (interaction, _) in button_query.iter() {
+                    if *interaction == Interaction::Pressed {
+                        // TODO: Implement respawn logic
+                        info!("Respawn requested");
+                        death_state.player_dead = false;
+                        for entity in death_ui_query.iter() {
+                            commands.entity(entity).despawn_recursive();
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Spawn death screen UI
+            commands.spawn((
+                DeathScreenUI,
+                Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.1, 0.0, 0.0, 0.8)),
+            )).with_children(|parent| {
+                parent.spawn((
+                    Node {
+                        width: Val::Px(500.0),
+                        height: Val::Auto,
+                        padding: UiRect::all(Val::Px(50.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(30.0),
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.15, 0.05, 0.05)),
+                    BorderColor(Color::srgb(0.8, 0.1, 0.1)),
+                )).with_children(|menu| {
+                    // Title
+                    menu.spawn((
+                        Text::new("YOU DIED"),
+                        TextFont {
+                            font_size: 64.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.2, 0.2)),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(20.0)),
+                            ..default()
+                        },
+                    ));
+
+                    // Flavor text
+                    menu.spawn((
+                        Text::new("The spirits mourn your passing..."),
+                        TextFont {
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.7, 0.5, 0.5)),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(20.0)),
+                            ..default()
+                        },
+                    ));
+
+                    // Respawn button
+                    menu.spawn((
+                        RespawnButton,
+                        Button,
+                        Node {
+                            width: Val::Px(300.0),
+                            height: Val::Px(60.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.4, 0.2, 0.2)),
+                        BorderColor(Color::srgb(0.8, 0.3, 0.3)),
+                    )).with_children(|button| {
+                        button.spawn((
+                            Text::new("RESPAWN"),
+                            TextFont {
+                                font_size: 28.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+                });
+            });
+        }
+
+        /// Display combo counter on screen
+        pub fn display_combo_counter(
+            mut commands: Commands,
+            player_query: Query<&RhythmCombo, With<Player>>,
+            combo_ui_query: Query<Entity, With<ComboCounterUI>>,
+        ) {
+            // Get player combo
+            let combo = if let Ok(combo) = player_query.get_single() {
+                combo.current_combo.len()
+            } else {
+                0
+            };
+
+            // Hide if no combo
+            if combo == 0 {
+                for entity in combo_ui_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Clean up old UI
+            for entity in combo_ui_query.iter() {
+                commands.entity(entity).despawn_recursive();
+            }
+
+            // Determine size and color based on combo count
+            let (font_size, color) = if combo >= 20 {
+                (64.0, Color::srgb(1.0, 0.2, 1.0)) // Huge purple
+            } else if combo >= 10 {
+                (48.0, Color::srgb(1.0, 0.5, 0.2)) // Large orange
+            } else {
+                (36.0, Color::srgb(1.0, 1.0, 0.3)) // Normal yellow
+            };
+
+            // Spawn combo counter UI
+            commands.spawn((
+                ComboCounterUI,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(45.0),
+                    top: Val::Px(100.0),
+                    padding: UiRect::all(Val::Px(15.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.6)),
+            )).with_children(|parent| {
+                parent.spawn((
+                    Text::new(format!("{} COMBO!", combo)),
+                    TextFont {
+                        font_size,
+                        ..default()
+                    },
+                    TextColor(color),
+                ));
+            });
+        }
+
+        /// Display settings panel
+        pub fn display_settings_panel(
+            mut commands: Commands,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut settings_state: ResMut<SettingsUIState>,
+            settings_ui_query: Query<Entity, With<SettingsPanelUI>>,
+        ) {
+            // Toggle with F1 key
+            if keyboard.just_pressed(KeyCode::F1) {
+                settings_state.visible = !settings_state.visible;
+            }
+
+            // Hide if not visible
+            if !settings_state.visible {
+                for entity in settings_ui_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Only spawn UI once
+            if !settings_ui_query.is_empty() {
+                return;
+            }
+
+            // Spawn settings panel
+            commands.spawn((
+                SettingsPanelUI,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(30.0),
+                    top: Val::Percent(20.0),
+                    width: Val::Px(500.0),
+                    height: Val::Auto,
+                    padding: UiRect::all(Val::Px(30.0)),
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(15.0),
+                    border: UiRect::all(Val::Px(2.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.1, 0.1, 0.12, 0.95)),
+                BorderColor(Color::srgb(0.5, 0.6, 0.7)),
+            )).with_children(|parent| {
+                // Title
+                parent.spawn((
+                    Text::new("SETTINGS"),
+                    TextFont {
+                        font_size: 32.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(15.0)),
+                        ..default()
+                    },
+                ));
+
+                // Controls section
+                parent.spawn((
+                    Text::new("=== CONTROLS ==="),
+                    TextFont {
+                        font_size: 20.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.7, 0.8, 0.9)),
+                    Node {
+                        margin: UiRect::vertical(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+
+                let controls = vec![
+                    ("WASD / Arrow Keys", "Move"),
+                    ("Space", "Attack (on beat)"),
+                    ("E", "Interact / Tame"),
+                    ("Q", "Quest Log"),
+                    ("I", "Inventory"),
+                    ("B", "Bestiary"),
+                    ("S", "Shop"),
+                    ("ESC", "Pause Menu"),
+                    ("F1", "Settings (this panel)"),
+                ];
+
+                for (key, action) in controls {
+                    parent.spawn((
+                        Text::new(format!("{:20} - {}", key, action)),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                    ));
+                }
+
+                // Footer
+                parent.spawn((
+                    Text::new("\nPress F1 to close"),
+                    TextFont {
+                        font_size: 14.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                    Node {
+                        margin: UiRect::top(Val::Px(15.0)),
+                        ..default()
+                    },
+                ));
+            });
         }
     }
 }
