@@ -1,0 +1,31 @@
+# Placeholder Portrait
+
+This file should be replaced with an actual PNG image.
+
+## Specifications
+
+- **File name**: `placeholder.png`
+- **Format**: PNG with transparency
+- **Resolution**: 512x512 pixels
+- **Style**: Pixel art, waist-up cutout
+- **Background**: Transparent
+- **Purpose**: Default portrait shown when character-specific portrait is not found
+
+## Quick Creation
+
+You can create a simple placeholder using any image editor:
+
+1. Create a 512x512 pixel canvas
+2. Draw a simple silhouette or generic character
+3. Use neutral colors (grey, blue, etc.)
+4. Save as PNG with transparency
+5. Rename to `placeholder.png`
+
+## Alternative Approaches
+
+- Use a gradient background
+- Add a "?" symbol
+- Create a generic village person silhouette
+- Use a simple geometric shape (circle, hexagon)
+
+Once you have the image, delete this README file and place your `placeholder.png` in this directory.

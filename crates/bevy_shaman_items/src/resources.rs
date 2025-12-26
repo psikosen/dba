@@ -79,6 +79,43 @@ impl LootTableDB {
                 },
             ],
         });
+
+        // Plant monster loot table (drops seeds)
+        self.register(LootTable {
+            id: "plant_monster".to_string(),
+            drops: vec![
+                LootDrop {
+                    item_id: "moonpetal_seed".to_string(),
+                    weight: 0.3,
+                    min_quantity: 1,
+                    max_quantity: 3,
+                },
+                LootDrop {
+                    item_id: "shadowroot_seed".to_string(),
+                    weight: 0.25,
+                    min_quantity: 1,
+                    max_quantity: 2,
+                },
+                LootDrop {
+                    item_id: "crystalmoss_seed".to_string(),
+                    weight: 0.2,
+                    min_quantity: 1,
+                    max_quantity: 2,
+                },
+                LootDrop {
+                    item_id: "voidflower_seed".to_string(),
+                    weight: 0.15,
+                    min_quantity: 1,
+                    max_quantity: 1,
+                },
+                LootDrop {
+                    item_id: "eternalbark_seed".to_string(),
+                    weight: 0.1,
+                    min_quantity: 1,
+                    max_quantity: 1,
+                },
+            ],
+        });
     }
 }
 

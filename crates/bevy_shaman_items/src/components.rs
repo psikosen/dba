@@ -20,28 +20,38 @@ impl Inventory {
     }
 
     pub fn add_item(&mut self, item: Item, quantity: u32) -> bool {
-        // Try to stack with existing item
+        let mut remaining = quantity;
+
+        // Try to stack with existing items
         for stack in &mut self.items {
-            if stack.item.id == item.id && stack.quantity < stack.item.max_stack {
+            if stack.item.id == item.id && stack.quantity < stack.item.max_stack && remaining > 0 {
                 let space = stack.item.max_stack - stack.quantity;
-                let to_add = quantity.min(space);
+                let to_add = remaining.min(space);
                 stack.quantity += to_add;
-                if quantity <= to_add {
+                remaining -= to_add;
+
+                if remaining == 0 {
                     return true;
                 }
             }
         }
 
-        // Create new stack if space available
-        if self.items.len() < self.max_slots {
-            self.items.push(ItemStack { item, quantity });
+        // Create new stack if there's remaining quantity and space available
+        if remaining > 0 && self.items.len() < self.max_slots {
+            self.items.push(ItemStack { item, quantity: remaining });
             true
         } else {
-            false
+            remaining == 0
         }
     }
 
     pub fn remove_item(&mut self, item_id: &str, quantity: u32) -> bool {
+        // First check if we have enough items
+        let total = self.count_item(item_id);
+        if total < quantity {
+            return false; // Not enough items, don't modify anything
+        }
+
         let mut remaining = quantity;
 
         self.items.retain_mut(|stack| {

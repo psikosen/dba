@@ -41,7 +41,7 @@ impl BeatClock {
         }
 
         self.time_in_beat += delta;
-        if self.time_in_beat >= self.beat_duration {
+        while self.time_in_beat >= self.beat_duration {
             self.current_beat += 1;
             self.time_in_beat -= self.beat_duration;
         }
@@ -49,9 +49,12 @@ impl BeatClock {
 
     /// Returns timing quality: Perfect/Great/Good/Miss
     pub fn evaluate_timing(&self) -> TimingQuality {
+        // Normalized time within beat (0.0 to 1.0)
         let normalized_time = self.time_in_beat / self.beat_duration;
-        let distance_from_beat = (normalized_time - 0.0).abs().min((normalized_time - 1.0).abs());
+        // Distance from nearest beat (start at 0.0 or end at 1.0)
+        let distance_from_beat = normalized_time.min(1.0 - normalized_time);
 
+        // Thresholds are fractions of a beat
         if distance_from_beat < 0.05 {
             TimingQuality::Perfect
         } else if distance_from_beat < 0.15 {
@@ -107,7 +110,7 @@ pub struct Song {
     pub stamina_cost: f32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MusicStyle {
     Calm,
     Aggressive,

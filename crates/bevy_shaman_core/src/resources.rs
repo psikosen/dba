@@ -69,3 +69,10 @@ impl GridOccupancy {
         self.occupied.remove(&(x, y));
     }
 }
+
+/// UI visibility toggles
+#[derive(Resource, Default)]
+pub struct InventoryVisible(pub bool);
+
+#[derive(Resource, Default)]
+pub struct DialogueVisible(pub bool);

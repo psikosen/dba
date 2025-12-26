@@ -26,6 +26,8 @@ fn main() {
         .add_plugins(bevy_shaman_dungeons::DungeonsPlugin)
         // Items - loot, inventory, spirit orbs, crafting
         .add_plugins(bevy_shaman_items::ItemsPlugin)
+        // Shop - store, currency, buying/selling
+        .add_plugins(bevy_shaman_shop::ShopPlugin)
         // UI - HUD, bestiary, skill tree, crafting UI
         .add_plugins(bevy_shaman_ui::UiPlugin)
         // Story - dialogue, quests, reputation, cutscenes
