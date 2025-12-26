@@ -94,6 +94,8 @@ pub enum ItemType {
     Remedy,
     CraftingMaterial,
     KeyItem,
+    Plant(PlantType),
+    Food(FoodType),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -146,4 +148,174 @@ pub enum CraftingStationType {
     HerbBench,
     SpiritAltar,
     InstrumentWorkshop,
+}
+
+// ============================================================================
+// PLANT SYSTEM
+// ============================================================================
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PlantType {
+    // Calming plants - reduce blood lust
+    SpiritBlossom,      // Temporary calming effect during battle
+    MoonPetal,          // Permanent calming bonus until next rest
+    StarRoot,           // Temporary, strong calming
+
+    // Poison plants - for Mambele weapon crafting
+    VenomVine,          // Basic spiritual poison
+    ShadowMushroom,     // Strong spiritual poison
+    DeathBloom,         // Rare, very potent poison
+
+    // Healing plants
+    LifeLeaf,           // Temporary health regen during battle
+    EternalBark,        // Permanent health bonus until death
+
+    // Spirit plants
+    AetherGrass,        // Temporary spirit regen boost
+    CrystalMoss,        // Permanent spirit capacity increase
+}
+
+impl PlantType {
+    /// Returns true if this plant's effect persists permanently (until rest/death)
+    pub fn is_permanent(&self) -> bool {
+        matches!(
+            self,
+            PlantType::MoonPetal | PlantType::EternalBark | PlantType::CrystalMoss
+        )
+    }
+
+    /// Returns true if this plant is used for weapon poison crafting
+    pub fn is_poison_ingredient(&self) -> bool {
+        matches!(
+            self,
+            PlantType::VenomVine | PlantType::ShadowMushroom | PlantType::DeathBloom
+        )
+    }
+
+    /// Blood lust reduction amount
+    pub fn blood_lust_reduction(&self) -> f32 {
+        match self {
+            PlantType::SpiritBlossom => 15.0,
+            PlantType::MoonPetal => 25.0,
+            PlantType::StarRoot => 30.0,
+            _ => 0.0,
+        }
+    }
+
+    /// Poison strength for weapon crafting
+    pub fn poison_strength(&self) -> f32 {
+        match self {
+            PlantType::VenomVine => 5.0,
+            PlantType::ShadowMushroom => 10.0,
+            PlantType::DeathBloom => 20.0,
+            _ => 0.0,
+        }
+    }
+
+    /// Duration in seconds (0.0 means permanent)
+    pub fn effect_duration(&self) -> f32 {
+        if self.is_permanent() {
+            0.0  // Permanent until rest/death
+        } else {
+            match self {
+                PlantType::SpiritBlossom => 30.0,
+                PlantType::StarRoot => 20.0,
+                PlantType::LifeLeaf => 45.0,
+                PlantType::AetherGrass => 60.0,
+                _ => 0.0,
+            }
+        }
+    }
+}
+
+// ============================================================================
+// FOOD SYSTEM
+// ============================================================================
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FoodType {
+    // Blood lust reduction foods
+    SweetBerry,         // Small reduction
+    HoneyBread,         // Medium reduction
+    SacredMeal,         // Large reduction
+
+    // Stat boost foods
+    StrengthMeat,       // Temporary attack boost
+    SwiftFish,          // Temporary speed boost
+    WisdomStew,         // Temporary spirit regen boost
+}
+
+impl FoodType {
+    pub fn blood_lust_reduction(&self) -> f32 {
+        match self {
+            FoodType::SweetBerry => 10.0,
+            FoodType::HoneyBread => 20.0,
+            FoodType::SacredMeal => 35.0,
+            _ => 0.0,
+        }
+    }
+
+    pub fn effect_duration(&self) -> f32 {
+        match self {
+            FoodType::StrengthMeat => 120.0,  // 2 minutes
+            FoodType::SwiftFish => 90.0,
+            FoodType::WisdomStew => 150.0,
+            _ => 0.0,
+        }
+    }
+}
+
+// ============================================================================
+// ACTIVE EFFECTS TRACKING
+// ============================================================================
+
+/// Component tracking active plant/food effects on an entity
+#[derive(Component, Default)]
+pub struct ActiveEffects {
+    pub effects: Vec<ActiveEffect>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ActiveEffect {
+    pub effect_type: EffectType,
+    pub duration_remaining: f32,  // 0.0 for permanent effects
+    pub strength: f32,
+    pub is_permanent: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EffectType {
+    BloodLustReduction,
+    HealthRegen,
+    SpiritRegen,
+    AttackBoost,
+    SpeedBoost,
+    SpiritCapacityBoost,
+}
+
+impl ActiveEffects {
+    pub fn add_effect(&mut self, effect: ActiveEffect) {
+        // Don't stack permanent effects of the same type
+        if effect.is_permanent {
+            self.effects.retain(|e| {
+                !(e.effect_type == effect.effect_type && e.is_permanent)
+            });
+        }
+        self.effects.push(effect);
+    }
+
+    pub fn remove_permanent_effects(&mut self) {
+        self.effects.retain(|e| !e.is_permanent);
+    }
+
+    pub fn update(&mut self, delta: f32) {
+        self.effects.retain_mut(|effect| {
+            if !effect.is_permanent {
+                effect.duration_remaining -= delta;
+                effect.duration_remaining > 0.0
+            } else {
+                true  // Keep permanent effects
+            }
+        });
+    }
 }

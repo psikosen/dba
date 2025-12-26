@@ -9,4 +9,6 @@ bevy.workspace = true
 bevy_shaman_core = { path = "../bevy_shaman_core" }
 bevy_shaman_audio = { path = "../bevy_shaman_audio" }
 bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
+bevy_shaman_items = { path = "../bevy_shaman_items" }
 serde.workspace = true
+rand.workspace = true
