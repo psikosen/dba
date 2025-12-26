@@ -19,10 +19,18 @@ impl Plugin for ItemsPlugin {
                 systems::spirit_orb::consume_spirit_orbs,
                 systems::inventory::manage_inventory,
                 systems::crafting::process_crafting_requests,
+                // Plant and food systems
+                systems::plant_food::plant_usage,
+                systems::plant_food::food_usage,
+                systems::plant_food::active_effects_update,
+                systems::plant_food::apply_active_effects,
             ).run_if(in_state(GameState::Playing)))
             // Events
             .add_event::<systems::events::ItemPickedUp>()
             .add_event::<systems::events::SpiritOrbConsumed>()
-            .add_event::<systems::events::CraftingRequested>();
+            .add_event::<systems::events::CraftingRequested>()
+            .add_event::<systems::plant_food::UsePlant>()
+            .add_event::<systems::plant_food::UseFood>()
+            .add_event::<systems::plant_food::ReduceBloodLust>();
     }
 }

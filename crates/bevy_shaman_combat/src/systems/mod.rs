@@ -2,3 +2,8 @@ pub mod damage;
 pub mod events;
 pub mod hit_resolution;
 pub mod status_effects;
+pub mod weapon;
+pub mod blood_lust;
+pub mod wheel;
+pub mod monster_control;
+pub mod rhythm_combo;
