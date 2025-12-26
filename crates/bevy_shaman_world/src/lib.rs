@@ -14,6 +14,13 @@ impl Plugin for WorldPlugin {
             .init_resource::<resources::PurificationAbility>()
             .init_resource::<resources::BossUnlockFlags>()
             .init_resource::<resources::WorldStateRulesDB>()
+            .init_resource::<systems::generation::WorldGenerated>()
+            .init_resource::<systems::generation::WorldGenConfig>()
+            .init_resource::<systems::generation::WorldSeed>()
+            // World generation (runs when entering Playing state)
+            .add_systems(OnEnter(GameState::Playing), (
+                systems::generation::generate_overworld,
+            ))
             // Systems
             .add_systems(Update, (
                 systems::corruption::spread_corruption,

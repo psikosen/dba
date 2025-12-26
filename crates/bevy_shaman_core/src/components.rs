@@ -62,6 +62,14 @@ impl Default for Spirit {
 }
 
 impl Spirit {
+    pub fn new(max: f32) -> Self {
+        Self {
+            current: max,
+            max,
+            regen_rate: 5.0,
+        }
+    }
+
     pub fn heal(&mut self, amount: f32) {
         self.current = (self.current + amount).min(self.max);
     }
@@ -81,6 +89,16 @@ impl Default for Stamina {
             current: 100.0,
             max: 100.0,
             regen_rate: 10.0, // per second
+        }
+    }
+}
+
+impl Stamina {
+    pub fn new(max: f32) -> Self {
+        Self {
+            current: max,
+            max,
+            regen_rate: 10.0,
         }
     }
 }
