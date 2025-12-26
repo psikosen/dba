@@ -1,12 +1,11 @@
 [package]
-name = "bevy_shaman_world"
+name = "bevy_shaman_shop"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-bevy.workspace = true
+bevy = { workspace = true }
+serde = { workspace = true }
 bevy_shaman_core = { path = "../bevy_shaman_core" }
 bevy_shaman_items = { path = "../bevy_shaman_items" }
-serde.workspace = true
-rand.workspace = true
