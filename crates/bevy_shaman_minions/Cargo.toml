@@ -1,0 +1,11 @@
+[package]
+name = "bevy_shaman_minions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+bevy.workspace = true
+bevy_shaman_core = { path = "../bevy_shaman_core" }
+bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
+serde.workspace = true

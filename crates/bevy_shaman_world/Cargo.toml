@@ -1,0 +1,10 @@
+[package]
+name = "bevy_shaman_world"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+bevy.workspace = true
+bevy_shaman_core = { path = "../bevy_shaman_core" }
+serde.workspace = true

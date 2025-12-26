@@ -1,0 +1,38 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/bevy_shaman",
+    "crates/bevy_shaman_core",
+    "crates/bevy_shaman_combat",
+    "crates/bevy_shaman_audio",
+    "crates/bevy_shaman_monsters",
+    "crates/bevy_shaman_minions",
+    "crates/bevy_shaman_world",
+    "crates/bevy_shaman_dungeons",
+    "crates/bevy_shaman_items",
+    "crates/bevy_shaman_ui",
+    "crates/bevy_shaman_story",
+    "crates/bevy_shaman_save",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+bevy = { version = "0.15", default-features = false, features = [
+    "bevy_asset",
+    "bevy_sprite",
+    "bevy_text",
+    "bevy_ui",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_render",
+    "bevy_state",
+    "png",
+    "x11",
+] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8"
