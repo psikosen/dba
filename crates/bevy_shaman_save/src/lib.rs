@@ -67,6 +67,32 @@ pub mod systems {
         use bevy_shaman_world::components::TileCorruption;
         use serde::{Deserialize, Serialize};
         use std::fs;
+        use std::collections::HashMap;
+
+        #[derive(Serialize, Deserialize, Clone)]
+        pub struct TutorialProgressData {
+            pub tutorial_started: bool,
+            pub tutorial_completed: bool,
+            pub current_mission: Option<String>,
+            pub current_step: u8,
+            pub completed_missions: Vec<String>,
+            pub mission_flags: HashMap<String, bool>,
+            pub cutscene_viewed: HashMap<String, bool>,
+        }
+
+        impl Default for TutorialProgressData {
+            fn default() -> Self {
+                Self {
+                    tutorial_started: false,
+                    tutorial_completed: false,
+                    current_mission: None,
+                    current_step: 0,
+                    completed_missions: Vec::new(),
+                    mission_flags: HashMap::new(),
+                    cutscene_viewed: HashMap::new(),
+                }
+            }
+        }
 
         #[derive(Serialize, Deserialize, Clone)]
         pub struct SaveData {
@@ -76,6 +102,8 @@ pub mod systems {
             pub player_stamina: (f32, f32),
             pub corrupted_tiles: Vec<((i32, i32), f32)>,
             pub inventory_items: Vec<(String, String, u32)>, // (id, display_name, quantity)
+            #[serde(default)]
+            pub tutorial_progress: TutorialProgressData,
             pub timestamp: f64,
             pub save_version: u32,
         }
@@ -108,6 +136,7 @@ pub mod systems {
                             .map(|(pos, corruption)| ((pos.x, pos.y), corruption.level))
                             .collect(),
                         inventory_items: vec![], // TODO: Extract from inventory component when available
+                        tutorial_progress: TutorialProgressData::default(), // TODO: Extract from TutorialProgress resource
                         timestamp: time.elapsed_secs_f64(),
                         save_version: 1,
                     };

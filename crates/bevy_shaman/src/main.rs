@@ -36,5 +36,7 @@ fn main() {
         .add_plugins(bevy_shaman_save::SavePlugin)
         // AI - LLM-driven boss/NPC behavior and dialogue
         .add_plugins(bevy_shaman_ai::AiPlugin)
+        // Tutorial - mission-based tutorials, cutscenes, overlays
+        .add_plugins(bevy_shaman_tutorial::TutorialPlugin)
         .run();
 }
