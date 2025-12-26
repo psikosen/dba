@@ -24,10 +24,19 @@ pub mod systems {
         pub struct HealthBar;
 
         #[derive(Component)]
+        pub struct HealthText;
+
+        #[derive(Component)]
         pub struct SpiritBar;
 
         #[derive(Component)]
+        pub struct SpiritText;
+
+        #[derive(Component)]
         pub struct StaminaBar;
+
+        #[derive(Component)]
+        pub struct StaminaText;
 
         #[derive(Component)]
         pub struct HudRoot;
@@ -39,6 +48,9 @@ pub mod systems {
             health_bars: Query<Entity, With<HealthBar>>,
             spirit_bars: Query<Entity, With<SpiritBar>>,
             stamina_bars: Query<Entity, With<StaminaBar>>,
+            mut health_text: Query<&mut Text, With<HealthText>>,
+            mut spirit_text: Query<&mut Text, (With<SpiritText>, Without<HealthText>, Without<StaminaText>)>,
+            mut stamina_text: Query<&mut Text, (With<StaminaText>, Without<HealthText>, Without<SpiritText>)>,
         ) {
             // Initialize HUD if it doesn't exist
             if hud_root.is_empty() {
@@ -66,6 +78,7 @@ pub mod systems {
                         BackgroundColor(Color::srgb(0.8, 0.2, 0.2)),
                     )).with_children(|bar| {
                         bar.spawn((
+                            HealthText,
                             Text::new("Health: 100 / 100"),
                             TextFont {
                                 font_size: 16.0,
@@ -86,6 +99,7 @@ pub mod systems {
                         BackgroundColor(Color::srgb(0.2, 0.5, 0.9)),
                     )).with_children(|bar| {
                         bar.spawn((
+                            SpiritText,
                             Text::new("Spirit: 100 / 100"),
                             TextFont {
                                 font_size: 16.0,
@@ -106,6 +120,7 @@ pub mod systems {
                         BackgroundColor(Color::srgb(0.3, 0.7, 0.3)),
                     )).with_children(|bar| {
                         bar.spawn((
+                            StaminaText,
                             Text::new("Stamina: 100 / 100"),
                             TextFont {
                                 font_size: 16.0,
@@ -117,9 +132,9 @@ pub mod systems {
                 });
             }
 
-            // Update bar values
+            // Update bar values and text
             if let Ok((health, spirit, stamina)) = player.get_single() {
-                // Update health bar width and text
+                // Update health bar width
                 for bar_entity in health_bars.iter() {
                     let percent = (health.current / health.max) * 100.0;
                     commands.entity(bar_entity).insert(Node {
@@ -129,7 +144,12 @@ pub mod systems {
                     });
                 }
 
-                // Update spirit bar
+                // Update health text
+                for mut text in health_text.iter_mut() {
+                    **text = format!("Health: {:.0} / {:.0}", health.current, health.max);
+                }
+
+                // Update spirit bar width
                 for bar_entity in spirit_bars.iter() {
                     let percent = (spirit.current / spirit.max) * 100.0;
                     commands.entity(bar_entity).insert(Node {
@@ -139,7 +159,12 @@ pub mod systems {
                     });
                 }
 
-                // Update stamina bar
+                // Update spirit text
+                for mut text in spirit_text.iter_mut() {
+                    **text = format!("Spirit: {:.0} / {:.0}", spirit.current, spirit.max);
+                }
+
+                // Update stamina bar width
                 for bar_entity in stamina_bars.iter() {
                     let percent = (stamina.current / stamina.max) * 100.0;
                     commands.entity(bar_entity).insert(Node {
@@ -147,6 +172,11 @@ pub mod systems {
                         height: Val::Px(25.0),
                         ..default()
                     });
+                }
+
+                // Update stamina text
+                for mut text in stamina_text.iter_mut() {
+                    **text = format!("Stamina: {:.0} / {:.0}", stamina.current, stamina.max);
                 }
             }
         }
