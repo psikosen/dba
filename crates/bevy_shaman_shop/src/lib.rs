@@ -2,6 +2,9 @@ use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
 use bevy_shaman_items::components::{Item, ItemStack};
 
+#[cfg(test)]
+mod tests;
+
 pub struct ShopPlugin;
 
 impl Plugin for ShopPlugin {
@@ -80,7 +83,7 @@ pub mod resources {
 
         pub fn add_stock(&mut self, item_id: &str, quantity: u32) {
             if let Some(shop_item) = self.items.iter_mut().find(|i| i.item.id == item_id) {
-                shop_item.stock += quantity;
+                shop_item.stock = shop_item.stock.saturating_add(quantity);
             }
         }
 
