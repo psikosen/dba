@@ -13,6 +13,8 @@ impl Plugin for StoryPlugin {
             // Resources
             .init_resource::<resources::InstrumentChoice>()
             .init_resource::<resources::BrotherCleansingProgress>()
+            .init_resource::<resources::AfricanNamesDB>()
+            .init_resource::<resources::PortraitDB>()
             // Systems
             .add_systems(Update, (
                 systems::npc_sickness::update_npc_waking_state,
