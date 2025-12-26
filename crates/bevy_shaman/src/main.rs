@@ -34,5 +34,7 @@ fn main() {
         .add_plugins(bevy_shaman_story::StoryPlugin)
         // Save - snapshot, migrations, autosave
         .add_plugins(bevy_shaman_save::SavePlugin)
+        // AI - LLM-driven boss/NPC behavior and dialogue
+        .add_plugins(bevy_shaman_ai::AiPlugin)
         .run();
 }

@@ -16,5 +16,6 @@ bevy_shaman_dungeons = { path = "../bevy_shaman_dungeons" }
 bevy_shaman_items = { path = "../bevy_shaman_items" }
 bevy_shaman_ui = { path = "../bevy_shaman_ui" }
 bevy_shaman_story = { path = "../bevy_shaman_story" }
-bevy_shaman_save = { path = "../bevy_shaman_save" }
+bevy_shaman_save = { path = "../bevy_shaman_save"}
+bevy_shaman_ai = { path = "../bevy_shaman_ai" 
 bevy_shaman_shop = { path = "../bevy_shaman_shop" }
