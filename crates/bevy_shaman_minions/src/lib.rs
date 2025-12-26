@@ -12,6 +12,7 @@ impl Plugin for MinionsPlugin {
             .init_resource::<systems::formation::FormationConfig>()
             .add_systems(Update, (
                 systems::taming::process_taming_attempts,
+                systems::taming::update_taming_progress,
                 systems::formation::update_minion_formation,
                 systems::commands::process_minion_commands,
             ).run_if(in_state(GameState::Playing)))
@@ -40,6 +41,25 @@ pub mod components {
         Attack(Entity),
         Stay,
     }
+
+    #[derive(Component)]
+    pub struct TamingProgress {
+        pub progress: f32, // 0.0 to 1.0
+        pub timer: bevy::time::Timer,
+    }
+
+    impl TamingProgress {
+        pub fn new(duration_secs: f32) -> Self {
+            Self {
+                progress: 0.0,
+                timer: bevy::time::Timer::from_seconds(duration_secs, bevy::time::TimerMode::Once),
+            }
+        }
+
+        pub fn is_complete(&self) -> bool {
+            self.progress >= 1.0
+        }
+    }
 }
 
 pub mod systems {
@@ -67,20 +87,37 @@ pub mod systems {
             mut commands: Commands,
             keyboard: Res<ButtonInput<KeyCode>>,
             player: Query<Entity, With<Player>>,
-            monsters: Query<(Entity, &MonsterState), Without<Tamed>>,
+            monsters: Query<(Entity, &MonsterState), (Without<Tamed>, Without<crate::components::TamingProgress>)>,
         ) {
             if !keyboard.just_pressed(KeyCode::KeyT) {
                 return;
             }
 
-            // Simplified: tame nearest monster if controllable
+            // Start taming the nearest controllable monster
             for (entity, state) in monsters.iter() {
                 if state.is_controllable() {
+                    commands.entity(entity).insert(crate::components::TamingProgress::new(3.0)); // 3 seconds to tame
+                    info!("Started taming monster...");
+                    break;
+                }
+            }
+        }
+
+        pub fn update_taming_progress(
+            mut commands: Commands,
+            time: Res<Time>,
+            mut taming_query: Query<(Entity, &mut crate::components::TamingProgress), Without<Tamed>>,
+        ) {
+            for (entity, mut taming) in taming_query.iter_mut() {
+                taming.timer.tick(time.delta());
+                taming.progress = taming.timer.fraction();
+
+                if taming.is_complete() {
+                    commands.entity(entity).remove::<crate::components::TamingProgress>();
                     commands.entity(entity).insert(Tamed {
-                        tamed_at: 0.0,
+                        tamed_at: time.elapsed_secs_f64(),
                     });
                     info!("Monster tamed!");
-                    break;
                 }
             }
         }

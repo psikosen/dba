@@ -15,7 +15,7 @@ members = [
     "crates/bevy_shaman_save",
     "crates/bevy_shaman_ai",
     "crates/bevy_shaman_shop",
-
+]
 
 [workspace.package]
 version = "0.1.0"

@@ -15,12 +15,16 @@ pub fn swap_sprites_on_state_change(
         };
 
         if let Some(new_sprite_handle) = sprite_db.get(&monster_id.0, event.new_state) {
-            // Swap sprite texture (in actual implementation, update Handle<Image>)
             info!(
                 "Swapping sprite for {} from {:?} to {:?}",
                 monster_id.0, event.old_state, event.new_state
             );
-            // sprite.image = new_sprite_handle.clone();
+            sprite.image = new_sprite_handle.clone();
+        } else {
+            warn!(
+                "No sprite found for monster {} in state {:?}",
+                monster_id.0, event.new_state
+            );
         }
     }
 }
