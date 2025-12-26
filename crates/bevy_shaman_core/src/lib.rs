@@ -3,6 +3,9 @@ pub mod resources;
 pub mod states;
 pub mod systems;
 
+#[cfg(test)]
+mod tests;
+
 use bevy::prelude::*;
 use states::{CombatState, GameState, WorldState};
 
