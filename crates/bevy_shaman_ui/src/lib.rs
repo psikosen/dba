@@ -11,6 +11,7 @@ impl Plugin for UiPlugin {
             .init_resource::<systems::shop_ui::ShopVisible>()
             .init_resource::<systems::dialogue_ui::DialogueUIState>()
             .init_resource::<systems::minimap::MinimapState>()
+            .init_resource::<systems::inventory_ui::InventoryUIState>()
             .add_systems(Update, (
                 systems::hud::update_hud,
                 systems::rhythm_ui::display_rhythm_visualizer,
@@ -18,7 +19,13 @@ impl Plugin for UiPlugin {
                 systems::shop_ui::display_shop,
                 systems::dialogue_ui::handle_dialogue_events,
                 systems::dialogue_ui::update_dialogue_ui,
+                systems::dialogue_ui::update_typewriter_text,
                 systems::minimap::update_minimap,
+                systems::inventory_ui::display_inventory,
+                systems::combat_feedback::spawn_damage_numbers,
+                systems::combat_feedback::update_damage_numbers,
+                systems::combat_feedback::spawn_hit_effects,
+                systems::taming_ui::display_taming_progress,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, systems::loading_screen::display_loading_screen.run_if(in_state(GameState::Boot)))
             .add_systems(Update, systems::main_menu::display_main_menu.run_if(in_state(GameState::MainMenu)));
@@ -51,6 +58,24 @@ pub mod systems {
         #[derive(Component)]
         pub struct HudRoot;
 
+        #[derive(Component)]
+        pub struct FpsCounter;
+
+        #[derive(Resource)]
+        pub struct FpsTracker {
+            pub frame_times: Vec<f32>,
+            pub last_update: f32,
+        }
+
+        impl Default for FpsTracker {
+            fn default() -> Self {
+                Self {
+                    frame_times: Vec::with_capacity(60),
+                    last_update: 0.0,
+                }
+            }
+        }
+
         pub fn update_hud(
             mut commands: Commands,
             player: Query<(&Health, &Spirit, &Stamina), With<Player>>,
@@ -61,6 +86,9 @@ pub mod systems {
             mut health_text: Query<&mut Text, With<HealthText>>,
             mut spirit_text: Query<&mut Text, (With<SpiritText>, Without<HealthText>, Without<StaminaText>)>,
             mut stamina_text: Query<&mut Text, (With<StaminaText>, Without<HealthText>, Without<SpiritText>)>,
+            mut fps_text: Query<&mut Text, (With<FpsCounter>, Without<HealthText>, Without<SpiritText>, Without<StaminaText>)>,
+            mut fps_tracker: Local<FpsTracker>,
+            time: Res<Time>,
         ) {
             // Initialize HUD if it doesn't exist
             if hud_root.is_empty() {
@@ -139,6 +167,27 @@ pub mod systems {
                             TextColor(Color::WHITE),
                         ));
                     });
+
+                    // FPS Counter
+                    parent.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(20.0),
+                            margin: UiRect::top(Val::Px(10.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.7)),
+                    )).with_children(|fps_container| {
+                        fps_container.spawn((
+                            FpsCounter,
+                            Text::new("FPS: 60"),
+                            TextFont {
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.5, 1.0, 0.5)),
+                        ));
+                    });
                 });
             }
 
@@ -187,6 +236,33 @@ pub mod systems {
                 // Update stamina text
                 for mut text in stamina_text.iter_mut() {
                     **text = format!("Stamina: {:.0} / {:.0}", stamina.current, stamina.max);
+                }
+            }
+
+            // Update FPS counter
+            let delta = time.delta_secs();
+            if delta > 0.0 {
+                fps_tracker.frame_times.push(delta);
+                if fps_tracker.frame_times.len() > 60 {
+                    fps_tracker.frame_times.remove(0);
+                }
+            }
+
+            // Update FPS text every 0.5 seconds
+            if time.elapsed_secs() - fps_tracker.last_update > 0.5 {
+                fps_tracker.last_update = time.elapsed_secs();
+
+                if !fps_tracker.frame_times.is_empty() {
+                    let avg_frame_time: f32 = fps_tracker.frame_times.iter().sum::<f32>() / fps_tracker.frame_times.len() as f32;
+                    let fps = if avg_frame_time > 0.0 {
+                        1.0 / avg_frame_time
+                    } else {
+                        60.0
+                    };
+
+                    for mut text in fps_text.iter_mut() {
+                        **text = format!("FPS: {:.0}", fps);
+                    }
                 }
             }
         }
@@ -825,6 +901,33 @@ pub mod systems {
             pub lifetime: Timer,
         }
 
+        #[derive(Component)]
+        pub struct TypewriterText {
+            pub full_text: String,
+            pub current_index: usize,
+            pub timer: Timer,
+            pub chars_per_second: f32,
+        }
+
+        impl TypewriterText {
+            pub fn new(text: String, chars_per_second: f32) -> Self {
+                Self {
+                    full_text: text,
+                    current_index: 0,
+                    timer: Timer::from_seconds(1.0 / chars_per_second, TimerMode::Repeating),
+                    chars_per_second,
+                }
+            }
+
+            pub fn is_complete(&self) -> bool {
+                self.current_index >= self.full_text.len()
+            }
+
+            pub fn skip_to_end(&mut self) {
+                self.current_index = self.full_text.len();
+            }
+        }
+
         #[derive(Resource)]
         pub struct DialogueUIState {
             pub active: bool,
@@ -1005,10 +1108,11 @@ pub mod systems {
                         TextColor(Color::srgb(0.9, 0.9, 1.0)),
                     ));
 
-                    // Dialogue text
+                    // Dialogue text with typewriter effect
                     box_parent.spawn((
                         DialogueText,
-                        Text::new(&dialogue_state.dialogue_text),
+                        TypewriterText::new(dialogue_state.dialogue_text.clone(), 30.0), // 30 chars per second
+                        Text::new(""), // Start with empty text
                         TextFont {
                             font_size: 18.0,
                             ..default()
@@ -1077,6 +1181,34 @@ pub mod systems {
                 if bark.lifetime.finished() {
                     commands.entity(entity).despawn_recursive();
                 }
+            }
+        }
+
+        // System to update typewriter text effect
+        pub fn update_typewriter_text(
+            time: Res<Time>,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut typewriter_query: Query<(&mut TypewriterText, &mut Text)>,
+        ) {
+            for (mut typewriter, mut text) in typewriter_query.iter_mut() {
+                // Skip to end if Space or Enter is pressed
+                if keyboard.just_pressed(KeyCode::Space) || keyboard.just_pressed(KeyCode::Enter) {
+                    typewriter.skip_to_end();
+                }
+
+                // Update timer
+                typewriter.timer.tick(time.delta());
+
+                // Reveal characters
+                if typewriter.timer.just_finished() && !typewriter.is_complete() {
+                    typewriter.current_index += 1;
+                }
+
+                // Update displayed text
+                let displayed_text: String = typewriter.full_text.chars()
+                    .take(typewriter.current_index)
+                    .collect();
+                **text = displayed_text;
             }
         }
     }
@@ -1244,6 +1376,555 @@ pub mod systems {
                     }
                 });
             });
+        }
+    }
+
+    // ============================================================================
+    // INVENTORY UI SYSTEM
+    // ============================================================================
+    pub mod inventory_ui {
+        use bevy::prelude::*;
+        use bevy_shaman_items::components::{Inventory, ItemStack};
+        use bevy_shaman_core::components::Player;
+
+        #[derive(Component)]
+        pub struct InventoryUIRoot;
+
+        #[derive(Component)]
+        pub struct InventorySlot {
+            pub slot_index: usize,
+        }
+
+        #[derive(Component)]
+        pub struct InventoryItemIcon;
+
+        #[derive(Component)]
+        pub struct InventoryItemText;
+
+        #[derive(Component)]
+        pub struct ItemTooltip {
+            pub item_id: String,
+            pub item_name: String,
+            pub quantity: u32,
+        }
+
+        #[derive(Resource)]
+        pub struct InventoryUIState {
+            pub visible: bool,
+            pub selected_slot: Option<usize>,
+        }
+
+        impl Default for InventoryUIState {
+            fn default() -> Self {
+                Self {
+                    visible: false,
+                    selected_slot: None,
+                }
+            }
+        }
+
+        const GRID_COLS: usize = 8;
+        const GRID_ROWS: usize = 6;
+        const SLOT_SIZE: f32 = 70.0;
+        const SLOT_SPACING: f32 = 5.0;
+
+        pub fn display_inventory(
+            mut commands: Commands,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut ui_state: ResMut<InventoryUIState>,
+            ui_root_query: Query<Entity, With<InventoryUIRoot>>,
+            player_inventory: Query<&Inventory, With<Player>>,
+        ) {
+            // Toggle inventory with 'I' key
+            if keyboard.just_pressed(KeyCode::KeyI) {
+                ui_state.visible = !ui_state.visible;
+            }
+
+            // Hide inventory if not visible
+            if !ui_state.visible {
+                for entity in ui_root_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Only spawn UI once
+            if !ui_root_query.is_empty() {
+                return;
+            }
+
+            // Get player inventory
+            let inventory = if let Ok(inv) = player_inventory.get_single() {
+                inv
+            } else {
+                return;
+            };
+
+            let total_slots = GRID_COLS * GRID_ROWS;
+
+            // Spawn inventory UI
+            commands.spawn((
+                InventoryUIRoot,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Percent(15.0),
+                    top: Val::Percent(10.0),
+                    width: Val::Auto,
+                    height: Val::Auto,
+                    flex_direction: FlexDirection::Column,
+                    padding: UiRect::all(Val::Px(25.0)),
+                    row_gap: Val::Px(15.0),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.08, 0.08, 0.12, 0.95)),
+                BorderColor(Color::srgb(0.5, 0.7, 0.9)),
+            )).with_children(|parent| {
+                // ====== Header ======
+                parent.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(10.0)),
+                        padding: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.15, 0.2, 0.25, 0.8)),
+                    BorderColor(Color::srgb(0.3, 0.5, 0.7)),
+                )).with_children(|header| {
+                    // Title
+                    header.spawn((
+                        Text::new("⚔ INVENTORY ⚔"),
+                        TextFont {
+                            font_size: 28.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                    ));
+
+                    // Slot counter
+                    header.spawn((
+                        Text::new(format!("Slots: {} / {}", inventory.items.len(), inventory.max_slots)),
+                        TextFont {
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.7, 0.8, 0.9)),
+                    ));
+                });
+
+                // ====== Inventory Grid ======
+                parent.spawn((
+                    Node {
+                        display: Display::Grid,
+                        grid_template_columns: vec![GridTrack::px(SLOT_SIZE); GRID_COLS],
+                        grid_template_rows: vec![GridTrack::px(SLOT_SIZE); GRID_ROWS],
+                        column_gap: Val::Px(SLOT_SPACING),
+                        row_gap: Val::Px(SLOT_SPACING),
+                        padding: UiRect::all(Val::Px(15.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.05, 0.05, 0.08, 0.6)),
+                )).with_children(|grid| {
+                    // Render all slots
+                    for slot_index in 0..total_slots {
+                        let item_stack: Option<&ItemStack> = inventory.items.get(slot_index);
+
+                        grid.spawn((
+                            InventorySlot { slot_index },
+                            Node {
+                                width: Val::Px(SLOT_SIZE),
+                                height: Val::Px(SLOT_SIZE),
+                                border: UiRect::all(Val::Px(2.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                flex_direction: FlexDirection::Column,
+                                ..default()
+                            },
+                            BackgroundColor(if item_stack.is_some() {
+                                Color::srgba(0.2, 0.25, 0.3, 0.9)
+                            } else {
+                                Color::srgba(0.1, 0.1, 0.15, 0.5)
+                            }),
+                            BorderColor(if item_stack.is_some() {
+                                Color::srgb(0.4, 0.6, 0.8)
+                            } else {
+                                Color::srgb(0.2, 0.2, 0.3)
+                            }),
+                        )).with_children(|slot| {
+                            if let Some(stack) = item_stack {
+                                // Item name (shortened)
+                                let display_name = if stack.item.display_name.len() > 10 {
+                                    format!("{}...", &stack.item.display_name[..7])
+                                } else {
+                                    stack.item.display_name.clone()
+                                };
+
+                                slot.spawn((
+                                    InventoryItemText,
+                                    Text::new(&display_name),
+                                    TextFont {
+                                        font_size: 12.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                                    Node {
+                                        margin: UiRect::bottom(Val::Px(2.0)),
+                                        ..default()
+                                    },
+                                ));
+
+                                // Quantity display
+                                slot.spawn((
+                                    Text::new(format!("x{}", stack.quantity)),
+                                    TextFont {
+                                        font_size: 14.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(1.0, 0.9, 0.5)),
+                                ));
+                            } else {
+                                // Empty slot indicator
+                                slot.spawn((
+                                    Text::new("─"),
+                                    TextFont {
+                                        font_size: 20.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgba(0.3, 0.3, 0.3, 0.5)),
+                                ));
+                            }
+                        });
+                    }
+                });
+
+                // ====== Footer with controls ======
+                parent.spawn((
+                    Node {
+                        width: Val::Percent(100.0),
+                        padding: UiRect::all(Val::Px(10.0)),
+                        margin: UiRect::top(Val::Px(10.0)),
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(5.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.15, 0.2, 0.25, 0.8)),
+                )).with_children(|footer| {
+                    footer.spawn((
+                        Text::new("Press [I] to close | [ESC] to close"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.6, 0.7, 0.8)),
+                    ));
+
+                    footer.spawn((
+                        Text::new("Left-click: Use item | Right-click: Drop item (Coming soon)"),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.5, 0.5, 0.6)),
+                    ));
+                });
+            });
+        }
+    }
+
+    // ============================================================================
+    // COMBAT VISUAL FEEDBACK SYSTEM
+    // ============================================================================
+    pub mod combat_feedback {
+        use bevy::prelude::*;
+
+        // Re-export the HitLanded event from combat crate
+        // We'll listen to this event to spawn damage numbers
+        use bevy_shaman_combat::systems::events::HitLanded;
+
+        #[derive(Component)]
+        pub struct DamageNumber {
+            pub lifetime: Timer,
+            pub initial_y: f32,
+        }
+
+        #[derive(Component)]
+        pub struct HitEffect {
+            pub lifetime: Timer,
+        }
+
+        const DAMAGE_NUMBER_LIFETIME: f32 = 1.2;
+        const DAMAGE_NUMBER_RISE_SPEED: f32 = 50.0;
+        const HIT_EFFECT_LIFETIME: f32 = 0.3;
+
+        /// Spawn floating damage numbers when hits land
+        pub fn spawn_damage_numbers(
+            mut commands: Commands,
+            mut hit_events: EventReader<HitLanded>,
+            target_positions: Query<&Transform>,
+        ) {
+            for event in hit_events.read() {
+                // Get target position
+                let target_transform = if let Ok(transform) = target_positions.get(event.target) {
+                    transform.translation
+                } else {
+                    continue;
+                };
+
+                // Determine color based on damage amount
+                let (color, font_size) = if event.damage >= 50.0 {
+                    // Critical hit
+                    (Color::srgb(1.0, 0.2, 0.2), 32.0)
+                } else if event.damage >= 25.0 {
+                    // Heavy hit
+                    (Color::srgb(1.0, 0.6, 0.2), 28.0)
+                } else {
+                    // Normal hit
+                    (Color::srgb(1.0, 1.0, 0.4), 24.0)
+                };
+
+                // Spawn damage number UI element
+                commands.spawn((
+                    DamageNumber {
+                        lifetime: Timer::from_seconds(DAMAGE_NUMBER_LIFETIME, TimerMode::Once),
+                        initial_y: target_transform.y,
+                    },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(target_transform.x),
+                        top: Val::Px(720.0 - target_transform.y), // Convert world to screen Y
+                        ..default()
+                    },
+                    Text::new(format!("{:.0}", event.damage)),
+                    TextFont {
+                        font_size,
+                        ..default()
+                    },
+                    TextColor(color),
+                ));
+            }
+        }
+
+        /// Update and animate damage numbers
+        pub fn update_damage_numbers(
+            mut commands: Commands,
+            time: Res<Time>,
+            mut damage_numbers: Query<(Entity, &mut DamageNumber, &mut Node, &mut TextColor)>,
+        ) {
+            for (entity, mut damage_num, mut node, mut text_color) in damage_numbers.iter_mut() {
+                damage_num.lifetime.tick(time.delta());
+
+                // Rise animation
+                let progress = damage_num.lifetime.fraction();
+
+                if let Val::Px(current_top) = node.top {
+                    node.top = Val::Px(current_top - time.delta_secs() * DAMAGE_NUMBER_RISE_SPEED);
+                }
+
+                // Fade out
+                let alpha = 1.0 - progress;
+                text_color.0.set_alpha(alpha);
+
+                // Remove when lifetime expires
+                if damage_num.lifetime.finished() {
+                    commands.entity(entity).despawn();
+                }
+            }
+        }
+
+        /// Spawn hit effects (flashes, screen shake, etc.)
+        pub fn spawn_hit_effects(
+            mut commands: Commands,
+            mut hit_events: EventReader<HitLanded>,
+            target_positions: Query<&Transform>,
+        ) {
+            for event in hit_events.read() {
+                // Get target position
+                let target_transform = if let Ok(transform) = target_positions.get(event.target) {
+                    transform.translation
+                } else {
+                    continue;
+                };
+
+                // Spawn hit flash effect
+                commands.spawn((
+                    HitEffect {
+                        lifetime: Timer::from_seconds(HIT_EFFECT_LIFETIME, TimerMode::Once),
+                    },
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(target_transform.x - 16.0),
+                        top: Val::Px(720.0 - target_transform.y - 16.0),
+                        width: Val::Px(32.0),
+                        height: Val::Px(32.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(1.0, 1.0, 1.0, 0.8)),
+                    BorderRadius::all(Val::Px(16.0)),
+                ));
+            }
+        }
+
+        /// Update hit effects (cleanup)
+        #[allow(dead_code)]
+        pub fn update_hit_effects(
+            mut commands: Commands,
+            time: Res<Time>,
+            mut hit_effects: Query<(Entity, &mut HitEffect, &mut BackgroundColor)>,
+        ) {
+            for (entity, mut effect, mut bg_color) in hit_effects.iter_mut() {
+                effect.lifetime.tick(time.delta());
+
+                // Fade out
+                let alpha = 1.0 - effect.lifetime.fraction();
+                bg_color.0.set_alpha(alpha * 0.8);
+
+                // Remove when lifetime expires
+                if effect.lifetime.finished() {
+                    commands.entity(entity).despawn();
+                }
+            }
+        }
+    }
+
+    // ============================================================================
+    // TAMING PROGRESS UI SYSTEM
+    // ============================================================================
+    pub mod taming_ui {
+        use bevy::prelude::*;
+        use bevy_shaman_minions::components::TamingProgress;
+
+        #[derive(Component)]
+        pub struct TamingProgressBar;
+
+        pub fn display_taming_progress(
+            mut commands: Commands,
+            taming_query: Query<&TamingProgress>,
+            progress_bar_query: Query<Entity, With<TamingProgressBar>>,
+        ) {
+            let has_taming_in_progress = !taming_query.is_empty();
+
+            if has_taming_in_progress {
+                // Spawn progress bar if it doesn't exist
+                if progress_bar_query.is_empty() {
+                    commands.spawn((
+                        TamingProgressBar,
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::Percent(35.0),
+                            bottom: Val::Percent(20.0),
+                            width: Val::Px(400.0),
+                            height: Val::Px(40.0),
+                            flex_direction: FlexDirection::Column,
+                            padding: UiRect::all(Val::Px(5.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.1, 0.1, 0.15, 0.9)),
+                        BorderColor(Color::srgb(0.4, 0.6, 0.9)),
+                    )).with_children(|parent| {
+                        // Title
+                        parent.spawn((
+                            Text::new("Taming..."),
+                            TextFont {
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                            Node {
+                                margin: UiRect::bottom(Val::Px(5.0)),
+                                ..default()
+                            },
+                        ));
+
+                        // Progress bar background
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.0),
+                                height: Val::Px(20.0),
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgb(0.2, 0.2, 0.25)),
+                            BorderColor(Color::srgb(0.3, 0.4, 0.5)),
+                        )).with_children(|progress_bg| {
+                            // Get the first taming progress
+                            if let Some(taming) = taming_query.iter().next() {
+                                // Progress bar fill
+                                progress_bg.spawn((
+                                    Node {
+                                        width: Val::Percent(taming.progress * 100.0),
+                                        height: Val::Percent(100.0),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.3, 0.7, 1.0)),
+                                ));
+                            }
+                        });
+                    });
+                } else {
+                    // Update existing progress bar
+                    for bar_entity in progress_bar_query.iter() {
+                        commands.entity(bar_entity).despawn_recursive();
+                        // Re-spawn with updated progress
+                        if let Some(taming) = taming_query.iter().next() {
+                            commands.spawn((
+                                TamingProgressBar,
+                                Node {
+                                    position_type: PositionType::Absolute,
+                                    left: Val::Percent(35.0),
+                                    bottom: Val::Percent(20.0),
+                                    width: Val::Px(400.0),
+                                    height: Val::Px(40.0),
+                                    flex_direction: FlexDirection::Column,
+                                    padding: UiRect::all(Val::Px(5.0)),
+                                    ..default()
+                                },
+                                BackgroundColor(Color::srgba(0.1, 0.1, 0.15, 0.9)),
+                                BorderColor(Color::srgb(0.4, 0.6, 0.9)),
+                            )).with_children(|parent| {
+                                parent.spawn((
+                                    Text::new(format!("Taming... {:.0}%", taming.progress * 100.0)),
+                                    TextFont {
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
+                                    TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                                    Node {
+                                        margin: UiRect::bottom(Val::Px(5.0)),
+                                        ..default()
+                                    },
+                                ));
+
+                                parent.spawn((
+                                    Node {
+                                        width: Val::Percent(100.0),
+                                        height: Val::Px(20.0),
+                                        border: UiRect::all(Val::Px(2.0)),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.2, 0.2, 0.25)),
+                                    BorderColor(Color::srgb(0.3, 0.4, 0.5)),
+                                )).with_children(|progress_bg| {
+                                    progress_bg.spawn((
+                                        Node {
+                                            width: Val::Percent(taming.progress * 100.0),
+                                            height: Val::Percent(100.0),
+                                            ..default()
+                                        },
+                                        BackgroundColor(Color::srgb(0.3, 0.7, 1.0)),
+                                    ));
+                                });
+                            });
+                        }
+                    }
+                }
+            } else {
+                // Remove progress bar if no taming in progress
+                for entity in progress_bar_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+            }
         }
     }
 }

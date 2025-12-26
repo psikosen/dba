@@ -6,9 +6,11 @@ impl Plugin for SavePlugin {
     fn build(&self, app: &mut App) {
         app
             .init_resource::<systems::autosave::AutosaveTimer>()
+            .init_resource::<systems::save_load::PendingLoadData>()
             .add_systems(Update, (
                 systems::autosave::autosave_system,
                 systems::save_load::handle_save_requests,
+                systems::save_load::apply_loaded_data,
             ))
             .add_event::<systems::events::SaveRequested>()
             .add_event::<systems::events::LoadRequested>();
@@ -66,14 +68,22 @@ pub mod systems {
         use serde::{Deserialize, Serialize};
         use std::fs;
 
-        #[derive(Serialize, Deserialize)]
+        #[derive(Serialize, Deserialize, Clone)]
         pub struct SaveData {
             pub player_position: (i32, i32),
             pub player_health: (f32, f32),
             pub player_spirit: (f32, f32),
             pub player_stamina: (f32, f32),
             pub corrupted_tiles: Vec<((i32, i32), f32)>,
+            pub inventory_items: Vec<(String, String, u32)>, // (id, display_name, quantity)
             pub timestamp: f64,
+            pub save_version: u32,
+        }
+
+        // Resource to store loaded save data for applying in next frame
+        #[derive(Resource, Default)]
+        pub struct PendingLoadData {
+            pub data: Option<SaveData>,
         }
 
         pub fn handle_save_requests(
@@ -82,6 +92,7 @@ pub mod systems {
             player: Query<(&GridPosition, &Health, &Spirit, &Stamina), With<Player>>,
             corrupted: Query<(&GridPosition, &TileCorruption)>,
             time: Res<Time>,
+            mut pending_load: ResMut<PendingLoadData>,
         ) {
             // Handle save requests
             for _event in save_events.read() {
@@ -96,7 +107,9 @@ pub mod systems {
                             .filter(|(_, corruption)| corruption.is_corrupt())
                             .map(|(pos, corruption)| ((pos.x, pos.y), corruption.level))
                             .collect(),
+                        inventory_items: vec![], // TODO: Extract from inventory component when available
                         timestamp: time.elapsed_secs_f64(),
+                        save_version: 1,
                     };
 
                     match serde_json::to_string_pretty(&save_data) {
@@ -118,23 +131,55 @@ pub mod systems {
                 }
             }
 
-            // Handle load requests
+            // Handle load requests - store data in resource for next frame
             for event in load_events.read() {
                 let filename = format!("saves/save_{}.json", event.save_slot);
                 match fs::read_to_string(&filename) {
                     Ok(json) => {
                         match serde_json::from_str::<SaveData>(&json) {
                             Ok(save_data) => {
-                                info!("Game loaded from {}", filename);
-                                // Note: Actual loading of data would require world mutation
-                                // which is complex in ECS. This is a simplified version.
-                                // In production, you'd use Commands and NextState.
+                                info!("Save data loaded from {}, will apply next frame", filename);
+                                pending_load.data = Some(save_data);
                             }
                             Err(e) => error!("Failed to deserialize save data: {}", e),
                         }
                     }
                     Err(e) => error!("Failed to load game from {}: {}", filename, e),
                 }
+            }
+        }
+
+        // System to apply loaded save data to the world
+        pub fn apply_loaded_data(
+            mut pending_load: ResMut<PendingLoadData>,
+            mut player_query: Query<(&mut GridPosition, &mut Health, &mut Spirit, &mut Stamina), With<Player>>,
+            mut corrupted_query: Query<(&GridPosition, &mut TileCorruption)>,
+        ) {
+            if let Some(save_data) = pending_load.data.take() {
+                info!("Applying loaded save data to world");
+
+                // Restore player data
+                if let Ok((mut pos, mut health, mut spirit, mut stamina)) = player_query.get_single_mut() {
+                    pos.x = save_data.player_position.0;
+                    pos.y = save_data.player_position.1;
+                    health.current = save_data.player_health.0;
+                    health.max = save_data.player_health.1;
+                    spirit.current = save_data.player_spirit.0;
+                    spirit.max = save_data.player_spirit.1;
+                    stamina.current = save_data.player_stamina.0;
+                    stamina.max = save_data.player_stamina.1;
+                    info!("Player data restored to position ({}, {})", pos.x, pos.y);
+                }
+
+                // Restore corruption data
+                for ((tile_x, tile_y), corruption_level) in &save_data.corrupted_tiles {
+                    for (tile_pos, mut corruption) in corrupted_query.iter_mut() {
+                        if tile_pos.x == *tile_x && tile_pos.y == *tile_y {
+                            corruption.level = *corruption_level;
+                        }
+                    }
+                }
+                info!("Restored {} corrupted tiles", save_data.corrupted_tiles.len());
             }
         }
     }

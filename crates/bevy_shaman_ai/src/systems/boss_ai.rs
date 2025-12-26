@@ -145,10 +145,10 @@ pub fn boss_combat_dialogue(
         // Find matching dialogue from queue
         if let Some(response_idx) = queue
             .dialogue_responses
-            .iter().position
-            |r| matches!(r.context, context) || matches!(r.context, DialogueContext::Combat))
+            .iter()
+            .position(|r| matches!(r.context, context) || matches!(r.context, DialogueContext::Combat))
         {
-            let response = queue.dialogue_responses.remove(idx);
+            let response = queue.dialogue_responses.remove(response_idx);
             // Add to conversation history
             history.add_npc_message(response.text.clone(), time.elapsed_secs_f64());
 
@@ -178,13 +178,13 @@ pub fn boss_phase_transitions(
         if new_phase > *current_phase {
             *current_phase = new_phase;
 
-                let response = queue.dialogue_responses.remove(idx);
             // Trigger phase transition dialogue
             if let Some(response_idx) = queue
                 .dialogue_responses
-                .iter().position
-                |r| matches!(r.context, DialogueContext::PhaseTransition))
+                .iter()
+                .position(|r| matches!(r.context, DialogueContext::PhaseTransition))
             {
+                let response = queue.dialogue_responses.remove(response_idx);
                 info!(
                     "Boss {} enters Phase {}: {}",
                     ai.character_name, new_phase, response.text
