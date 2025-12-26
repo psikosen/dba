@@ -8,6 +8,7 @@ impl Plugin for DungeonsPlugin {
         app
             .init_resource::<systems::generation::DungeonGenerator>()
             .add_systems(Update, (
+                systems::generation::trigger_dungeon_entry,
                 systems::generation::generate_dungeon_rooms,
                 systems::encounters::spawn_encounters,
                 systems::bosses::manage_boss_fights,
@@ -62,20 +63,46 @@ pub mod systems {
         use crate::components::{DungeonRoom, RoomType};
         use rand::Rng;
 
-        #[derive(Resource, Default)]
+        #[derive(Resource)]
         pub struct DungeonGenerator {
             pub current_dungeon_id: String,
             pub rooms_generated: usize,
+            pub dungeon_count: u32,
+        }
+
+        impl Default for DungeonGenerator {
+            fn default() -> Self {
+                Self {
+                    current_dungeon_id: String::new(),
+                    rooms_generated: 0,
+                    dungeon_count: 0,
+                }
+            }
+        }
+
+        /// Trigger dungeon generation with 'D' key (for testing/manual trigger)
+        pub fn trigger_dungeon_entry(
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut events: EventWriter<super::events::DungeonEntered>,
+            mut dungeon_gen: ResMut<DungeonGenerator>,
+        ) {
+            if keyboard.just_pressed(KeyCode::KeyD) {
+                dungeon_gen.dungeon_count += 1;
+                let dungeon_id = format!("dungeon_{}", dungeon_gen.dungeon_count);
+                events.send(super::events::DungeonEntered {
+                    dungeon_id: dungeon_id.clone(),
+                });
+                info!("Entering dungeon: {}", dungeon_id);
+            }
         }
 
         pub fn generate_dungeon_rooms(
             mut commands: Commands,
             mut dungeon_gen: ResMut<DungeonGenerator>,
-            dungeon_entered: EventReader<super::events::DungeonEntered>,
+            mut dungeon_entered: EventReader<super::events::DungeonEntered>,
         ) {
-            if dungeon_entered.is_empty() {
-                return;
-            }
+            for event in dungeon_entered.read() {
+                dungeon_gen.current_dungeon_id = event.dungeon_id.clone();
 
             let mut rng = rand::thread_rng();
             let room_count = rng.gen_range(5..=12);
@@ -120,8 +147,9 @@ pub mod systems {
                 current_pos += direction;
             }
 
-            dungeon_gen.rooms_generated = room_count;
-            info!("Dungeon generation complete");
+                dungeon_gen.rooms_generated = room_count;
+                info!("Dungeon '{}' generation complete: {} rooms", event.dungeon_id, room_count);
+            }
         }
     }
 
