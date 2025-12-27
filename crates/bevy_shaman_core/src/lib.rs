@@ -28,6 +28,7 @@ impl Plugin for CorePlugin {
             .init_resource::<resources::DialogueVisible>()
             .init_resource::<resources::CalendarVisible>()
             .init_resource::<resources::GameCalendar>()
+            .init_resource::<resources::LoadingFromSave>()
             .init_resource::<settings::GameSettings>()
             .init_resource::<systems::player::PlayerSpawned>()
             .init_resource::<systems::assets::AssetLoadingState>()

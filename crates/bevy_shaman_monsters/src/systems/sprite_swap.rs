@@ -81,7 +81,21 @@ pub fn populate_monster_sprite_db(
     info!("MonsterSpriteDB populated with {} entries", sprite_db.sprites.len());
 }
 
-/// Swaps monster sprites when state changes
+/// Get color tint for a given state (provides visual feedback even without sprite assets)
+fn get_state_color_tint(state: StateType) -> Color {
+    match state {
+        StateType::Stable => Color::WHITE,
+        StateType::Chaos => Color::srgb(1.0, 0.6, 0.2), // Orange
+        StateType::Corrupt => Color::srgb(0.6, 0.2, 0.6), // Purple
+        StateType::Harmony => Color::srgb(0.4, 1.0, 0.8), // Cyan
+        StateType::Decay => Color::srgb(0.5, 0.5, 0.3), // Brown
+        StateType::Rage => Color::srgb(1.0, 0.2, 0.2), // Red
+        StateType::Void => Color::srgb(0.2, 0.2, 0.4), // Dark blue
+        StateType::Ancestral => Color::srgb(1.0, 1.0, 0.6), // Golden
+    }
+}
+
+/// Swaps monster sprites when state changes and applies color tint
 pub fn swap_sprites_on_state_change(
     mut events: EventReader<MonsterStateChanged>,
     sprite_db: Res<MonsterSpriteDB>,
@@ -92,6 +106,10 @@ pub fn swap_sprites_on_state_change(
             continue;
         };
 
+        // Apply color tint for visual differentiation
+        sprite.color = get_state_color_tint(event.new_state);
+
+        // Swap sprite asset if available
         if let Some(new_sprite_handle) = sprite_db.get(&monster_id.0, event.new_state) {
             info!(
                 "Swapping sprite for {} from {:?} to {:?}",
@@ -99,9 +117,10 @@ pub fn swap_sprites_on_state_change(
             );
             sprite.image = new_sprite_handle.clone();
         } else {
-            warn!(
-                "No sprite found for monster {} in state {:?}",
-                monster_id.0, event.new_state
+            // No sprite asset, but color tint provides visual feedback
+            info!(
+                "Applied color tint for {} state change {:?} -> {:?} (no sprite asset)",
+                monster_id.0, event.old_state, event.new_state
             );
         }
     }

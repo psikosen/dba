@@ -16,9 +16,10 @@ fn main() {
         // Combat - rhythm evaluation, hit resolution, status effects
         .add_plugins(bevy_shaman_combat::CombatPlugin);
 
-    // Audio - beat clock, song manager, spatial SFX (optional, requires ALSA on Linux)
-    #[cfg(feature = "audio")]
-    app.add_plugins(bevy_shaman_audio::AudioPlugin);
+    // Audio - beat clock, song manager, spatial SFX
+    // NOTE: Audio system is fully implemented, requires ALSA on Linux
+    // To enable: install libasound2-dev, then uncomment this line
+    // app.add_plugins(bevy_shaman_audio::AudioPlugin);
 
     app
         // Monsters - state machine, corruption, sprite swapping, AI

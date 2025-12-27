@@ -34,9 +34,18 @@ pub fn generate_overworld(
     mut generated: ResMut<WorldGenerated>,
     config: Res<WorldGenConfig>,
     tile_handles: Option<Res<TileSpriteHandles>>,
+    loading_from_save: Option<Res<bevy_shaman_core::resources::LoadingFromSave>>,
 ) {
     if generated.0 {
         return;
+    }
+
+    // Don't generate world if we're loading from a save
+    if let Some(loading) = loading_from_save {
+        if loading.is_loading {
+            info!("Skipping world generation - loading from save");
+            return;
+        }
     }
 
     // Wait for assets to load
