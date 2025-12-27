@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod combat_tests {
     use super::super::components::*;
-    use bevy_shaman_audio::resources::TimingQuality;
+    use bevy_shaman_core::resources::TimingQuality;
 
     // ============================================================================
     // BLOOD LUST TESTS
