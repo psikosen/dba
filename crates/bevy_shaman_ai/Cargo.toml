@@ -12,7 +12,11 @@ bevy_shaman_story = { path = "../bevy_shaman_story" }
 bevy_shaman_combat = { path = "../bevy_shaman_combat" }
 serde.workspace = true
 serde_json = "1.0"
+rand.workspace = true
 
-# LLM inference - will use llama.cpp bindings
-# Note: User will add the GGUF model file later
-# For now, we'll create the infrastructure
+# LLM inference using llama.cpp bindings
+llama-cpp-2 = { version = "0.1", optional = true }
+
+[features]
+default = []
+llm = ["llama-cpp-2"]

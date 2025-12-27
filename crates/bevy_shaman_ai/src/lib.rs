@@ -1,6 +1,7 @@
 pub mod components;
 pub mod resources;
 pub mod systems;
+pub mod llm_backend;
 
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
