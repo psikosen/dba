@@ -316,8 +316,10 @@ pub mod systems {
             #[cfg(feature = "audio")]
             rhythm: Option<Res<BeatClock>>,
             visualizer: Query<Entity, With<RhythmVisualizer>>,
-            _beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
-            _time: Res<Time>,
+            #[cfg_attr(not(feature = "audio"), allow(unused_variables))]
+            mut beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
+            #[cfg_attr(not(feature = "audio"), allow(unused_variables))]
+            time: Res<Time>,
         ) {
             // Initialize visualizer if it doesn't exist
             if visualizer.is_empty() {

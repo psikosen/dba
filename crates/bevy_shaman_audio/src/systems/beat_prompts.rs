@@ -142,10 +142,10 @@ pub fn consume_beat_prompts(
 ) {
     for event in rhythm_events.read() {
         // Find the prompt closest to the current beat
-        let mut closest_prompt: Option<(Entity, &mut BeatPrompt, &mut Sprite)> = None;
+        let mut closest_prompt_entity: Option<Entity> = None;
         let mut closest_distance = f32::MAX;
 
-        for (entity, prompt, sprite) in prompt_query.iter_mut() {
+        for (entity, prompt, _sprite) in prompt_query.iter() {
             if prompt.consumed {
                 continue;
             }
@@ -153,12 +153,13 @@ pub fn consume_beat_prompts(
             let distance = (prompt.target_beat as i32 - clock.current_beat as i32).abs() as f32;
             if distance < closest_distance {
                 closest_distance = distance;
-                closest_prompt = Some((entity, prompt, sprite));
+                closest_prompt_entity = Some(entity);
             }
         }
 
         // Consume the closest prompt
-        if let Some((entity, mut prompt, mut sprite)) = closest_prompt {
+        if let Some(entity) = closest_prompt_entity {
+            if let Ok((_, mut prompt, mut sprite)) = prompt_query.get_mut(entity) {
             prompt.consumed = true;
 
             // Visual feedback based on timing quality
@@ -171,6 +172,7 @@ pub fn consume_beat_prompts(
 
             // Despawn after a short delay (show feedback then remove)
             commands.entity(entity).despawn();
+            }
         }
     }
 }

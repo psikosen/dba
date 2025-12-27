@@ -109,7 +109,8 @@ fn animate_highlight_pulse(
 
 fn spawn_tutorial_hint(
     commands: &mut Commands,
-    _asset_server: &AssetServer,
+    #[allow(unused_variables)]
+    asset_server: &AssetServer,
     hint_text: &str,
     highlight_zone: Option<UiHighlightZone>,
 ) {
@@ -185,7 +186,8 @@ fn spawn_tutorial_highlight(
 /// Spawn an animated arrow pointing to a specific screen position
 pub fn spawn_tutorial_arrow(
     commands: &mut Commands,
-    _asset_server: &AssetServer,
+    #[allow(unused_variables)]
+    asset_server: &AssetServer,
     target_position: Vec2,
 ) {
     commands.spawn((
