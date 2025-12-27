@@ -1,11 +1,7 @@
 use bevy::prelude::*;
 
-#[derive(Event)]
-pub struct HitLanded {
-    pub attacker: Entity,
-    pub target: Entity,
-    pub damage: f32,
-}
+// Re-export from core to avoid circular dependency
+pub use bevy_shaman_core::events::HitLanded;
 
 #[derive(Event)]
 pub struct StatusEffectApplied {

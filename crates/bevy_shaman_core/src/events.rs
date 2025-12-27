@@ -19,3 +19,17 @@ pub struct EntityDied {
     pub entity: Entity,
     pub was_player: bool,
 }
+
+/// Event triggered when a hit lands in combat
+#[derive(Event, Debug, Clone)]
+pub struct HitLanded {
+    pub attacker: Entity,
+    pub target: Entity,
+    pub damage: f32,
+}
+
+/// Event triggered when a quest is completed
+#[derive(Event, Debug, Clone)]
+pub struct QuestCompleted {
+    pub quest_id: String,
+}

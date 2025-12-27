@@ -7,5 +7,8 @@ license.workspace = true
 [dependencies]
 bevy.workspace = true
 bevy_shaman_core = { path = "../bevy_shaman_core" }
+# NOTE: Removed to avoid circular dependency (combat -> items -> combat)
+# BloodLust interactions are commented out in inventory.rs
+# bevy_shaman_combat = { path = "../bevy_shaman_combat" }
 serde.workspace = true
 rand.workspace = true

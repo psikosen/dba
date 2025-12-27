@@ -26,6 +26,8 @@ impl Plugin for CorePlugin {
             .init_resource::<resources::GridOccupancy>()
             .init_resource::<resources::InventoryVisible>()
             .init_resource::<resources::DialogueVisible>()
+            .init_resource::<resources::CalendarVisible>()
+            .init_resource::<resources::GameCalendar>()
             .init_resource::<settings::GameSettings>()
             .init_resource::<systems::player::PlayerSpawned>()
             .init_resource::<systems::assets::AssetLoadingState>()
@@ -33,6 +35,8 @@ impl Plugin for CorePlugin {
             .add_event::<events::DialogueRequested>()
             .add_event::<events::PlayerDied>()
             .add_event::<events::EntityDied>()
+            .add_event::<events::HitLanded>()
+            .add_event::<events::QuestCompleted>()
             // Asset loading (runs in Boot state)
             .add_systems(Startup, (
                 systems::assets::load_game_assets,
@@ -51,6 +55,7 @@ impl Plugin for CorePlugin {
                 systems::movement::process_movement_commands,
                 systems::camera::follow_player,
                 systems::animation::update_sprite_animations,
+                systems::calendar::update_calendar,
             ).run_if(in_state(GameState::Playing)));
     }
 }

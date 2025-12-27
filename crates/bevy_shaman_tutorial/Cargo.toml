@@ -12,4 +12,6 @@ bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
 bevy_shaman_world = { path = "../bevy_shaman_world" }
 bevy_shaman_ui = { path = "../bevy_shaman_ui" }
 bevy_shaman_save = { path = "../bevy_shaman_save" }
+bevy_shaman_story = { path = "../bevy_shaman_story" }
 serde.workspace = true
+rand.workspace = true

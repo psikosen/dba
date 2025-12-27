@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{Position, Player};
+use bevy_shaman_core::components::{GridPosition, Player};
 use crate::components::{NpcDialogue, NpcSicknessState, NpcName};
 use crate::systems::dialogue_tree::{
     ActiveDialogueState, DialogueTreeRegistry, DialogueTreeStarted

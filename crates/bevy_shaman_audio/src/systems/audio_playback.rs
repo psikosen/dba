@@ -142,7 +142,7 @@ pub fn play_sound_effects(
 /// Trigger sound effects on combat hits
 pub fn play_hit_sounds(
     mut sfx_events: EventWriter<PlaySoundEffect>,
-    mut hit_events: EventReader<bevy_shaman_combat::systems::events::HitLanded>,
+    mut hit_events: EventReader<bevy_shaman_core::events::HitLanded>,
 ) {
     for _event in hit_events.read() {
         sfx_events.send(PlaySoundEffect::Hit);
@@ -164,7 +164,7 @@ pub fn play_level_up_sound(
 /// Trigger sound effect on quest completion
 pub fn play_quest_complete_sound(
     mut sfx_events: EventWriter<PlaySoundEffect>,
-    mut quest_events: EventReader<bevy_shaman_story::systems::quest_system::QuestCompleted>,
+    mut quest_events: EventReader<bevy_shaman_core::events::QuestCompleted>,
 ) {
     for _event in quest_events.read() {
         sfx_events.send(PlaySoundEffect::QuestComplete);

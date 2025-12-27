@@ -1,9 +1,8 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, Player, Health, Spirit, Stamina};
-use bevy_shaman_combat::components::BloodLust;
+use bevy_shaman_core::components::{GridPosition, Player, Health, Spirit, Stamina, BloodLust};
 use crate::components::{
-    Inventory, Pickupable, ItemStack, Item, ItemType, SpiritOrbSize,
-    PlantType, FoodType, ActiveEffects, ActiveEffect, EffectType
+    Inventory, Pickupable, Item, ItemType, PlantType, FoodType,
+    ActiveEffects, ActiveEffect, EffectType
 };
 
 /// Event fired when player picks up an item
@@ -32,7 +31,7 @@ pub struct ItemDropped {
 /// Handle picking up items when player is near them
 pub fn pickup_items(
     mut commands: Commands,
-    player: Query<(Entity, &GridPosition, &mut Inventory), With<Player>>,
+    mut player: Query<(Entity, &GridPosition, &mut Inventory), With<Player>>,
     pickupables: Query<(Entity, &GridPosition, &Pickupable)>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut pickup_events: EventWriter<ItemPickedUp>,
@@ -63,11 +62,11 @@ pub fn pickup_items(
 /// Use items from inventory (consume consumables)
 pub fn use_items(
     mut use_events: EventReader<ItemUsed>,
-    mut player: Query<(&mut Inventory, &mut Health, Option<&mut Spirit>, Option<&mut BloodLust>, Option<&mut ActiveEffects>), With<Player>>,
+    mut player: Query<(&mut Inventory, &mut Health, Option<&mut Spirit>, Option<&mut Stamina>, Option<&mut BloodLust>, Option<&mut ActiveEffects>), With<Player>>,
     time: Res<Time>,
 ) {
     for event in use_events.read() {
-        let Ok((mut inventory, mut health, spirit_opt, blood_lust_opt, effects_opt)) = player.get_single_mut() else {
+        let Ok((mut inventory, mut health, mut spirit_opt, mut stamina_opt, mut blood_lust_opt, effects_opt)) = player.get_single_mut() else {
             continue;
         };
 
@@ -83,9 +82,11 @@ pub fn use_items(
         // Apply item effects based on type
         match item.item_type {
             ItemType::SpiritOrb(size) => {
-                if let Some(mut spirit) = spirit_opt {
+                if let Some(spirit) = spirit_opt.as_mut() {
                     spirit.current = (spirit.current + size.spirit_restore()).min(spirit.max);
-                    spirit.stamina = (spirit.stamina + size.stamina_restore()).min(spirit.max_stamina);
+                }
+                if let Some(stamina) = stamina_opt.as_mut() {
+                    stamina.current = (stamina.current + size.stamina_restore()).min(stamina.max);
                 }
                 inventory.remove_item(&item.id, 1);
             }
@@ -93,7 +94,7 @@ pub fn use_items(
             ItemType::Plant(plant_type) => {
                 // Apply plant effects
                 if plant_type.blood_lust_reduction() > 0.0 {
-                    if let Some(mut blood_lust) = blood_lust_opt {
+                    if let Some(blood_lust) = blood_lust_opt.as_mut() {
                         blood_lust.reduce_with_plant(plant_type.blood_lust_reduction());
                     }
                 }
@@ -123,7 +124,7 @@ pub fn use_items(
             ItemType::Food(food_type) => {
                 // Apply food effects
                 if food_type.blood_lust_reduction() > 0.0 {
-                    if let Some(mut blood_lust) = blood_lust_opt {
+                    if let Some(blood_lust) = blood_lust_opt.as_mut() {
                         blood_lust.reduce_with_food(food_type.blood_lust_reduction());
                     }
                 }
@@ -176,7 +177,7 @@ pub fn update_active_effects(
 ) {
     let delta = time.delta_secs();
 
-    for (mut effects, mut health, spirit_opt) in entities.iter_mut() {
+    for (mut effects, mut health, mut spirit_opt) in entities.iter_mut() {
         // Apply effect bonuses
         for effect in &effects.effects {
             match effect.effect_type {
@@ -184,12 +185,12 @@ pub fn update_active_effects(
                     health.heal(effect.strength * 2.0 * delta);
                 }
                 EffectType::SpiritRegen => {
-                    if let Some(mut spirit) = spirit_opt.as_mut() {
+                    if let Some(spirit) = spirit_opt.as_mut() {
                         spirit.current = (spirit.current + effect.strength * 3.0 * delta).min(spirit.max);
                     }
                 }
                 EffectType::SpiritCapacityBoost => {
-                    if let Some(mut spirit) = spirit_opt.as_mut() {
+                    if let Some(_spirit) = spirit_opt.as_mut() {
                         // Permanent boost - apply once when added
                         // This would be handled when the effect is first applied
                     }
