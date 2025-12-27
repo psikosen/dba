@@ -8,10 +8,10 @@ const CORRUPTION_GROWTH_RATE: f32 = 0.005;
 /// Updates monster state meters based on various factors
 pub fn update_monster_state_meters(
     time: Res<Time>,
-    mut monsters: Query<(&mut MonsterState, Option<&CorruptionExposure>)>,
+    mut monsters: Query<(Entity, &mut MonsterState, Option<&CorruptionExposure>)>,
     mut corruption_events: EventWriter<MonsterCorrupted>,
 ) {
-    for (mut state, exposure) in monsters.iter_mut() {
+    for (entity, mut state, exposure) in monsters.iter_mut() {
         let dt = time.delta_secs();
 
         // Passive stability decay in chaotic environments
@@ -27,7 +27,7 @@ pub fn update_monster_state_meters(
 
                 if state.corruption_meter > 0.7 {
                     corruption_events.send(MonsterCorrupted {
-                        entity: Entity::PLACEHOLDER, // filled by caller
+                        entity,
                         corruption_level: state.corruption_meter,
                     });
                 }

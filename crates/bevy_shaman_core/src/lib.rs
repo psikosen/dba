@@ -1,6 +1,7 @@
 pub mod components;
 pub mod events;
 pub mod resources;
+pub mod settings;
 pub mod states;
 pub mod systems;
 
@@ -25,6 +26,7 @@ impl Plugin for CorePlugin {
             .init_resource::<resources::GridOccupancy>()
             .init_resource::<resources::InventoryVisible>()
             .init_resource::<resources::DialogueVisible>()
+            .init_resource::<settings::GameSettings>()
             .init_resource::<systems::player::PlayerSpawned>()
             .init_resource::<systems::assets::AssetLoadingState>()
             // Register events

@@ -16,6 +16,7 @@ impl Plugin for UiPlugin {
             .init_resource::<systems::quick_wins::PauseMenuState>()
             .init_resource::<systems::quick_wins::DeathScreenState>()
             .init_resource::<systems::quick_wins::SettingsUIState>()
+            .init_resource::<systems::combat_feedback::ScreenShake>()
             .add_systems(Update, (
                 systems::hud::update_hud,
                 systems::rhythm_ui::display_rhythm_visualizer,
@@ -35,6 +36,8 @@ impl Plugin for UiPlugin {
                 systems::combat_feedback::spawn_damage_numbers,
                 systems::combat_feedback::update_damage_numbers,
                 systems::combat_feedback::spawn_hit_effects,
+                systems::combat_feedback::update_hit_effects,
+                systems::combat_feedback::apply_screen_shake,
                 systems::taming_ui::display_taming_progress,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, (
@@ -1207,6 +1210,7 @@ pub mod systems {
             time: Res<Time>,
             keyboard: Res<ButtonInput<KeyCode>>,
             mut typewriter_query: Query<(&mut TypewriterText, &mut Text)>,
+            mut sfx_events: EventWriter<bevy_shaman_audio::systems::audio_playback::PlaySoundEffect>,
         ) {
             for (mut typewriter, mut text) in typewriter_query.iter_mut() {
                 // Skip to end if Space or Enter is pressed
@@ -1220,6 +1224,10 @@ pub mod systems {
                 // Reveal characters
                 if typewriter.timer.just_finished() && !typewriter.is_complete() {
                     typewriter.current_index += 1;
+                    // Play typewriter sound effect every few characters to avoid spam
+                    if typewriter.current_index % 3 == 0 {
+                        sfx_events.send(bevy_shaman_audio::systems::audio_playback::PlaySoundEffect::TypewriterBeep);
+                    }
                 }
 
                 // Update displayed text
@@ -2087,8 +2095,7 @@ pub mod systems {
             }
         }
 
-        /// Update hit effects (cleanup)
-        #[allow(dead_code)]
+        /// Update hit effects (cleanup and fade out)
         pub fn update_hit_effects(
             mut commands: Commands,
             time: Res<Time>,
@@ -2105,6 +2112,67 @@ pub mod systems {
                 if effect.lifetime.finished() {
                     commands.entity(entity).despawn();
                 }
+            }
+        }
+
+        /// Screen shake resource
+        #[derive(Resource, Default)]
+        pub struct ScreenShake {
+            pub intensity: f32,
+            pub duration: f32,
+            pub current_time: f32,
+        }
+
+        impl ScreenShake {
+            pub fn trigger(&mut self, intensity: f32, duration: f32) {
+                self.intensity = intensity;
+                self.duration = duration;
+                self.current_time = 0.0;
+            }
+
+            pub fn is_active(&self) -> bool {
+                self.current_time < self.duration
+            }
+        }
+
+        /// Apply screen shake effect to camera
+        pub fn apply_screen_shake(
+            mut camera: Query<&mut Transform, With<Camera>>,
+            mut shake: ResMut<ScreenShake>,
+            time: Res<Time>,
+            mut hit_events: EventReader<HitLanded>,
+        ) {
+            // Trigger shake on heavy hits
+            for event in hit_events.read() {
+                if event.damage >= 50.0 {
+                    shake.trigger(8.0, 0.3);
+                } else if event.damage >= 25.0 {
+                    shake.trigger(4.0, 0.2);
+                } else if event.damage >= 10.0 {
+                    shake.trigger(2.0, 0.15);
+                }
+            }
+
+            if !shake.is_active() {
+                return;
+            }
+
+            shake.current_time += time.delta_secs();
+
+            // Calculate shake offset using sine wave
+            let progress = shake.current_time / shake.duration;
+            let decay = 1.0 - progress;
+            let shake_amount = shake.intensity * decay;
+
+            // Apply shake to camera
+            for mut transform in camera.iter_mut() {
+                use std::f32::consts::PI;
+                let offset_x = (shake.current_time * 20.0).sin() * shake_amount;
+                let offset_y = (shake.current_time * 25.0 + PI/2.0).sin() * shake_amount;
+
+                // Apply shake as small translation offsets
+                transform.translation.x += offset_x;
+                transform.translation.y += offset_y;
             }
         }
     }
