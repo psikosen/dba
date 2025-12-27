@@ -248,7 +248,13 @@ pub mod systems {
 
             // Handle load requests - store data in resource for next frame
             for event in load_events.read() {
-                let filename = format!("saves/save_{}.json", event.save_slot);
+                // Slot 0 is reserved for autosave
+                let filename = if event.save_slot == 0 {
+                    "saves/autosave.json".to_string()
+                } else {
+                    format!("saves/save_{}.json", event.save_slot)
+                };
+
                 match fs::read_to_string(&filename) {
                     Ok(json) => {
                         match serde_json::from_str::<SaveData>(&json) {
