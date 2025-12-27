@@ -114,6 +114,14 @@ pub mod systems {
             pub full_dialogue: String,
             pub partial_dialogue: Option<String>,
             pub sick_dialogue: String,
+            #[serde(default)]
+            pub is_head_shaman: bool,
+            #[serde(default)]
+            pub is_player_brother: bool,
+            #[serde(default)]
+            pub soul_corruption: f32,
+            #[serde(default)]
+            pub fights_remaining: u8,
         }
 
         #[derive(Serialize, Deserialize, Clone)]
@@ -168,6 +176,8 @@ pub mod systems {
                 &GridPosition,
                 &bevy_shaman_story::components::NpcSicknessState,
                 &bevy_shaman_story::components::NpcDialogue,
+                Option<&bevy_shaman_story::components::HeadShaman>,
+                Option<&bevy_shaman_story::components::PlayerBrother>,
             )>,
             time: Res<Time>,
             mut pending_load: ResMut<PendingLoadData>,
@@ -212,7 +222,7 @@ pub mod systems {
                     // Extract NPC data
                     let npc_data: Vec<NpcSaveData> = npcs
                         .iter()
-                        .map(|(name, pos, sickness, dialogue)| {
+                        .map(|(name, pos, sickness, dialogue, head_shaman, player_brother)| {
                             NpcSaveData {
                                 name: name.name.clone(),
                                 position: (pos.x, pos.y),
@@ -220,6 +230,10 @@ pub mod systems {
                                 full_dialogue: dialogue.full_dialogue.clone(),
                                 partial_dialogue: dialogue.partial_dialogue.clone(),
                                 sick_dialogue: dialogue.sick_dialogue.clone(),
+                                is_head_shaman: head_shaman.is_some(),
+                                is_player_brother: player_brother.is_some(),
+                                soul_corruption: player_brother.map(|b| b.soul_corruption).unwrap_or(1.0),
+                                fights_remaining: player_brother.map(|b| b.fights_remaining).unwrap_or(4),
                             }
                         })
                         .collect();
@@ -360,27 +374,48 @@ pub mod systems {
 
                         // Restore inventory
                         if let Some(item_db) = item_db.as_ref() {
+                            let mut restored_count = 0;
+                            let mut missing_count = 0;
+
                             if let Some(mut inv) = inventory {
                                 inv.items.clear();
                                 for (item_id, display_name, quantity) in &save_data.inventory_items {
                                     if let Some(item) = item_db.get(item_id) {
                                         inv.add_item(item.clone(), *quantity);
+                                        restored_count += 1;
                                     } else {
-                                        warn!("Item not found in database: {}", item_id);
+                                        error!("Failed to restore item '{}' ({}): not found in database", display_name, item_id);
+                                        missing_count += 1;
                                     }
                                 }
-                                info!("Restored {} inventory stacks", save_data.inventory_items.len());
+                                if missing_count > 0 {
+                                    warn!("Restored {}/{} inventory items ({} missing from database)",
+                                        restored_count, save_data.inventory_items.len(), missing_count);
+                                } else {
+                                    info!("Restored {} inventory items successfully", restored_count);
+                                }
                             } else {
                                 // Player doesn't have inventory component, add it
                                 let mut new_inv = bevy_shaman_items::components::Inventory::new(20);
                                 for (item_id, display_name, quantity) in &save_data.inventory_items {
                                     if let Some(item) = item_db.get(item_id) {
                                         new_inv.add_item(item.clone(), *quantity);
+                                        restored_count += 1;
+                                    } else {
+                                        error!("Failed to restore item '{}' ({}): not found in database", display_name, item_id);
+                                        missing_count += 1;
                                     }
                                 }
                                 commands.entity(entity).insert(new_inv);
-                                info!("Added inventory component with {} stacks", save_data.inventory_items.len());
+                                if missing_count > 0 {
+                                    warn!("Created inventory with {}/{} items ({} missing from database)",
+                                        restored_count, save_data.inventory_items.len(), missing_count);
+                                } else {
+                                    info!("Created inventory with {} items successfully", restored_count);
+                                }
                             }
+                        } else {
+                            warn!("Item database not available - cannot restore {} inventory items", save_data.inventory_items.len());
                         }
 
                         info!("Player data restored to position ({}, {})", pos.x, pos.y);
@@ -397,13 +432,24 @@ pub mod systems {
                             if let Some(item_db) = item_db.as_ref() {
                                 if !save_data.inventory_items.is_empty() {
                                     let mut inv = bevy_shaman_items::components::Inventory::new(20);
+                                    let mut restored = 0;
+                                    let mut missing = 0;
                                     for (item_id, display_name, quantity) in &save_data.inventory_items {
                                         if let Some(item) = item_db.get(item_id) {
                                             inv.add_item(item.clone(), *quantity);
+                                            restored += 1;
+                                        } else {
+                                            error!("Failed to restore item '{}' ({}): not found in database", display_name, item_id);
+                                            missing += 1;
                                         }
+                                    }
+                                    if missing > 0 {
+                                        warn!("Player spawn: restored {}/{} items ({} missing)", restored, save_data.inventory_items.len(), missing);
                                     }
                                     inventory_component = Some(inv);
                                 }
+                            } else if !save_data.inventory_items.is_empty() {
+                                warn!("Item database not available - cannot restore {} inventory items for spawned player", save_data.inventory_items.len());
                             }
 
                             let mut entity_commands = commands.spawn((
@@ -574,11 +620,18 @@ pub mod systems {
                         _ => NpcSicknessState::AsleepSick,
                     };
 
-                    // Create a simple colored sprite for NPCs (yellow)
-                    commands.spawn((
+                    // Determine emotion based on role
+                    let emotion = if npc_data.is_player_brother {
+                        PortraitEmotion::Angry
+                    } else {
+                        PortraitEmotion::Neutral
+                    };
+
+                    // Create NPC entity
+                    let mut entity_commands = commands.spawn((
                         NpcName {
                             name: npc_data.name.clone(),
-                            current_emotion: PortraitEmotion::Neutral,
+                            current_emotion: emotion,
                         },
                         GridPosition {
                             x: npc_data.position.0,
@@ -587,7 +640,7 @@ pub mod systems {
                         Transform::from_xyz(
                             npc_data.position.0 as f32 * 32.0,
                             npc_data.position.1 as f32 * 32.0,
-                            5.0,
+                            1.0,
                         ),
                         sickness_state,
                         NpcDialogue {
@@ -595,10 +648,21 @@ pub mod systems {
                             partial_dialogue: npc_data.partial_dialogue.clone(),
                             sick_dialogue: npc_data.sick_dialogue.clone(),
                         },
-                        BlocksMovement,
                         GlobalTransform::default(),
                         Visibility::default(),
+                        Name::new(format!("NPC: {}", npc_data.name)),
                     ));
+
+                    // Add special components based on role
+                    if npc_data.is_head_shaman {
+                        entity_commands.insert(HeadShaman);
+                    }
+                    if npc_data.is_player_brother {
+                        entity_commands.insert(PlayerBrother {
+                            soul_corruption: npc_data.soul_corruption,
+                            fights_remaining: npc_data.fights_remaining,
+                        });
+                    }
                 }
                 info!("Spawned {} NPCs from save data", save_data.npcs.len());
 
