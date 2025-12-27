@@ -21,6 +21,12 @@ impl Plugin for StoryPlugin {
             .init_resource::<systems::dialogue_tree::ActiveDialogueState>()
             .init_resource::<systems::quest_system::QuestLog>()
             .init_resource::<systems::quest_system::QuestRegistry>()
+            .init_resource::<systems::npc_spawning::NpcsSpawned>()
+            // Systems - NPC Spawning (runs after world generation)
+            .add_systems(Update, (
+                systems::npc_spawning::mark_village_tiles,
+                systems::npc_spawning::spawn_village_npcs.after(systems::npc_spawning::mark_village_tiles),
+            ).run_if(in_state(GameState::Playing)))
             // Systems
             .add_systems(Update, (
                 systems::npc_sickness::update_npc_waking_state,

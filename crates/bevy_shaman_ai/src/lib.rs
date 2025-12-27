@@ -32,9 +32,15 @@ impl Plugin for AiPlugin {
                 systems::npc_dialogue::dynamic_greeting_system,
                 systems::npc_dialogue::update_conversation_context,
             ).run_if(in_state(GameState::Playing)))
-            // Events
+            // Events - NPC Dialogue
             .add_event::<systems::npc_dialogue::PlayerDialogueRequest>()
-            .add_event::<systems::npc_dialogue::NpcDialogueResponse>();
+            .add_event::<systems::npc_dialogue::NpcDialogueResponse>()
+            // Events - Boss Combat
+            .add_event::<systems::boss_ai::SpecialMoveTriggered>()
+            .add_event::<systems::boss_ai::SummonMinionEvent>()
+            .add_event::<systems::boss_ai::StanceChangeEvent>()
+            .add_event::<systems::boss_ai::AbilityTriggered>()
+            .add_event::<systems::boss_ai::CorruptionSpreadEvent>();
     }
 }
 
