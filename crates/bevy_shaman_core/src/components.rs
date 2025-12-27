@@ -200,7 +200,7 @@ impl BloodLust {
         self.current >= self.threshold
     }
 
-    pub fn add_from_combat(&mut self, enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+    pub fn add_from_combat(&mut self, _enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
         let base_gain = match difficulty {
             CombatDifficulty::Easy => 2.0,
             CombatDifficulty::Normal => 5.0,

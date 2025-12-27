@@ -9,7 +9,7 @@ pub fn update_brother_cleansing_progress(
     mut brother: Query<&mut PlayerBrother>,
     mut fight_events: EventReader<BrotherFightCompleted>,
 ) {
-    for event in fight_events.read() {
+    for _event in fight_events.read() {
         progress.complete_fight();
 
         if let Ok(mut brother) = brother.get_single_mut() {

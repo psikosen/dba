@@ -316,8 +316,8 @@ pub mod systems {
             #[cfg(feature = "audio")]
             rhythm: Option<Res<BeatClock>>,
             visualizer: Query<Entity, With<RhythmVisualizer>>,
-            beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
-            time: Res<Time>,
+            _beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
+            _time: Res<Time>,
         ) {
             // Initialize visualizer if it doesn't exist
             if visualizer.is_empty() {
@@ -2118,7 +2118,7 @@ pub mod systems {
             mut use_events: EventWriter<bevy_shaman_items::systems::inventory::ItemUsed>,
             mut drop_events: EventWriter<bevy_shaman_items::systems::inventory::ItemDropped>,
             player_query: Query<Entity, With<Player>>,
-            time: Res<Time>,
+            _time: Res<Time>,
         ) {
             // Close inventory with ESC
             if keyboard.just_pressed(KeyCode::Escape) && ui_state.visible {
@@ -3665,7 +3665,7 @@ pub mod systems {
             calendar: Res<GameCalendar>,
             mut time_text_query: Query<&mut Text, (With<CalendarTimeText>, Without<CalendarDateText>, Without<CalendarFestivalText>)>,
             mut date_text_query: Query<&mut Text, (With<CalendarDateText>, Without<CalendarTimeText>, Without<CalendarFestivalText>)>,
-            festival_text_query: Query<&mut Text, (With<CalendarFestivalText>, Without<CalendarTimeText>, Without<CalendarDateText>)>,
+            _festival_text_query: Query<&mut Text, (With<CalendarFestivalText>, Without<CalendarTimeText>, Without<CalendarDateText>)>,
         ) {
             // Toggle visibility with C key
             if keyboard.just_pressed(KeyCode::KeyC) {

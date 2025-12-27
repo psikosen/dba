@@ -283,7 +283,7 @@ fn check_tutorial_conditions(
 fn is_condition_met(
     condition: &TutorialCondition,
     event: &TutorialEvent,
-    progress: &TutorialProgress,
+    _progress: &TutorialProgress,
 ) -> bool {
     match (condition, event) {
         (TutorialCondition::DefeatMonster(_), TutorialEvent::MonsterDefeated) => true,
@@ -309,7 +309,7 @@ fn update_tutorial_ui(
     progress: Res<TutorialProgress>,
     settings: Res<TutorialSettings>,
     missions: Res<TutorialMissionRegistry>,
-    commands: Commands,
+    _commands: Commands,
 ) {
     if !settings.show_hints || progress.tutorial_completed {
         return;
@@ -320,7 +320,7 @@ fn update_tutorial_ui(
     if let Some(mission_id) = &progress.current_mission {
         if let Some(mission) = missions.get(mission_id) {
             let step_idx = progress.current_step as usize;
-            if let Some(step) = mission.steps.get(step_idx) {
+            if let Some(_step) = mission.steps.get(step_idx) {
                 // UI overlay will be rendered here in overlay.rs
                 // For now, just track that we need to display it
             }
@@ -368,7 +368,7 @@ fn track_combat_events(
     }
 
     // Track rhythm attacks (when player attacks on beat)
-    for event in hit_events.read() {
+    for _event in hit_events.read() {
         tutorial_events.send(TutorialEvent::RhythmAttackTriggered);
     }
 }

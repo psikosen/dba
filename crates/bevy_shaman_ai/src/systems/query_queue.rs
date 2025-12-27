@@ -163,14 +163,14 @@ fn generate_combat_decisions(
     queue: &mut LlmQueryQueue,
     templates: &PromptTemplates,
     model: &mut LlmModel,
-    current_time: f64,
+    _current_time: f64,
 ) {
     // Generate varied combat decisions
     let decision_count = 5;
 
     for i in 0..decision_count {
         // Build combat prompt
-        let prompt = build_combat_prompt(ai, i as u32, templates);
+        let _prompt = build_combat_prompt(ai, i as u32, templates);
 
         // TODO: When GGUF model is loaded, use actual inference here
         // For now, use placeholder decisions

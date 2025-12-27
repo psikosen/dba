@@ -72,7 +72,7 @@ pub fn brother_dialogue_system(
 }
 
 /// Determine dialogue context based on AI state and history
-fn determine_dialogue_context(ai: &LlmAi, history: &ConversationHistory) -> DialogueContext {
+fn determine_dialogue_context(_ai: &LlmAi, history: &ConversationHistory) -> DialogueContext {
     if history.messages.is_empty() {
         DialogueContext::Greeting
     } else {
@@ -158,10 +158,10 @@ pub fn brother_advice_system(
 
 /// System to generate dynamic greetings based on time of day/game state
 pub fn dynamic_greeting_system(
-    commands: Commands,
+    _commands: Commands,
     mut brother_query: Query<(Entity, &LlmAi, &mut LlmQueryQueue), Added<LlmAi>>,
 ) {
-    for (entity, ai, mut queue) in brother_query.iter_mut() {
+    for (_entity, ai, mut queue) in brother_query.iter_mut() {
         // Generate initial greeting when brother is first encountered
         if queue.dialogue_responses.is_empty() {
             let greeting = generate_initial_greeting(ai);
@@ -187,7 +187,7 @@ fn generate_initial_greeting(ai: &LlmAi) -> String {
 
 /// System to update conversation context based on game events
 pub fn update_conversation_context(
-    brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
+    _brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
     // TODO: Add event readers for major game events
     // combat_events: EventReader<CombatEvent>,
     // quest_events: EventReader<QuestEvent>,
