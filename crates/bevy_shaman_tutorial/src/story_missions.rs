@@ -1191,8 +1191,1026 @@ pub fn create_spirit_bargain_mission() -> TutorialMission {
     }
 }
 
-// Due to length constraints, I'll create a summary structure for the remaining acts
-// and key boss missions. Full implementation would continue this pattern.
+/// Act 3 - Infiltrate Enemy Camp
+pub fn create_infiltrate_camp_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act3_infiltrate_camp".to_string(),
+        title: "Behind Enemy Lines".to_string(),
+        description: "Infiltrate the foreign command camp to gather intelligence on Dr. Ekow.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Sneak into the enemy encampment".to_string(),
+                hint: Some("Use stealth and spirit concealment.".to_string()),
+                condition: TutorialCondition::Custom("infiltrated_enemy_camp".to_string()),
+                dialogue: Some("Under cover of darkness, you slip past the sentries. One mistake could cost you everything.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Find Dr. Ekow's documents".to_string(),
+                hint: Some("Search the command tent.".to_string()),
+                condition: TutorialCondition::Custom("found_ekow_documents".to_string()),
+                dialogue: Some("You find blueprints and notes. Dr. Ekow's plan is revealed in horrifying detail.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Discover the Grand Design".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'Create lifeless spirits without will. Merge with them to access all 5 realms. Use the player's chosen spirit as anchor. Breach the Unknown Dimension...'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Escape without being detected".to_string(),
+                hint: Some("Guards are everywhere!".to_string()),
+                condition: TutorialCondition::Custom("escaped_undetected".to_string()),
+                dialogue: Some("You vanish into the night, clutching the stolen documents. The war just became more urgent.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["bargain_choice_made".to_string()],
+        reward_xp: 2500,
+    }
+}
+
+/// Act 3 - Rainmaking Ceremony
+pub fn create_rainmaking_ceremony_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act3_rainmaking_ceremony".to_string(),
+        title: "The Drought".to_string(),
+        description: "Spiritual imbalance from war causes severe drought. Perform the Rainmaking Ceremony.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Notice the drought conditions".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("drought_noticed".to_string()),
+                dialogue: Some("The crops are dying. Rivers run dry. The spiritual balance has been shattered by so much death.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Attempt the traditional Rainmaking Ceremony".to_string(),
+                hint: Some("Gather the elders and shamans.".to_string()),
+                condition: TutorialCondition::Custom("ceremony_attempted".to_string()),
+                dialogue: Some("You perform the ancient rites, calling to the spirits for rain. But... nothing happens. The spirits don't answer.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Enter the Spirit Realm directly".to_string(),
+                hint: Some("This is your first time fully entering the Spirit Realm!".to_string()),
+                condition: TutorialCondition::Custom("entered_spirit_realm_fully".to_string()),
+                dialogue: Some("You pierce the veil between worlds and step fully into the Spirit Realm for the first time.".to_string()),
+                ui_highlight: Some(UiHighlightZone::SpiritBar),
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Speak with the ancestral spirits".to_string(),
+                hint: None,
+                condition: TutorialCondition::InteractWithNpc("ancestral_spirit".to_string()),
+                dialogue: Some("Ancient spirits appear, shimmering with otherworldly light. 'Young shaman, the barriers between realms are weakening...'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Receive the warning".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'Something... someone... is tearing at the fabric of reality. If the barriers fall, all realms will collapse into chaos.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 5,
+                objective: "Perform the ritual in the Spirit Realm".to_string(),
+                hint: Some("Channel your full power!".to_string()),
+                condition: TutorialCondition::Custom("ritual_successful".to_string()),
+                dialogue: Some("You perform the ceremony with the ancestral spirits' guidance. Power flows through you, across the realms.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 6,
+                objective: "Return to the Physical Realm".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("returned_to_physical".to_string()),
+                dialogue: Some("You snap back to reality. Above, clouds gather. Thunder rumbles. Rain begins to fall. The ceremony worked!".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["found_ekow_documents".to_string()],
+        reward_xp: 3000,
+    }
+}
+
+/// Act 3 - First Encounter with Dr. Ekow
+pub fn create_first_ekow_encounter_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act3_ekow_first_encounter".to_string(),
+        title: "The Mad Scientist".to_string(),
+        description: "Track Dr. Ekow to his hidden fortress for a direct confrontation.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Follow the intelligence to Dr. Ekow's fortress".to_string(),
+                hint: Some("The fortress is hidden in the corrupted wastelands.".to_string()),
+                condition: TutorialCondition::ReachPosition(300, 200),
+                dialogue: Some("A massive fortress of twisted metal and writhing spirits looms before you. This is it.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Breach the fortress defenses".to_string(),
+                hint: Some("Fight through spirit-enhanced guards.".to_string()),
+                condition: TutorialCondition::Custom("breached_fortress".to_string()),
+                dialogue: Some("You carve through the defenses with spirit power and raw determination. Nothing will stop you.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Find Dr. Ekow's laboratory".to_string(),
+                hint: None,
+                condition: TutorialCondition::ReachPosition(305, 205),
+                dialogue: Some("The laboratory doors swing open. Inside, a figure in a mask works at a massive spirit apparatus.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Confront Dr. Ekow".to_string(),
+                hint: None,
+                condition: TutorialCondition::InteractWithNpc("dr_ekow".to_string()),
+                dialogue: Some("'Ah, the young shaman. I've been expecting you.' His voice is calm, almost amused.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Boss: Dr. Ekow - First Encounter".to_string(),
+                hint: Some("He's not using his full power - just testing you!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_first".to_string()),
+                dialogue: Some("Dr. Ekow attacks with calculated precision, testing your abilities. He's holding back...".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 5,
+                objective: "Watch him escape".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ekow_escapes".to_string()),
+                dialogue: Some("'You're stronger than I thought. Perfect. You'll be the final catalyst.' He vanishes into a spirit portal, laughing.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["ritual_successful".to_string()],
+        reward_xp: 4000,
+    }
+}
+
+/// Act 3 - War Ends, Trade Fair Resumes
+pub fn create_war_ends_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act3_war_ends".to_string(),
+        title: "The Stalemate".to_string(),
+        description: "The war ends in stalemate. Foreign powers retreat, Trade Fair resumes.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Witness the treaty signing".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("treaty_signing".to_string()),
+                dialogue: Some("The foreign generals and King Nkrumah sign the treaty. The war is over... for now.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Survey the damage to the kingdom".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("surveyed_damage".to_string()),
+                dialogue: Some("70% of villages saved. Many died, but many more live. It could have been worse.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Attend the first Trade Fair since the war".to_string(),
+                hint: Some("A celebration of peace and commerce!".to_string()),
+                condition: TutorialCondition::Custom("attended_trade_fair".to_string()),
+                dialogue: Some("Merchants from across the land gather. Music, laughter, trade. Life continues despite everything.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Heart-to-heart with your chosen rival (if romanced)".to_string(),
+                hint: Some("A quiet moment together.".to_string()),
+                condition: TutorialCondition::Custom("romance_scene".to_string()),
+                dialogue: Some("Under the festival lights, you share your fears and hopes with the one closest to your heart.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Discover Dr. Ekow's surveillance".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("Later, reviewing intelligence: Dr. Ekow has been collecting data on your spirit-bonding techniques. Why?".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_ekow_first".to_string()],
+        reward_xp: 3500,
+    }
+}
+
+/// Act 3 Finale - Secret Meeting
+pub fn create_secret_meeting_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act3_secret_meeting".to_string(),
+        title: "The Agreement".to_string(),
+        description: "Post-credits scene: Dr. Ekow meets with your chosen spirit...".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Witness the secret meeting (cutscene)".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("secret_meeting".to_string()),
+                dialogue: Some("In a realm between realms, Dr. Ekow and your chosen spirit meet in secret.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "The question".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("Dr. Ekow: 'Are you ready to become a god?'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "The answer".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("Your spirit: 'Yes. But first, the shaman must be broken.'".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["romance_scene".to_string()],
+        reward_xp: 5000,
+    }
+}
+
+// =============================================================================
+// ACT 4: REALM RIFTS
+// Conduit Level: 9 → 12
+// =============================================================================
+
+/// Act 4 - Strange Phenomena
+pub fn create_strange_phenomena_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_strange_phenomena".to_string(),
+        title: "Reality Bleeds".to_string(),
+        description: "Six months after the war: reality is phasing into spirit realms.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Investigate reports of reality distortions".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("investigated_distortions".to_string()),
+                dialogue: Some("Citizens report seeing impossible things: sky turning inside out, objects existing in two places, time flowing backward.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Witness mass transformations".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("mass_transformation".to_string()),
+                dialogue: Some("Before your eyes, dozens of people begin transforming into half-spirit hybrids simultaneously!".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Check the conduit sensors".to_string(),
+                hint: Some("All four spirit types are surging!".to_string()),
+                condition: TutorialCondition::Custom("checked_sensors".to_string()),
+                dialogue: Some("Your conduit sensors scream warnings. Chaos, Neutral, Light, and Dark - all spiking simultaneously. Impossible!".to_string()),
+                ui_highlight: Some(UiHighlightZone::SpiritBar),
+            },
+        ],
+        required_flags: vec!["secret_meeting_witnessed".to_string()],
+        reward_xp: 3000,
+    }
+}
+
+/// Act 4 - Seal the Rifts
+pub fn create_seal_rifts_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_seal_rifts".to_string(),
+        title: "Between Worlds".to_string(),
+        description: "Rifts are opening between realms. Seal them before reality collapses!".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Seal the Chaos Realm rift".to_string(),
+                hint: Some("Reality warps and logic breaks down near the rift.".to_string()),
+                condition: TutorialCondition::Custom("sealed_chaos_rift".to_string()),
+                dialogue: Some("The rift pulses with chaotic energy. Time runs backward, objects phase through each other. You pour all your power into sealing it.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Seal the Neutral Realm rift".to_string(),
+                hint: Some("An emotionless zone where free will fades.".to_string()),
+                condition: TutorialCondition::Custom("sealed_neutral_rift".to_string()),
+                dialogue: Some("Near this rift, you feel nothing. No fear, no hope, no desire. Just... emptiness. You fight to maintain your sense of self.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Seal the Light Realm rift".to_string(),
+                hint: Some("Searing purification burns everything.".to_string()),
+                condition: TutorialCondition::Custom("sealed_light_rift".to_string()),
+                dialogue: Some("Blinding light pours from the rift, purifying everything it touches. Your skin burns. Too much purity is its own corruption.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Seal the Dark Realm rift".to_string(),
+                hint: Some("Absolute corruption spreads.".to_string()),
+                condition: TutorialCondition::Custom("sealed_dark_rift".to_string()),
+                dialogue: Some("Darkness oozes from the rift like living tar. It whispers promises of power, temptations. You resist and seal it.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Evacuate civilians from rift zones".to_string(),
+                hint: Some("Save as many as you can!".to_string()),
+                condition: TutorialCondition::Custom("evacuated_civilians".to_string()),
+                dialogue: Some("Between sealing rifts, you rescue hundreds of civilians. Every life saved matters.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["checked_sensors".to_string()],
+        reward_xp: 4000,
+    }
+}
+
+/// Act 4 - Four Spirits Battle
+pub fn create_four_spirits_battle_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_four_spirits_battle".to_string(),
+        title: "The Final Battle of Gods".to_string(),
+        description: "All four spirits fight for dominance. Dr. Ekow has other plans...".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Witness the spirits appear".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("four_spirits_appear".to_string()),
+                dialogue: Some("The four spirits manifest above the capital: Angelic, Neutral, Chaotic, Dark. Each radiates immense power.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Watch the battle in the sky".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("spirits_battle".to_string()),
+                dialogue: Some("They clash in a spectacular display. The sky tears apart with each blow. Your chosen spirit is winning, absorbing power from the others.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Dr. Ekow appears".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ekow_appears".to_string()),
+                dialogue: Some("A rift opens. Dr. Ekow steps through, now wearing a strange apparatus on his body. 'Thank you for strengthening them.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Watch him capture all four spirits".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("spirits_captured".to_string()),
+                dialogue: Some("The apparatus activates. All four spirits scream as they're pulled into spirit-tech vessels. 'Now I'll take all four.'".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["evacuated_civilians".to_string()],
+        reward_xp: 5000,
+    }
+}
+
+/// Act 4 - Tau's Betrayal
+pub fn create_tau_betrayal_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_tau_betrayal".to_string(),
+        title: "The Traitor".to_string(),
+        description: "Your rival Tau has been Dr. Ekow's spy all along...".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Discover the sabotage".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("discovered_sabotage".to_string()),
+                dialogue: Some("The capital's spirit defenses are down. Someone sabotaged them from within. But who?".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Confront Tau".to_string(),
+                hint: None,
+                condition: TutorialCondition::InteractWithNpc("tau".to_string()),
+                dialogue: Some("You find Tau destroying the spirit barrier generators. 'I'm sorry... but I had no choice...'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Learn the truth".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'My sister! She's transforming into a lost spirit. Dr. Ekow promised to save her if I helped him. What would you have done?!'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Boss: Fight Tau the Traitor".to_string(),
+                hint: Some("A heartbreaking battle against your former friend.".to_string()),
+                condition: TutorialCondition::Custom("defeated_tau".to_string()),
+                dialogue: Some("Tears stream down both your faces as you fight. Once allies, now enemies. This is the cost of war.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Tau's final words".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("Tau collapses, dying. 'He... promised... to save her... you were... too slow...' The light fades from their eyes.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["spirits_captured".to_string()],
+        reward_xp: 4500,
+    }
+}
+
+/// Act 4 - Tau's Sister
+pub fn create_taus_sister_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_taus_sister".to_string(),
+        title: "The Impossible Choice".to_string(),
+        description: "Find Tau's sister - 95% transformed. Can you save her?".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Find Tau's sister".to_string(),
+                hint: Some("She's in the transformation chambers.".to_string()),
+                condition: TutorialCondition::ReachPosition(120, 90),
+                dialogue: Some("You find her chained in a cell, body halfway between human and spirit. She's nearly lost.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Assess her condition".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("assessed_sister".to_string()),
+                dialogue: Some("95% tainted. At this stage, purification should be impossible. But there's a forbidden technique...".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Make your choice".to_string(),
+                hint: Some("Save her using forbidden technique (lose max conduit level) or let her transform?".to_string()),
+                condition: TutorialCondition::Custom("sister_choice_made".to_string()),
+                dialogue: Some("The choice is yours. Sacrifice your power to honor Tau's memory? Or let her go?".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_tau".to_string()],
+        reward_xp: 3000,
+    }
+}
+
+/// Act 4 - Solstice Event
+pub fn create_solstice_event_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_solstice_event".to_string(),
+        title: "The Ancient Prophecy".to_string(),
+        description: "The Solstice Event activates an ancient prophecy.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Observe the Solstice alignment".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("solstice_alignment".to_string()),
+                dialogue: Some("The sun and moon align perfectly. The world holds its breath.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Witness the ruins reveal themselves".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ruins_appear".to_string()),
+                dialogue: Some("Ancient ruins rise from the earth, glowing with spiritual energy. They've been hidden for a thousand years.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Explore the ancestral ruins".to_string(),
+                hint: Some("Discover the ancient shamans' secrets.".to_string()),
+                condition: TutorialCondition::ReachPosition(400, 400),
+                dialogue: Some("Inside, you find murals depicting ancient shamans performing a great sealing ritual.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Learn about the Unknown Dimension seal".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("Inscriptions reveal: 1000 years ago, shamans sealed the Unknown Dimension. The seal weakens during Solstice alignments.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Realize Dr. Ekow's plan".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("He's been waiting for this. The weakened seal is his chance to breach the Unknown Dimension. The ritual is tonight!".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["sister_choice_made".to_string()],
+        reward_xp: 4000,
+    }
+}
+
+/// Act 4 Finale - The Ritual Site
+pub fn create_ritual_site_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_ritual_site".to_string(),
+        title: "The Ritual".to_string(),
+        description: "Race to Dr. Ekow's ritual site. Stop him before he breaches the Unknown Dimension!".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Race to the ritual site".to_string(),
+                hint: Some("At the heart of the ancient ruins.".to_string()),
+                condition: TutorialCondition::ReachPosition(410, 410),
+                dialogue: Some("You sprint through the ruins. The ground trembles. Reality warps. You're almost out of time!".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Find Dr. Ekow at the spirit circle".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("found_ritual_circle".to_string()),
+                dialogue: Some("A massive spirit circle glows with power. At its center: Dr. Ekow, the four imprisoned spirits orbiting him.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Watch the transformation begin".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ekow_transformation".to_string()),
+                dialogue: Some("'Finally! A thousand years of waiting ends tonight!' Dr. Ekow begins the ritual, his body glowing with stolen spirit power.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Boss: Dr. Ekow - Form 1: Spirit-Merged".to_string(),
+                hint: Some("He's fused with lifeless spirits!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_form1".to_string()),
+                dialogue: Some("Dr. Ekow's form shifts - no longer fully human. Spirits flow through his body like living energy. This is his first true form!".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Victory... or is it?".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ekow_escapes_act4".to_string()),
+                dialogue: Some("You strike the final blow. Dr. Ekow's form shatters. But instead of dying, he laughs and falls backward into a rift. 'See you soon...'".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["realized_ekow_plan".to_string()],
+        reward_xp: 6000,
+    }
+}
+
+/// Act 4 Epilogue - The Breach
+pub fn create_dimension_breach_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act4_dimension_breach".to_string(),
+        title: "The Breach".to_string(),
+        description: "Dr. Ekow has entered the Unknown Dimension. Reality is unraveling.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Witness the dimensional breach".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("dimension_breach".to_string()),
+                dialogue: Some("The rift Dr. Ekow fell through expands. You see impossible geometries, colors that shouldn't exist. The Unknown Dimension.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Your chosen spirit breaks free".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("spirit_breaks_free".to_string()),
+                dialogue: Some("One of the spirit vessels shatters. Your chosen spirit emerges, severely weakened but alive.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Temporary alliance".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'He took most of my power... but not my will. We must stop him together. If he succeeds, all of existence ends.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Festivals cancelled, apocalypse preparation begins".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("apocalypse_preparation".to_string()),
+                dialogue: Some("You return to the capital. Citizens prepare for the end of the world. All festivals cancelled. This is it.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Train to reach Conduit Level 15".to_string(),
+                hint: Some("Maximum power required to face the final threat!".to_string()),
+                condition: TutorialCondition::Custom("reached_level_15".to_string()),
+                dialogue: Some("You train with desperate intensity. Your conduit level rises: 13... 14... 15. Maximum power achieved.".to_string()),
+                ui_highlight: Some(UiHighlightZone::SpiritBar),
+            },
+        ],
+        required_flags: vec!["defeated_ekow_form1".to_string()],
+        reward_xp: 7000,
+    }
+}
+
+// =============================================================================
+// ACT 5: THE GOD COMPLEX
+// Conduit Level: 12 → 15 (Maximum)
+// =============================================================================
+
+/// Act 5 - Chaos Realm Hunt
+pub fn create_chaos_realm_hunt_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_chaos_realm".to_string(),
+        title: "Chaos Incarnate".to_string(),
+        description: "Dr. Ekow appears in the Chaos Realm, unstable and powerful.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Enter the Chaos Realm".to_string(),
+                hint: Some("Reality follows no rules here.".to_string()),
+                condition: TutorialCondition::Custom("entered_chaos_realm".to_string()),
+                dialogue: Some("You step into pure chaos. Up is down. Time flows sideways. Logic is meaningless.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Track Dr. Ekow through impossible geometry".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("tracked_ekow_chaos".to_string()),
+                dialogue: Some("You follow his trail through landscapes that shift and change. Each step defies natural law.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Boss: Dr. Ekow in Chaos Realm".to_string(),
+                hint: Some("Reality-warping attacks!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_chaos".to_string()),
+                dialogue: Some("Dr. Ekow attacks from every impossible angle at once. Gravity inverts. Time loops. Causality breaks. You endure.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["reached_level_15".to_string()],
+        reward_xp: 5000,
+    }
+}
+
+/// Act 5 - Neutral Realm Hunt
+pub fn create_neutral_realm_hunt_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_neutral_realm".to_string(),
+        title: "The Perfect Machine".to_string(),
+        description: "Confront Dr. Ekow in the Neutral Realm - emotionless perfection.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Enter the Neutral Realm".to_string(),
+                hint: Some("All emotion drains away here.".to_string()),
+                condition: TutorialCondition::Custom("entered_neutral_realm".to_string()),
+                dialogue: Some("The Neutral Realm is perfectly ordered. Sterile. Empty. You feel nothing. Not fear, not hope. Nothing.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Boss: Dr. Ekow in Neutral Realm".to_string(),
+                hint: Some("Perfect strategy, no emotions!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_neutral".to_string()),
+                dialogue: Some("Dr. Ekow fights with mathematical precision. Every move calculated. Emotionless. Perfect. You struggle to match his cold efficiency.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_ekow_chaos".to_string()],
+        reward_xp: 5000,
+    }
+}
+
+/// Act 5 - Light Realm Hunt
+pub fn create_light_realm_hunt_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_light_realm".to_string(),
+        title: "Blinding Purity".to_string(),
+        description: "Face Dr. Ekow in the Light Realm - absolute purification.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Enter the Light Realm".to_string(),
+                hint: Some("Blinding light purifies everything.".to_string()),
+                condition: TutorialCondition::Custom("entered_light_realm".to_string()),
+                dialogue: Some("Pure white light sears your eyes. Everything here is purified to the point of nothingness.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Boss: Dr. Ekow in Light Realm".to_string(),
+                hint: Some("Blinding purification attacks!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_light".to_string()),
+                dialogue: Some("Dr. Ekow radiates searing light. Each attack threatens to purify you out of existence. You endure the burning.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_ekow_neutral".to_string()],
+        reward_xp: 5000,
+    }
+}
+
+/// Act 5 - Dark Realm Hunt
+pub fn create_dark_realm_hunt_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_dark_realm".to_string(),
+        title: "Absolute Corruption".to_string(),
+        description: "Confront Dr. Ekow in the Dark Realm - total corruption.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Enter the Dark Realm".to_string(),
+                hint: Some("Corruption spreads with every breath.".to_string()),
+                condition: TutorialCondition::Custom("entered_dark_realm".to_string()),
+                dialogue: Some("Absolute darkness. You feel corruption seeping into your soul with every heartbeat.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Boss: Dr. Ekow in Dark Realm".to_string(),
+                hint: Some("Corruption attacks that threaten your very soul!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_dark".to_string()),
+                dialogue: Some("Dr. Ekow embodies corruption itself. His attacks poison your spirit. You resist with every ounce of willpower.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Watch him flee to Unknown Dimension".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ekow_flees_unknown".to_string()),
+                dialogue: Some("'Enough playing in my realms. Time to show you true power!' He vanishes into the Unknown Dimension.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_ekow_light".to_string()],
+        reward_xp: 5000,
+    }
+}
+
+/// Act 5 - Gather the Four Spirits
+pub fn create_gather_spirits_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_gather_spirits".to_string(),
+        title: "The Four Weakened Gods".to_string(),
+        description: "Gather the four weakened spirits for a desperate ritual.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Find the Angelic Spirit".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("found_angelic_spirit".to_string()),
+                dialogue: Some("You find the Angelic Spirit in the Light Realm, weakened but alive. 'I'll help you... this once.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Find the Neutral Spirit".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("found_neutral_spirit".to_string()),
+                dialogue: Some("The Neutral Spirit calculates: 'Assisting you has 67% chance of preserving existence. Acceptable.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Find the Chaotic Spirit".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("found_chaotic_spirit".to_string()),
+                dialogue: Some("The Chaotic Spirit laughs madly: 'If we're all going to end, might as well go down fighting!'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Find the Dark Spirit".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("found_dark_spirit".to_string()),
+                dialogue: Some("The Dark Spirit sneers: 'I refuse to be erased by that madman. Let's finish this.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Perform the bonding ritual".to_string(),
+                hint: Some("Temporarily bond with all four spirits!".to_string()),
+                condition: TutorialCondition::Custom("bonded_with_four".to_string()),
+                dialogue: Some("You channel all four spirits into yourself. Pain. Power. Chaos, Order, Light, Dark - all flowing through you at once!".to_string()),
+                ui_highlight: Some(UiHighlightZone::SpiritBar),
+            },
+            TutorialStep {
+                step_id: 5,
+                objective: "Achieve ultimate conduit power - Level 15".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("ultimate_power_achieved".to_string()),
+                dialogue: Some("Your conduit level maxes out. You've become the most powerful shaman in history. But will it be enough?".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_ekow_dark".to_string()],
+        reward_xp: 8000,
+    }
+}
+
+/// Act 5 - Royal Inauguration Interrupted
+pub fn create_royal_inauguration_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_royal_inauguration".to_string(),
+        title: "Protector of Realms".to_string(),
+        description: "The king abdicates and names you Protector of Realms.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Attend the Royal Inauguration ceremony".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("inauguration_ceremony".to_string()),
+                dialogue: Some("The entire kingdom gathers. King Nkrumah stands before his throne, looking weary.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Witness the king's abdication".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'I am but a king of men. You... you defend reality itself. I name you Protector of Realms. May the spirits guide you.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Say farewell to your rivals".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("said_farewells".to_string()),
+                dialogue: Some("Amara, Zuri, and Jabari embrace you. 'Come back alive.' They can't follow where you're going.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Final moment with love interest (if applicable)".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("final_romance_moment".to_string()),
+                dialogue: Some("Under the stars one last time. No words needed. Just... this moment, perfect and fragile.".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["ultimate_power_achieved".to_string()],
+        reward_xp: 6000,
+    }
+}
+
+/// Act 5 Finale - Enter Unknown Dimension
+pub fn create_enter_unknown_dimension_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_enter_unknown".to_string(),
+        title: "Beyond Reality".to_string(),
+        description: "Enter the Unknown Dimension rift to face Dr. Ekow's godlike form.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Approach the Unknown Dimension rift".to_string(),
+                hint: None,
+                condition: TutorialCondition::ReachPosition(500, 500),
+                dialogue: Some("The rift pulses with impossible energies. Looking at it hurts your mind. This is the point of no return.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Step through the rift".to_string(),
+                hint: Some("There's no going back after this.".to_string()),
+                condition: TutorialCondition::Custom("entered_unknown_dimension".to_string()),
+                dialogue: Some("You step through. Reality breaks apart. You're in a place that shouldn't exist.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Explore the Unknown Dimension".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("explored_unknown".to_string()),
+                dialogue: Some("Bizarre otherworldly realm. Concepts made manifest. Fear has shape. Hope has weight. Thought becomes real.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Boss: Dr. Ekow - Form 2: Dimensional Being (Phase 1)".to_string(),
+                hint: Some("He controls reality itself!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_form2_phase1".to_string()),
+                dialogue: Some("Dr. Ekow appears, no longer human. A being of pure energy and will. 'Welcome to my realm!'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Boss: Dr. Ekow - Form 2: Dimensional Being (Phase 2)".to_string(),
+                hint: Some("Endless lifeless spirits!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_form2_phase2".to_string()),
+                dialogue: Some("He summons an army of lifeless spirits. They have no will, no soul. Perfect servants. Endless numbers.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 5,
+                objective: "Boss: Dr. Ekow - Form 2: Dimensional Being (Phase 3)".to_string(),
+                hint: Some("Existence erasure attack!".to_string()),
+                condition: TutorialCondition::Custom("defeated_ekow_form2_phase3".to_string()),
+                dialogue: Some("'I can simply... erase you.' The world fades. Your body, your thoughts, your very existence threatened. You fight to remain!".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["final_romance_moment".to_string()],
+        reward_xp: 10000,
+    }
+}
+
+/// Act 5 Epilogue - The Final Truth
+pub fn create_final_truth_mission() -> TutorialMission {
+    TutorialMission {
+        id: "act5_final_truth".to_string(),
+        title: "A Tragic Fall".to_string(),
+        description: "Learn Dr. Ekow's tragic backstory and his final transformation.".to_string(),
+        steps: vec![
+            TutorialStep {
+                step_id: 0,
+                objective: "Deliver the final blow to Form 2".to_string(),
+                hint: None,
+                condition: TutorialCondition::Custom("struck_final_blow".to_string()),
+                dialogue: Some("Your attack connects. Dr. Ekow's form shatters... but he doesn't die. He kneels, barely holding together.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 1,
+                objective: "Hear the truth".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'I was once like you... tried to save everyone... my entire village... I failed. They all died. All of them.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 2,
+                objective: "Learn his motivation".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("'Some can't be saved. But in this form... I can rewrite reality. No one will ever suffer again. No one will die. No one will choose wrong.'".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 3,
+                objective: "Realize the parallel".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("You understand now: He's become exactly like the Neutral Spirit's goal. Remove free will to prevent suffering.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 4,
+                objective: "Watch the final transformation begin".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForCutscene("ekow_final_transformation".to_string()),
+                dialogue: Some("'I'm sorry it has to be this way.' Dr. Ekow rises, his form shifting once more. Merging with the Unknown Dimension itself.".to_string()),
+                ui_highlight: None,
+            },
+            TutorialStep {
+                step_id: 5,
+                objective: "Your chosen spirit's warning".to_string(),
+                hint: None,
+                condition: TutorialCondition::WaitForDialogue,
+                dialogue: Some("Your spirit: 'It's time. We end this together.' The screen fades to white...".to_string()),
+                ui_highlight: None,
+            },
+        ],
+        required_flags: vec!["defeated_ekow_form2_phase3".to_string()],
+        reward_xp: 12000,
+    }
+}
+
+// Act 6 content follows...
 
 /// Act 6 - Final Boss Fight
 pub fn create_final_boss_mission() -> TutorialMission {
@@ -1250,7 +2268,7 @@ pub fn create_final_boss_mission() -> TutorialMission {
 // Export all mission creation functions for use in the game
 pub fn get_all_story_missions() -> Vec<TutorialMission> {
     vec![
-        // Act 1
+        // Act 1 - The Preliminary Shaman (12 missions)
         create_meet_rivals_mission(),
         create_purification_race_mission(),
         create_team_battle_mission(),
@@ -1263,7 +2281,8 @@ pub fn get_all_story_missions() -> Vec<TutorialMission> {
         create_first_boss_mission(),
         create_religious_festival_mission(),
         create_kings_summons_mission(),
-        // Act 2
+
+        // Act 2 - War Drums and the Spirit Scientist (10 missions)
         create_border_attack_mission(),
         create_ekow_glimpse_mission(),
         create_purify_villages_mission(),
@@ -1274,13 +2293,39 @@ pub fn get_all_story_missions() -> Vec<TutorialMission> {
         create_war_council_mission(),
         create_destroy_factory_mission(),
         create_spirit_contact_mission(),
-        // Act 3
+
+        // Act 3 - The Puppet Master (9 missions)
         create_invasion_begins_mission(),
         create_capital_siege_mission(),
         create_spirit_bargain_mission(),
-        // Act 6
+        create_infiltrate_camp_mission(),
+        create_rainmaking_ceremony_mission(),
+        create_first_ekow_encounter_mission(),
+        create_war_ends_mission(),
+        create_secret_meeting_mission(),
+
+        // Act 4 - Realm Rifts (9 missions)
+        create_strange_phenomena_mission(),
+        create_seal_rifts_mission(),
+        create_four_spirits_battle_mission(),
+        create_tau_betrayal_mission(),
+        create_taus_sister_mission(),
+        create_solstice_event_mission(),
+        create_ritual_site_mission(),
+        create_dimension_breach_mission(),
+
+        // Act 5 - The God Complex (9 missions)
+        create_chaos_realm_hunt_mission(),
+        create_neutral_realm_hunt_mission(),
+        create_light_realm_hunt_mission(),
+        create_dark_realm_hunt_mission(),
+        create_gather_spirits_mission(),
+        create_royal_inauguration_mission(),
+        create_enter_unknown_dimension_mission(),
+        create_final_truth_mission(),
+
+        // Act 6 - Spirits and Souls (1 mission + endings)
         create_final_boss_mission(),
-        // Additional missions would be added here for Acts 3-6
     ]
 }
 
