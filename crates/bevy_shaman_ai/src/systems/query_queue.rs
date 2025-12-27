@@ -306,7 +306,7 @@ fn generate_placeholder_combat_decision(ai: &LlmAi, variation: usize) -> QueuedC
         reasoning: "Tactical decision based on current situation".to_string(),
         conditions: vec![
             CombatCondition::HealthAbove(30.0),
-            CombatCondition::DistanceToPlayer(5.0),
+            CombatCondition::DistanceToPlayer(DistanceCheck::LessThan(5.0)),
         ],
     }
 }

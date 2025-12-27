@@ -39,11 +39,13 @@ pub fn brother_dialogue_system(
             // Get appropriate response from queue
             let context = determine_dialogue_context(&ai, &history);
 
-            if let Some(response) = queue
+            if let Some(response_idx) = queue
                 .dialogue_responses
                 .iter()
-                .find(|r| matches!(r.context, context) || matches!(r.context, DialogueContext::Greeting))
+                .position(|r| matches!(&r.context, ctx if ctx == &context) || matches!(r.context, DialogueContext::Greeting))
             {
+                let response = queue.dialogue_responses.remove(response_idx);
+
                 // Add NPC response to history
                 history.add_npc_message(response.text.clone(), time.elapsed_secs_f64());
 
@@ -55,9 +57,6 @@ pub fn brother_dialogue_system(
                 });
 
                 info!("Brother {}: {}", ai.character_name, response.text);
-
-                // Remove used response
-                queue.dialogue_responses.retain(|r| !std::ptr::eq(r, response));
             } else {
                 // Fallback response if queue is empty
                 let fallback = generate_fallback_brother_response(&ai);
@@ -161,7 +160,7 @@ pub fn brother_advice_system(
 /// System to generate dynamic greetings based on time of day/game state
 pub fn dynamic_greeting_system(
     mut commands: Commands,
-    brother_query: Query<(Entity, &LlmAi, &mut LlmQueryQueue), Added<LlmAi>>,
+    mut brother_query: Query<(Entity, &LlmAi, &mut LlmQueryQueue), Added<LlmAi>>,
 ) {
     for (entity, ai, mut queue) in brother_query.iter_mut() {
         // Generate initial greeting when brother is first encountered
