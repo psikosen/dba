@@ -10,16 +10,11 @@ pub struct PlayerSpawned(pub bool);
 pub fn spawn_player(
     mut commands: Commands,
     mut spawned: ResMut<PlayerSpawned>,
-    sprite_handle: Option<Res<PlayerSpriteHandle>>,
+    sprite_handle: Res<PlayerSpriteHandle>,
 ) {
     if spawned.0 {
         return;
     }
-
-    // Wait for assets to load
-    let Some(sprite_handle) = sprite_handle else {
-        return;
-    };
 
     info!("Spawning player entity...");
 

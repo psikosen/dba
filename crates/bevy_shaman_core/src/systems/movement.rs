@@ -6,11 +6,10 @@ const TILE_SIZE: f32 = 32.0;
 
 /// Processes movement commands from queue, updates GridPosition and Transform
 pub fn process_movement_commands(
-    mut commands: Commands,
     occupancy: Res<GridOccupancy>,
-    mut movers: Query<(Entity, &mut GridPosition, &mut Transform, &mut MovementQueue)>,
+    mut movers: Query<(&mut GridPosition, &mut Transform, &mut MovementQueue)>,
 ) {
-    for (entity, mut grid_pos, mut transform, mut queue) in movers.iter_mut() {
+    for (mut grid_pos, mut transform, mut queue) in movers.iter_mut() {
         if queue.commands.is_empty() {
             continue;
         }
