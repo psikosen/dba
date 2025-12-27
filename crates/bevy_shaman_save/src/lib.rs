@@ -95,6 +95,28 @@ pub mod systems {
         }
 
         #[derive(Serialize, Deserialize, Clone)]
+        pub struct MonsterSaveData {
+            pub monster_id: String,
+            pub position: (i32, i32),
+            pub health: (f32, f32),
+            pub state: String,  // Serialized StateType
+            pub stability_meter: f32,
+            pub corruption_meter: f32,
+            pub obedience_meter: f32,
+            pub is_tamed: bool,
+        }
+
+        #[derive(Serialize, Deserialize, Clone)]
+        pub struct NpcSaveData {
+            pub name: String,
+            pub position: (i32, i32),
+            pub sickness_state: String,  // "AsleepSick", "Waking", or "Awake"
+            pub full_dialogue: String,
+            pub partial_dialogue: Option<String>,
+            pub sick_dialogue: String,
+        }
+
+        #[derive(Serialize, Deserialize, Clone)]
         pub struct SaveData {
             pub player_position: (i32, i32),
             pub player_health: (f32, f32),
@@ -104,6 +126,10 @@ pub mod systems {
             pub inventory_items: Vec<(String, String, u32)>, // (id, display_name, quantity)
             #[serde(default)]
             pub tutorial_progress: TutorialProgressData,
+            #[serde(default)]
+            pub monsters: Vec<MonsterSaveData>,
+            #[serde(default)]
+            pub npcs: Vec<NpcSaveData>,
             pub timestamp: f64,
             pub save_version: u32,
         }
@@ -119,12 +145,57 @@ pub mod systems {
             mut load_events: EventReader<super::events::LoadRequested>,
             player: Query<(&GridPosition, &Health, &Spirit, &Stamina), With<Player>>,
             corrupted: Query<(&GridPosition, &TileCorruption)>,
+            monsters: Query<(
+                &bevy_shaman_monsters::components::MonsterId,
+                &GridPosition,
+                &Health,
+                &bevy_shaman_monsters::components::MonsterState,
+                Option<&bevy_shaman_monsters::components::Tamed>,
+            )>,
+            npcs: Query<(
+                &bevy_shaman_story::components::NpcName,
+                &GridPosition,
+                &bevy_shaman_story::components::NpcSicknessState,
+                &bevy_shaman_story::components::NpcDialogue,
+            )>,
             time: Res<Time>,
             mut pending_load: ResMut<PendingLoadData>,
         ) {
             // Handle save requests
             for _event in save_events.read() {
                 if let Ok((pos, health, spirit, stamina)) = player.get_single() {
+                    // Extract monster data
+                    let monster_data: Vec<MonsterSaveData> = monsters
+                        .iter()
+                        .map(|(monster_id, pos, health, state, tamed)| {
+                            MonsterSaveData {
+                                monster_id: monster_id.0.clone(),
+                                position: (pos.x, pos.y),
+                                health: (health.current, health.max),
+                                state: format!("{:?}", state.state),
+                                stability_meter: state.stability_meter,
+                                corruption_meter: state.corruption_meter,
+                                obedience_meter: state.obedience_meter,
+                                is_tamed: tamed.is_some(),
+                            }
+                        })
+                        .collect();
+
+                    // Extract NPC data
+                    let npc_data: Vec<NpcSaveData> = npcs
+                        .iter()
+                        .map(|(name, pos, sickness, dialogue)| {
+                            NpcSaveData {
+                                name: name.name.clone(),
+                                position: (pos.x, pos.y),
+                                sickness_state: format!("{:?}", sickness),
+                                full_dialogue: dialogue.full_dialogue.clone(),
+                                partial_dialogue: dialogue.partial_dialogue.clone(),
+                                sick_dialogue: dialogue.sick_dialogue.clone(),
+                            }
+                        })
+                        .collect();
+
                     let save_data = SaveData {
                         player_position: (pos.x, pos.y),
                         player_health: (health.current, health.max),
@@ -137,6 +208,8 @@ pub mod systems {
                             .collect(),
                         inventory_items: vec![], // TODO: Extract from inventory component when available
                         tutorial_progress: TutorialProgressData::default(), // TODO: Extract from TutorialProgress resource
+                        monsters: monster_data,
+                        npcs: npc_data,
                         timestamp: time.elapsed_secs_f64(),
                         save_version: 1,
                     };
@@ -186,6 +259,8 @@ pub mod systems {
             mut corrupted_query: Query<(&GridPosition, &mut TileCorruption)>,
             mut player_spawned: ResMut<bevy_shaman_core::systems::player::PlayerSpawned>,
             sprite_handle: Option<Res<bevy_shaman_core::systems::assets::PlayerSpriteHandle>>,
+            monster_sprites: Option<Res<bevy_shaman_core::systems::assets::MonsterSpriteHandles>>,
+            monster_template_db: Option<Res<bevy_shaman_monsters::resources::MonsterTemplateDB>>,
         ) {
             if let Some(save_data) = pending_load.data.take() {
                 info!("Applying loaded save data to world");
@@ -267,6 +342,141 @@ pub mod systems {
                     }
                 }
                 info!("Restored {} corrupted tiles", save_data.corrupted_tiles.len());
+
+                // Spawn monsters from save data
+                if let (Some(monster_sprites), Some(template_db)) = (monster_sprites, monster_template_db) {
+                    use bevy_shaman_monsters::components::*;
+                    use bevy_shaman_core::components::*;
+
+                    for monster_data in &save_data.monsters {
+                        // Parse state type
+                        let state_type = match monster_data.state.as_str() {
+                            "Stable" => StateType::Stable,
+                            "Chaos" => StateType::Chaos,
+                            "Corrupt" => StateType::Corrupt,
+                            "Harmony" => StateType::Harmony,
+                            "Decay" => StateType::Decay,
+                            "Rage" => StateType::Rage,
+                            "Void" => StateType::Void,
+                            "Ancestral" => StateType::Ancestral,
+                            _ => StateType::Stable,
+                        };
+
+                        // Get monster template for default stats
+                        let template = template_db.get(&monster_data.monster_id);
+
+                        // Select appropriate sprite
+                        let sprite_handle = match monster_data.monster_id.as_str() {
+                            "forest_spirit" => monster_sprites.forest_spirit.clone(),
+                            "chaos_hound" => monster_sprites.chaos_hound.clone(),
+                            "corrupt_shade" => monster_sprites.corrupt_shade.clone(),
+                            "shadow_beast" => monster_sprites.shadow_beast.clone(),
+                            "spirit_wisp" => monster_sprites.spirit_wisp.clone(),
+                            "rock_golem" => monster_sprites.rock_golem.clone(),
+                            "flame_wraith" => monster_sprites.flame_wraith.clone(),
+                            "void_stalker" => monster_sprites.void_stalker.clone(),
+                            _ => monster_sprites.forest_spirit.clone(),
+                        };
+
+                        let mut entity_commands = commands.spawn((
+                            MonsterId(monster_data.monster_id.clone()),
+                            GridPosition {
+                                x: monster_data.position.0,
+                                y: monster_data.position.1,
+                            },
+                            Transform::from_xyz(
+                                monster_data.position.0 as f32 * 32.0,
+                                monster_data.position.1 as f32 * 32.0,
+                                5.0,
+                            ),
+                            Sprite {
+                                image: sprite_handle,
+                                custom_size: Some(Vec2::new(32.0, 32.0)),
+                                ..default()
+                            },
+                            Health {
+                                current: monster_data.health.0,
+                                max: monster_data.health.1,
+                            },
+                            MonsterState {
+                                state: state_type,
+                                stability_meter: monster_data.stability_meter,
+                                corruption_meter: monster_data.corruption_meter,
+                                obedience_meter: monster_data.obedience_meter,
+                                chaos_output: 1.0,
+                            },
+                            MonsterStats {
+                                attack: template.map(|t| t.base_stats.attack).unwrap_or(10.0),
+                                defense: template.map(|t| t.base_stats.defense).unwrap_or(5.0),
+                                speed: template.map(|t| t.base_stats.speed).unwrap_or(5.0),
+                                spirit_affinity: template.map(|t| t.base_stats.spirit_affinity).unwrap_or(0.5),
+                            },
+                            MusicAffinityProfile {
+                                prefers_calm: template.map(|t| t.affinity_profile.prefers_calm).unwrap_or(0.5),
+                                prefers_aggressive: template.map(|t| t.affinity_profile.prefers_aggressive).unwrap_or(0.5),
+                                corruption_resistance: template.map(|t| t.affinity_profile.corruption_resistance).unwrap_or(0.5),
+                                trust_level: template.map(|t| t.affinity_profile.trust_level).unwrap_or(0.0),
+                            },
+                            AiBehavior::default(),
+                            AiState::default(),
+                            BlocksMovement,
+                            GlobalTransform::default(),
+                            Visibility::default(),
+                        ));
+
+                        // Add Tamed component if monster was tamed
+                        if monster_data.is_tamed {
+                            entity_commands.insert(Tamed {
+                                tamed_at: save_data.timestamp,
+                            });
+                        }
+                    }
+                    info!("Spawned {} monsters from save data", save_data.monsters.len());
+                } else {
+                    warn!("Cannot spawn monsters: sprite handles or template DB not available");
+                }
+
+                // Spawn NPCs from save data
+                for npc_data in &save_data.npcs {
+                    use bevy_shaman_story::components::*;
+                    use bevy_shaman_core::components::*;
+                    use bevy_shaman_story::resources::PortraitEmotion;
+
+                    // Parse sickness state
+                    let sickness_state = match npc_data.sickness_state.as_str() {
+                        "AsleepSick" => NpcSicknessState::AsleepSick,
+                        "Waking" => NpcSicknessState::Waking,
+                        "Awake" => NpcSicknessState::Awake,
+                        _ => NpcSicknessState::AsleepSick,
+                    };
+
+                    // Create a simple colored sprite for NPCs (yellow)
+                    commands.spawn((
+                        NpcName {
+                            name: npc_data.name.clone(),
+                            current_emotion: PortraitEmotion::Neutral,
+                        },
+                        GridPosition {
+                            x: npc_data.position.0,
+                            y: npc_data.position.1,
+                        },
+                        Transform::from_xyz(
+                            npc_data.position.0 as f32 * 32.0,
+                            npc_data.position.1 as f32 * 32.0,
+                            5.0,
+                        ),
+                        sickness_state,
+                        NpcDialogue {
+                            full_dialogue: npc_data.full_dialogue.clone(),
+                            partial_dialogue: npc_data.partial_dialogue.clone(),
+                            sick_dialogue: npc_data.sick_dialogue.clone(),
+                        },
+                        BlocksMovement,
+                        GlobalTransform::default(),
+                        Visibility::default(),
+                    ));
+                }
+                info!("Spawned {} NPCs from save data", save_data.npcs.len());
             }
         }
     }
