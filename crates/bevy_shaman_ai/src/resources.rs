@@ -21,7 +21,7 @@ pub struct LlmModel {
 impl Default for LlmModel {
     fn default() -> Self {
         Self {
-            model_path: "assets/models/gemma3_270m.gguf".to_string(),
+            model_path: "gemma3:270m".to_string(),
             is_loaded: false,
             config: ModelConfig::default(),
             stats: GenerationStats::default(),
