@@ -1,11 +1,5 @@
 use bevy::prelude::*;
-use bevy_shaman_core::{
-    components::{GridPosition, Health, Player, Spirit},
-    states::{CombatState, GameState},
-};
-use bevy_shaman_combat::components::RhythmCombo;
-use bevy_shaman_monsters::components::MonsterState;
-use bevy_shaman_world::components::TileCorruption;
+use bevy_shaman_core::states::GameState;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -315,7 +309,7 @@ fn update_tutorial_ui(
     progress: Res<TutorialProgress>,
     settings: Res<TutorialSettings>,
     missions: Res<TutorialMissionRegistry>,
-    mut commands: Commands,
+    commands: Commands,
 ) {
     if !settings.show_hints || progress.tutorial_completed {
         return;

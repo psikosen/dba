@@ -186,7 +186,7 @@ pub mod systems {
             }
 
             // Assign formation positions to minions
-            for (i, (minion_entity, mut minion_pos, mut movement_queue, formation)) in minions.iter_mut().enumerate() {
+            for (i, (minion_entity, minion_pos, mut movement_queue, formation)) in minions.iter_mut().enumerate() {
                 // Add formation component if missing
                 if formation.is_none() {
                     commands.entity(minion_entity).insert(MinionFormation {

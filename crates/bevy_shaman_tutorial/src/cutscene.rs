@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{TutorialEvent, TutorialProgress};
+use crate::TutorialEvent;
 
 /// Cutscene system for tutorial sequences
 /// Handles image flashes, transitions, and narrative moments
@@ -225,12 +225,12 @@ pub fn create_four_spirits_battle_cutscene() -> ActiveCutscene {
 
 fn update_active_cutscenes(
     time: Res<Time>,
-    mut active_cutscene: Option<ResMut<ActiveCutscene>>,
+    active_cutscene: Option<ResMut<ActiveCutscene>>,
     mut commands: Commands,
     mut tutorial_events: EventWriter<TutorialEvent>,
     mut end_events: EventWriter<CutsceneEndEvent>,
     asset_server: Res<AssetServer>,
-    mut existing_roots: Query<Entity, With<CutsceneRoot>>,
+    existing_roots: Query<Entity, With<CutsceneRoot>>,
 ) {
     let Some(mut cutscene) = active_cutscene else {
         return;
@@ -276,7 +276,7 @@ fn update_active_cutscenes(
 
 fn handle_cutscene_input(
     keyboard: Res<ButtonInput<KeyCode>>,
-    mut active_cutscene: Option<ResMut<ActiveCutscene>>,
+    active_cutscene: Option<ResMut<ActiveCutscene>>,
 ) {
     let Some(mut cutscene) = active_cutscene else {
         return;

@@ -143,7 +143,7 @@ pub mod systems {
         pub fn handle_save_requests(
             mut save_events: EventReader<super::events::SaveRequested>,
             mut load_events: EventReader<super::events::LoadRequested>,
-            player: Query<(&GridPosition, &Health, &Spirit, &Stamina), With<Player>>,
+            player: Query<(&GridPosition, &Health, &Spirit, &Stamina, Option<&bevy_shaman_items::components::Inventory>), With<Player>>,
             corrupted: Query<(&GridPosition, &TileCorruption)>,
             monsters: Query<(
                 &bevy_shaman_monsters::components::MonsterId,
@@ -163,7 +163,20 @@ pub mod systems {
         ) {
             // Handle save requests
             for _event in save_events.read() {
-                if let Ok((pos, health, spirit, stamina)) = player.get_single() {
+                if let Ok((pos, health, spirit, stamina, inventory)) = player.get_single() {
+                    // Extract inventory data
+                    let inventory_items = if let Some(inv) = inventory {
+                        inv.items.iter().map(|stack| {
+                            (
+                                stack.item.id.clone(),
+                                stack.item.display_name.clone(),
+                                stack.quantity,
+                            )
+                        }).collect()
+                    } else {
+                        vec![]
+                    };
+
                     // Extract monster data
                     let monster_data: Vec<MonsterSaveData> = monsters
                         .iter()
@@ -206,8 +219,8 @@ pub mod systems {
                             .filter(|(_, corruption)| corruption.is_corrupt())
                             .map(|(pos, corruption)| ((pos.x, pos.y), corruption.level))
                             .collect(),
-                        inventory_items: vec![], // TODO: Extract from inventory component when available
-                        tutorial_progress: TutorialProgressData::default(), // TODO: Extract from TutorialProgress resource
+                        inventory_items,
+                        tutorial_progress: TutorialProgressData::default(), // TODO: Tutorial crate should handle its own save/load
                         monsters: monster_data,
                         npcs: npc_data,
                         timestamp: time.elapsed_secs_f64(),
@@ -255,19 +268,20 @@ pub mod systems {
         pub fn apply_loaded_data(
             mut commands: Commands,
             mut pending_load: ResMut<PendingLoadData>,
-            mut player_query: Query<(Entity, &mut GridPosition, &mut Transform, &mut Health, &mut Spirit, &mut Stamina), With<Player>>,
+            mut player_query: Query<(Entity, &mut GridPosition, &mut Transform, &mut Health, &mut Spirit, &mut Stamina, Option<&mut bevy_shaman_items::components::Inventory>), With<Player>>,
             mut corrupted_query: Query<(&GridPosition, &mut TileCorruption)>,
             mut player_spawned: ResMut<bevy_shaman_core::systems::player::PlayerSpawned>,
             sprite_handle: Option<Res<bevy_shaman_core::systems::assets::PlayerSpriteHandle>>,
             monster_sprites: Option<Res<bevy_shaman_core::systems::assets::MonsterSpriteHandles>>,
             monster_template_db: Option<Res<bevy_shaman_monsters::resources::MonsterTemplateDB>>,
+            item_db: Option<Res<bevy_shaman_items::resources::ItemDB>>,
         ) {
             if let Some(save_data) = pending_load.data.take() {
                 info!("Applying loaded save data to world");
 
                 // Restore or spawn player data
                 match player_query.get_single_mut() {
-                    Ok((_, mut pos, mut transform, mut health, mut spirit, mut stamina)) => {
+                    Ok((entity, mut pos, mut transform, mut health, mut spirit, mut stamina, inventory)) => {
                         // Player exists, update components
                         pos.x = save_data.player_position.0;
                         pos.y = save_data.player_position.1;
@@ -279,6 +293,32 @@ pub mod systems {
                         spirit.max = save_data.player_spirit.1;
                         stamina.current = save_data.player_stamina.0;
                         stamina.max = save_data.player_stamina.1;
+
+                        // Restore inventory
+                        if let Some(item_db) = item_db.as_ref() {
+                            if let Some(mut inv) = inventory {
+                                inv.items.clear();
+                                for (item_id, display_name, quantity) in &save_data.inventory_items {
+                                    if let Some(item) = item_db.get(item_id) {
+                                        inv.add_item(item.clone(), *quantity);
+                                    } else {
+                                        warn!("Item not found in database: {}", item_id);
+                                    }
+                                }
+                                info!("Restored {} inventory stacks", save_data.inventory_items.len());
+                            } else {
+                                // Player doesn't have inventory component, add it
+                                let mut new_inv = bevy_shaman_items::components::Inventory::new(20);
+                                for (item_id, display_name, quantity) in &save_data.inventory_items {
+                                    if let Some(item) = item_db.get(item_id) {
+                                        new_inv.add_item(item.clone(), *quantity);
+                                    }
+                                }
+                                commands.entity(entity).insert(new_inv);
+                                info!("Added inventory component with {} stacks", save_data.inventory_items.len());
+                            }
+                        }
+
                         info!("Player data restored to position ({}, {})", pos.x, pos.y);
                     }
                     Err(_) => {
@@ -288,7 +328,21 @@ pub mod systems {
                         if let Some(sprite_handle) = sprite_handle {
                             use bevy_shaman_core::components::*;
 
-                            commands.spawn((
+                            // Build inventory if we have items to restore
+                            let mut inventory_component = None;
+                            if let Some(item_db) = item_db.as_ref() {
+                                if !save_data.inventory_items.is_empty() {
+                                    let mut inv = bevy_shaman_items::components::Inventory::new(20);
+                                    for (item_id, display_name, quantity) in &save_data.inventory_items {
+                                        if let Some(item) = item_db.get(item_id) {
+                                            inv.add_item(item.clone(), *quantity);
+                                        }
+                                    }
+                                    inventory_component = Some(inv);
+                                }
+                            }
+
+                            let mut entity_commands = commands.spawn((
                                 Player,
                                 GridPosition {
                                     x: save_data.player_position.0,
@@ -324,6 +378,12 @@ pub mod systems {
                                 GlobalTransform::default(),
                                 Visibility::default(),
                             ));
+
+                            // Add inventory if we created one
+                            if let Some(inv) = inventory_component {
+                                entity_commands.insert(inv);
+                                info!("Spawned player with {} inventory stacks", save_data.inventory_items.len());
+                            }
 
                             player_spawned.0 = true;
                             info!("Player spawned from save at ({}, {})", save_data.player_position.0, save_data.player_position.1);
@@ -477,6 +537,8 @@ pub mod systems {
                     ));
                 }
                 info!("Spawned {} NPCs from save data", save_data.npcs.len());
+
+                // TODO: Tutorial crate should listen for load events and restore its own progress
             }
         }
     }

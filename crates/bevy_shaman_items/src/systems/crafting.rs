@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::components::{Inventory, Item};
+use crate::components::Inventory;
 use crate::resources::{ItemDB, RecipeDB};
 use crate::systems::events::CraftingRequested;
 

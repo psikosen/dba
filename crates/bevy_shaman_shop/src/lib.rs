@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
-use bevy_shaman_items::components::{Item, ItemStack};
 
 #[cfg(test)]
 mod tests;
@@ -33,7 +32,7 @@ pub mod components {
 
 pub mod resources {
     use bevy::prelude::*;
-    use bevy_shaman_items::components::{Item, ItemStack, ItemType, SpiritOrbSize};
+    use bevy_shaman_items::components::{Item, ItemType, SpiritOrbSize};
 
     #[derive(Resource, Default)]
     pub struct Currency {

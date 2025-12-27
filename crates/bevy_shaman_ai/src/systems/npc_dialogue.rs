@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use crate::components::*;
-use bevy_shaman_story::components::NpcDialogue;
 
 /// Event for player initiating dialogue with an NPC
 #[derive(Event)]
@@ -159,7 +158,7 @@ pub fn brother_advice_system(
 
 /// System to generate dynamic greetings based on time of day/game state
 pub fn dynamic_greeting_system(
-    mut commands: Commands,
+    commands: Commands,
     mut brother_query: Query<(Entity, &LlmAi, &mut LlmQueryQueue), Added<LlmAi>>,
 ) {
     for (entity, ai, mut queue) in brother_query.iter_mut() {
@@ -188,7 +187,7 @@ fn generate_initial_greeting(ai: &LlmAi) -> String {
 
 /// System to update conversation context based on game events
 pub fn update_conversation_context(
-    mut brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
+    brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
     // TODO: Add event readers for major game events
     // combat_events: EventReader<CombatEvent>,
     // quest_events: EventReader<QuestEvent>,

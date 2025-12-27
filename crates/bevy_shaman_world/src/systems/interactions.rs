@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Player};
 use bevy_shaman_items::components::{Inventory, Item, ItemType, SpiritOrbSize, PlantType};
-use crate::components::WorldTile;
 use rand::Rng;
 
 #[derive(Component)]

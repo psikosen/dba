@@ -235,7 +235,7 @@ pub mod systems {
             MusicAffinityProfile,
         };
         use crate::components::{BossArena, DungeonRoom, RoomType};
-        use rand::Rng;
+        
 
         #[derive(Component)]
         pub struct BossSpawned;
@@ -248,7 +248,7 @@ pub mod systems {
             bosses: Query<(&Health, &BossArena)>,
             mut defeated_events: EventWriter<super::events::BossDefeated>,
         ) {
-            let mut rng = rand::thread_rng();
+            let rng = rand::thread_rng();
 
             // Spawn boss in boss rooms when player enters
             if let Ok(player_pos) = player.get_single() {

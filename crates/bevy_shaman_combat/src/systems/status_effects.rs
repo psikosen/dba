@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_shaman_core::components::Health;
-use crate::components::{StatusEffect, StatusEffectType, StatusEffects};
+use crate::components::{StatusEffectType, StatusEffects};
 
 pub fn apply_status_effects(
     time: Res<Time>,
