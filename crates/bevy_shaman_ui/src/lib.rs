@@ -23,6 +23,7 @@ impl Plugin for UiPlugin {
                 systems::bestiary::display_bestiary,
                 systems::shop_ui::display_shop,
                 systems::inventory_ui::display_inventory,
+                systems::inventory_ui::handle_inventory_interactions,
                 systems::minimap::update_minimap,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, (
@@ -1862,6 +1863,7 @@ pub mod systems {
 
                         grid.spawn((
                             InventorySlot { slot_index },
+                            Button,
                             Node {
                                 width: Val::Px(SLOT_SIZE),
                                 height: Val::Px(SLOT_SIZE),
@@ -1950,7 +1952,7 @@ pub mod systems {
                     ));
 
                     footer.spawn((
-                        Text::new("Left-click: Use item | Right-click: Drop item (Coming soon)"),
+                        Text::new("Left-click: Use item | Right-click: Drop item"),
                         TextFont {
                             font_size: 12.0,
                             ..default()
@@ -1959,6 +1961,59 @@ pub mod systems {
                     ));
                 });
             });
+        }
+
+        /// Handle click interactions with inventory slots
+        pub fn handle_inventory_interactions(
+            ui_state: Res<InventoryUIState>,
+            slot_query: Query<(&InventorySlot, &Interaction), Changed<Interaction>>,
+            player_inventory: Query<&Inventory, With<Player>>,
+            mouse_button: Res<ButtonInput<MouseButton>>,
+            mut use_events: EventWriter<bevy_shaman_items::systems::inventory::ItemUsed>,
+            mut drop_events: EventWriter<bevy_shaman_items::systems::inventory::ItemDropped>,
+            player_query: Query<Entity, With<Player>>,
+        ) {
+            if !ui_state.visible {
+                return;
+            }
+
+            let Ok(inventory) = player_inventory.get_single() else {
+                return;
+            };
+
+            let Ok(player_entity) = player_query.get_single() else {
+                return;
+            };
+
+            for (slot, interaction) in slot_query.iter() {
+                if *interaction != Interaction::Pressed {
+                    continue;
+                }
+
+                // Get item at this slot
+                let Some(item_stack) = inventory.items.get(slot.slot_index) else {
+                    continue;
+                };
+
+                // Left click = Use item
+                if mouse_button.pressed(MouseButton::Left) {
+                    info!("Using item: {} (x{})", item_stack.item.display_name, item_stack.quantity);
+                    use_events.send(bevy_shaman_items::systems::inventory::ItemUsed {
+                        player: player_entity,
+                        item_id: item_stack.item.id.clone(),
+                    });
+                }
+
+                // Right click = Drop 1 item
+                if mouse_button.pressed(MouseButton::Right) {
+                    info!("Dropping 1x {}", item_stack.item.display_name);
+                    drop_events.send(bevy_shaman_items::systems::inventory::ItemDropped {
+                        player: player_entity,
+                        item_id: item_stack.item.id.clone(),
+                        quantity: 1,
+                    });
+                }
+            }
         }
     }
 

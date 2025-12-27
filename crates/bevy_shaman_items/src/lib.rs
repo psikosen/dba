@@ -20,7 +20,10 @@ impl Plugin for ItemsPlugin {
             .add_systems(Update, (
                 systems::pickup::process_item_pickups,
                 systems::spirit_orb::consume_spirit_orbs,
-                systems::inventory::manage_inventory,
+                systems::inventory::pickup_items,
+                systems::inventory::use_items,
+                systems::inventory::update_active_effects,
+                systems::inventory::drop_items,
                 systems::crafting::process_crafting_requests,
                 // Plant and food systems
                 systems::plant_food::plant_usage,
@@ -32,6 +35,9 @@ impl Plugin for ItemsPlugin {
             .add_event::<systems::events::ItemPickedUp>()
             .add_event::<systems::events::SpiritOrbConsumed>()
             .add_event::<systems::events::CraftingRequested>()
+            .add_event::<systems::inventory::ItemPickedUp>()
+            .add_event::<systems::inventory::ItemUsed>()
+            .add_event::<systems::inventory::ItemDropped>()
             .add_event::<systems::plant_food::UsePlant>()
             .add_event::<systems::plant_food::UseFood>()
             .add_event::<systems::plant_food::ReduceBloodLust>();

@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{Position, Player, Health};
-use bevy_shaman_core::resources::Spirit;
+use bevy_shaman_core::components::{GridPosition, Player, Health, Spirit, Stamina};
 use bevy_shaman_combat::components::BloodLust;
 use crate::components::{
     Inventory, Pickupable, ItemStack, Item, ItemType, SpiritOrbSize,
@@ -33,8 +32,8 @@ pub struct ItemDropped {
 /// Handle picking up items when player is near them
 pub fn pickup_items(
     mut commands: Commands,
-    player: Query<(Entity, &Position, &mut Inventory), With<Player>>,
-    pickupables: Query<(Entity, &Position, &Pickupable)>,
+    player: Query<(Entity, &GridPosition, &mut Inventory), With<Player>>,
+    pickupables: Query<(Entity, &GridPosition, &Pickupable)>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut pickup_events: EventWriter<ItemPickedUp>,
 ) {
@@ -208,7 +207,7 @@ pub fn update_active_effects(
 pub fn drop_items(
     mut commands: Commands,
     mut drop_events: EventReader<ItemDropped>,
-    mut player: Query<(&Position, &mut Inventory), With<Player>>,
+    mut player: Query<(&GridPosition, &mut Inventory), With<Player>>,
 ) {
     for event in drop_events.read() {
         let Ok((player_pos, mut inventory)) = player.get_single_mut() else {
@@ -232,7 +231,7 @@ pub fn drop_items(
                     quantity: drop_quantity,
                     auto_pickup: false,
                 },
-                Position {
+                GridPosition {
                     x: player_pos.x + 1,
                     y: player_pos.y,
                 },
