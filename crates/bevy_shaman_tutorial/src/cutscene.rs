@@ -229,6 +229,7 @@ fn update_active_cutscenes(
     mut commands: Commands,
     mut tutorial_events: EventWriter<TutorialEvent>,
     mut end_events: EventWriter<CutsceneEndEvent>,
+    #[allow(unused_variables)]
     asset_server: Res<AssetServer>,
     existing_roots: Query<Entity, With<CutsceneRoot>>,
 ) {
@@ -304,6 +305,7 @@ fn handle_cutscene_input(
 
 pub fn spawn_cutscene(
     cutscene_id: &str,
+    #[allow(unused_variables)]
     commands: &mut Commands,
 ) -> Option<ActiveCutscene> {
     match cutscene_id {
@@ -317,6 +319,7 @@ pub fn spawn_cutscene(
 /// Render cutscene UI (called from update system)
 pub fn render_cutscene_frame(
     commands: &mut Commands,
+    #[allow(unused_variables)]
     asset_server: &AssetServer,
     frame: &CutsceneFrame,
     existing_roots: &Query<Entity, With<CutsceneRoot>>,

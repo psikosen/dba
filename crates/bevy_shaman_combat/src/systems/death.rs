@@ -27,7 +27,7 @@ pub fn handle_entity_deaths(
 
 /// System to check for dead entities that weren't properly handled
 pub fn cleanup_dead_entities(
-    commands: Commands,
+    _commands: Commands,
     dead_entities: Query<(Entity, &Health), Without<Player>>,
     mut death_events: EventWriter<EntityDied>,
 ) {

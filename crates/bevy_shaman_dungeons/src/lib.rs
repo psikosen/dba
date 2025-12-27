@@ -248,7 +248,7 @@ pub mod systems {
             bosses: Query<(&Health, &BossArena)>,
             mut defeated_events: EventWriter<super::events::BossDefeated>,
         ) {
-            let rng = rand::thread_rng();
+            let _rng = rand::thread_rng();
 
             // Spawn boss in boss rooms when player enters
             if let Ok(player_pos) = player.get_single() {
@@ -267,7 +267,7 @@ pub mod systems {
 
                     // Spawn boss
                     let boss_id = "corrupted_guardian";
-                    let boss_entity = commands.spawn((
+                    let _boss_entity = commands.spawn((
                         MonsterId(boss_id.to_string()),
                         GridPosition::new(room_pos.x + 1, room_pos.y + 1),
                         Health::new(200.0),

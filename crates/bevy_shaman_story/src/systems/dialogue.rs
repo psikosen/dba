@@ -37,7 +37,7 @@ pub fn initiate_npc_dialogue(
 
     let interact_range = 1.5; // Grid units
 
-    for (npc_entity, npc_pos, tree_opt, dialogue_opt, sickness_opt) in npcs.iter() {
+    for (npc_entity, npc_pos, tree_opt, dialogue_opt, _sickness_opt) in npcs.iter() {
         let distance = ((player_pos.x - npc_pos.x).abs() + (player_pos.y - npc_pos.y).abs()) as f32;
 
         if distance <= interact_range {
@@ -81,7 +81,7 @@ pub fn show_simple_dialogue(
 pub fn filter_sick_npc_dialogue(
     mut dialogue_events: EventReader<StartDialogue>,
     npcs: Query<&NpcSicknessState>,
-    commands: Commands,
+    _commands: Commands,
 ) {
     for event in dialogue_events.read() {
         if let Ok(sickness) = npcs.get(event.npc_entity) {

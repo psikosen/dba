@@ -63,7 +63,7 @@ pub fn pickup_items(
 pub fn use_items(
     mut use_events: EventReader<ItemUsed>,
     mut player: Query<(&mut Inventory, &mut Health, Option<&mut Spirit>, Option<&mut Stamina>, Option<&mut BloodLust>, Option<&mut ActiveEffects>), With<Player>>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     for event in use_events.read() {
         let Ok((mut inventory, mut health, mut spirit_opt, mut stamina_opt, mut blood_lust_opt, effects_opt)) = player.get_single_mut() else {

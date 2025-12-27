@@ -165,7 +165,7 @@ fn find_suitable_decision(
 fn execute_combat_decision(
     decision: &QueuedCombatDecision,
     ai_state: &mut AiState,
-    ai: &LlmAi,
+    _ai: &LlmAi,
     commands: &mut Commands,
     boss_entity: Entity,
     phase_data: &mut BossPhaseData,

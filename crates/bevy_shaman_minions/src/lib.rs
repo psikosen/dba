@@ -86,7 +86,7 @@ pub mod systems {
         pub fn process_taming_attempts(
             mut commands: Commands,
             keyboard: Res<ButtonInput<KeyCode>>,
-            player: Query<Entity, With<Player>>,
+            _player: Query<Entity, With<Player>>,
             monsters: Query<(Entity, &MonsterState), (Without<Tamed>, Without<crate::components::TamingProgress>)>,
         ) {
             if !keyboard.just_pressed(KeyCode::KeyT) {

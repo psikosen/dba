@@ -223,7 +223,7 @@ pub fn apply_active_effects(
 
 /// System to clear permanent effects on rest
 pub fn clear_permanent_effects_on_rest(
-    effects_query: Query<&mut ActiveEffects>,
+    _effects_query: Query<&mut ActiveEffects>,
     // TODO: Add rest event
 ) {
     // This would be triggered by a rest event

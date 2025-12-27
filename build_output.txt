@@ -1,0 +1,850 @@
+    Updating crates.io index
+     Locking 430 packages to latest compatible versions
+      Adding bevy v0.15.3 (available: v0.17.3)
+      Adding rand v0.8.5 (available: v0.9.2)
+      Adding uuid v1.12.1 (available: v1.19.0)
+ Downloading crates ...
+  Downloaded bevy_derive v0.15.3
+  Downloaded const-random-macro v0.1.16
+  Downloaded disqualified v1.0.0
+  Downloaded nonmax v0.5.5
+  Downloaded renderdoc-sys v1.1.0
+  Downloaded typeid v1.0.3
+  Downloaded unicode-xid v0.2.6
+  Downloaded xkbcommon-dl v0.4.2
+  Downloaded zmij v1.0.0
+  Downloaded zeno v0.2.3
+  Downloaded x11-dl v2.21.0
+  Downloaded rand v0.8.5
+  Downloaded xkeysym v0.2.1
+  Downloaded ttf-parser v0.20.0
+  Downloaded wgpu v23.0.1
+  Downloaded swash v0.1.19
+  Downloaded winnow v0.7.14
+  Downloaded x11rb v0.13.2
+  Downloaded tracing-subscriber v0.3.22
+  Downloaded rustybuzz v0.14.1
+  Downloaded syn v2.0.111
+  Downloaded wgpu-core v23.0.1
+  Downloaded zerocopy v0.8.31
+  Downloaded image v0.25.9
+  Downloaded regex-syntax v0.8.8
+  Downloaded wgpu-hal v23.0.1
+  Downloaded nix v0.30.1
+  Downloaded bevy_ecs v0.15.4
+  Downloaded rustix v0.38.44
+  Downloaded read-fonts v0.22.7
+  Downloaded rustix v1.1.3
+  Downloaded tracing v0.1.44
+  Downloaded glam v0.29.3
+  Downloaded x11rb-protocol v0.13.2
+  Downloaded bevy v0.15.3
+  Downloaded ash v0.38.0+1.3.281
+  Downloaded unicode-width v0.1.14
+  Downloaded winit v0.30.12
+  Downloaded moxcms v0.7.11
+  Downloaded naga v23.1.0
+  Downloaded regex-automata v0.4.13
+  Downloaded bevy_core_pipeline v0.15.3
+  Downloaded ttf-parser v0.21.1
+  Downloaded skrifa v0.22.3
+  Downloaded regex v1.12.2
+  Downloaded petgraph v0.6.5
+  Downloaded rayon v1.11.0
+  Downloaded itertools v0.13.0
+  Downloaded hashbrown v0.16.1
+  Downloaded libc v0.2.178
+  Downloaded hashbrown v0.15.5
+  Downloaded pxfm v0.1.27
+  Downloaded unicode-segmentation v1.12.0
+  Downloaded glow v0.14.2
+  Downloaded blake3 v1.8.2
+  Downloaded serde_json v1.0.148
+  Downloaded naga_oil v0.16.0
+  Downloaded libm v0.2.15
+  Downloaded hashbrown v0.14.5
+  Downloaded taffy v0.5.2
+  Downloaded png v0.18.0
+  Downloaded memchr v2.7.6
+  Downloaded fontdb v0.16.2
+  Downloaded wgpu-types v23.0.0
+  Downloaded rangemap v1.7.1
+  Downloaded indexmap v2.12.1
+  Downloaded flate2 v1.1.5
+  Downloaded uuid v1.12.1
+  Downloaded serde_derive v1.0.228
+  Downloaded roxmltree v0.20.0
+  Downloaded ron v0.8.1
+  Downloaded rand_distr v0.4.3
+  Downloaded polling v3.11.0
+  Downloaded parking_lot_core v0.9.12
+  Downloaded parking_lot v0.12.5
+  Downloaded num-traits v0.2.19
+  Downloaded memmap2 v0.9.9
+  Downloaded lock_api v0.4.14
+  Downloaded getrandom v0.3.4
+  Downloaded getrandom v0.2.16
+  Downloaded fontconfig-parser v0.5.8
+  Downloaded bevy_render v0.15.3
+  Downloaded yazi v0.1.6
+  Downloaded unicode-script v0.5.8
+  Downloaded unicode-properties v0.1.4
+  Downloaded unicode-bidi v0.3.18
+  Downloaded typewit v1.14.2
+  Downloaded toml_edit v0.22.27
+  Downloaded tinyvec v1.10.0
+  Downloaded slotmap v1.1.1
+  Downloaded serde v1.0.228
+  Downloaded rustc-hash v1.1.0
+  Downloaded rayon-core v1.13.0
+  Downloaded miniz_oxide v0.8.9
+  Downloaded matchers v0.2.0
+  Downloaded litrs v1.0.0
+  Downloaded cosmic-text v0.12.1
+  Downloaded jobserver v0.1.34
+  Downloaded hexf-parse v0.2.1
+  Downloaded hexasphere v15.1.0
+  Downloaded guillotiere v0.6.2
+  Downloaded aho-corasick v1.1.4
+  Downloaded version_check v0.9.5
+  Downloaded unicode-ident v1.0.22
+  Downloaded unicode-ccc v0.2.0
+  Downloaded tracing-core v0.1.36
+  Downloaded serde_core v1.0.228
+  Downloaded self_cell v1.2.1
+  Downloaded scopeguard v1.2.0
+  Downloaded rectangle-pack v0.4.2
+  Downloaded rand_core v0.6.4
+  Downloaded rand_chacha v0.3.1
+  Downloaded profiling v1.0.17
+  Downloaded pkg-config v0.3.32
+  Downloaded piper v0.2.4
+  Downloaded percent-encoding v2.3.2
+  Downloaded linux-raw-sys v0.4.15
+  Downloaded offset-allocator v0.2.0
+  Downloaded log v0.4.29
+  Downloaded lazy_static v1.5.0
+  Downloaded grid v0.14.0
+  Downloaded futures-lite v2.6.1
+  Downloaded fdeflate v0.3.7
+  Downloaded crossbeam-channel v0.5.15
+  Downloaded bevy_asset v0.15.3
+  Downloaded unicode-linebreak v0.1.5
+  Downloaded unicode-bidi-mirroring v0.2.0
+  Downloaded tracing-log v0.2.0
+  Downloaded tracing-attributes v0.1.31
+  Downloaded toml_datetime v0.6.11
+  Downloaded thread_local v1.1.9
+  Downloaded thiserror v1.0.69
+  Downloaded sys-locale v0.3.2
+  Downloaded spirv v0.3.0+sdk-1.3.268.0
+  Downloaded smallvec v1.15.1
+  Downloaded sharded-slab v0.1.7
+  Downloaded proc-macro2 v1.0.104
+  Downloaded libloading v0.8.9
+  Downloaded gpu-alloc v0.6.0
+  Downloaded font-types v0.7.3
+  Downloaded foldhash v0.1.5
+  Downloaded find-msvc-tools v0.1.6
+  Downloaded euclid v0.22.11
+  Downloaded calloop v0.13.0
+  Downloaded bevy_text v0.15.3
+  Downloaded linux-raw-sys v0.11.0
+  Downloaded bevy_scene v0.15.3
+  Downloaded bevy_reflect v0.15.3
+  Downloaded bevy_mesh v0.15.3
+  Downloaded bevy_math v0.15.3
+  Downloaded bevy_gizmos v0.15.3
+  Downloaded tinyvec_macros v0.1.1
+  Downloaded tiny-keccak v2.0.2
+  Downloaded thiserror-impl v1.0.69
+  Downloaded termcolor v1.4.1
+  Downloaded svg_fmt v0.4.5
+  Downloaded static_assertions v1.1.0
+  Downloaded stackfuture v0.3.1
+  Downloaded smol_str v0.2.2
+  Downloaded slab v0.4.11
+  Downloaded simd-adler32 v0.3.8
+  Downloaded shlex v1.3.0
+  Downloaded radsort v0.1.1
+  Downloaded ppv-lite86 v0.2.21
+  Downloaded once_cell v1.21.3
+  Downloaded khronos-egl v6.0.0
+  Downloaded gpu-descriptor-types v0.2.0
+  Downloaded gpu-alloc-types v0.3.0
+  Downloaded fixedbitset v0.4.2
+  Downloaded event-listener v5.4.1
+  Downloaded erased-serde v0.4.9
+  Downloaded encase v0.10.0
+  Downloaded either v1.15.0
+  Downloaded dpi v0.1.2
+  Downloaded derive_more-impl v1.0.0
+  Downloaded crc32fast v1.5.0
+  Downloaded const_soft_float v0.1.4
+  Downloaded const_panic v0.2.15
+  Downloaded codespan-reporting v0.11.1
+  Downloaded cc v1.2.51
+  Downloaded bytemuck v1.24.0
+  Downloaded bevy_winit v0.15.3
+  Downloaded bevy_internal v0.15.3
+  Downloaded bevy_input v0.15.3
+  Downloaded bevy_color v0.15.4
+  Downloaded async-task v4.7.1
+  Downloaded raw-window-handle v0.6.2
+  Downloaded quote v1.0.42
+  Downloaded pp-rs v0.2.1
+  Downloaded pin-project-lite v0.2.16
+  Downloaded parking v2.2.1
+  Downloaded nu-ansi-term v0.50.3
+  Downloaded fixedbitset v0.5.7
+  Downloaded fastrand v2.3.0
+  Downloaded event-listener-strategy v0.5.4
+  Downloaded errno v0.3.14
+  Downloaded equivalent v1.0.2
+  Downloaded encase_derive_impl v0.10.0
+  Downloaded encase_derive v0.10.0
+  Downloaded data-encoding v2.9.0
+  Downloaded crossbeam-utils v0.8.21
+  Downloaded crossbeam-deque v0.8.6
+  Downloaded blocking v1.6.2
+  Downloaded bitflags v2.10.0
+  Downloaded bevy_ui v0.15.3
+  Downloaded bevy_time v0.15.3
+  Downloaded bevy_render_macros v0.15.3
+  Downloaded bevy_reflect_derive v0.15.3
+  Downloaded bevy_mikktspace v0.15.3
+  Downloaded bevy_image v0.15.3
+  Downloaded bevy_hierarchy v0.15.3
+  Downloaded bevy_ecs_macros v0.15.3
+  Downloaded bevy_diagnostic v0.15.3
+  Downloaded bevy_app v0.15.3
+  Downloaded async-lock v3.4.2
+  Downloaded itoa v1.0.17
+  Downloaded gpu-descriptor v0.3.2
+  Downloaded gethostname v1.1.0
+  Downloaded futures-io v0.3.31
+  Downloaded futures-core v0.3.31
+  Downloaded event-listener v2.5.3
+  Downloaded downcast-rs v1.2.1
+  Downloaded document-features v0.2.12
+  Downloaded dlib v0.5.2
+  Downloaded cursor-icon v1.2.0
+  Downloaded crunchy v0.2.4
+  Downloaded constant_time_eq v0.3.1
+  Downloaded cfg_aliases v0.1.1
+  Downloaded cfg-if v1.0.4
+  Downloaded byteorder-lite v0.1.0
+  Downloaded bytemuck_derive v1.10.2
+  Downloaded bevy_tasks v0.15.3
+  Downloaded bevy_state_macros v0.15.3
+  Downloaded bevy_state v0.15.3
+  Downloaded bevy_ptr v0.15.3
+  Downloaded bevy_log v0.15.3
+  Downloaded bevy_gizmos_macros v0.15.3
+  Downloaded bevy_core v0.15.3
+  Downloaded bevy_a11y v0.15.3
+  Downloaded autocfg v1.5.0
+  Downloaded async-channel v2.5.0
+  Downloaded async-broadcast v0.5.1
+  Downloaded arrayref v0.3.9
+  Downloaded derive_more v1.0.0
+  Downloaded ctrlc v3.5.1
+  Downloaded crossbeam-epoch v0.9.18
+  Downloaded constgebra v0.1.4
+  Downloaded cfg_aliases v0.2.1
+  Downloaded bevy_window v0.15.3
+  Downloaded bevy_utils_proc_macros v0.15.3
+  Downloaded bevy_utils v0.15.3
+  Downloaded bevy_sprite v0.15.3
+  Downloaded bevy_picking v0.15.3
+  Downloaded bevy_macro_utils v0.15.3
+  Downloaded base64 v0.21.7
+  Downloaded atomicow v1.1.0
+  Downloaded async-fs v2.2.0
+  Downloaded assert_type_match v0.1.1
+  Downloaded as-raw-xcb-connection v1.0.1
+  Downloaded allocator-api2 v0.2.21
+  Downloaded ahash v0.8.12
+  Downloaded adler2 v2.0.1
+  Downloaded accesskit_winit v0.23.1
+  Downloaded accesskit v0.17.1
+  Downloaded const-random v0.1.18
+  Downloaded const-fnv1a-hash v1.1.0
+  Downloaded concurrent-queue v2.5.0
+  Downloaded bit-vec v0.8.0
+  Downloaded bit-vec v0.6.3
+  Downloaded bit-set v0.8.0
+  Downloaded bit-set v0.5.3
+  Downloaded bevy_transform v0.15.3
+  Downloaded bevy_encase_derive v0.15.3
+  Downloaded bevy_asset_macros v0.15.3
+  Downloaded atomic-waker v1.1.2
+  Downloaded async-executor v1.13.3
+  Downloaded arrayvec v0.7.6
+  Downloaded approx v0.5.1
+   Compiling proc-macro2 v1.0.104
+   Compiling unicode-ident v1.0.22
+   Compiling quote v1.0.42
+   Compiling cfg-if v1.0.4
+   Compiling serde_core v1.0.228
+   Compiling libc v0.2.178
+   Compiling equivalent v1.0.2
+   Compiling hashbrown v0.16.1
+   Compiling once_cell v1.21.3
+   Compiling pin-project-lite v0.2.16
+   Compiling crossbeam-utils v0.8.21
+   Compiling zerocopy v0.8.31
+   Compiling serde v1.0.228
+   Compiling version_check v0.9.5
+   Compiling winnow v0.7.14
+   Compiling toml_datetime v0.6.11
+   Compiling smallvec v1.15.1
+   Compiling crunchy v0.2.4
+   Compiling unicode-xid v0.2.6
+   Compiling tracing-core v0.1.36
+   Compiling tiny-keccak v2.0.2
+   Compiling parking v2.2.1
+   Compiling getrandom v0.3.4
+   Compiling indexmap v2.12.1
+   Compiling ahash v0.8.12
+   Compiling futures-core v0.3.31
+   Compiling cfg_aliases v0.2.1
+   Compiling fastrand v2.3.0
+   Compiling futures-io v0.3.31
+   Compiling typeid v1.0.3
+   Compiling thread_local v1.1.9
+   Compiling libm v0.2.15
+   Compiling erased-serde v0.4.9
+   Compiling allocator-api2 v0.2.21
+   Compiling slab v0.4.11
+   Compiling concurrent-queue v2.5.0
+   Compiling futures-lite v2.6.1
+   Compiling async-task v4.7.1
+   Compiling downcast-rs v1.2.1
+   Compiling bevy_ptr v0.15.3
+   Compiling disqualified v1.0.0
+   Compiling autocfg v1.5.0
+   Compiling nix v0.30.1
+   Compiling log v0.4.29
+   Compiling fixedbitset v0.4.2
+   Compiling toml_edit v0.22.27
+   Compiling nonmax v0.5.5
+   Compiling petgraph v0.6.5
+   Compiling fixedbitset v0.5.7
+   Compiling thiserror v1.0.69
+   Compiling cfg_aliases v0.1.1
+   Compiling libloading v0.8.9
+   Compiling syn v2.0.111
+   Compiling getrandom v0.2.16
+   Compiling num-traits v0.2.19
+   Compiling either v1.15.0
+   Compiling async-executor v1.13.3
+   Compiling uuid v1.12.1
+   Compiling arrayvec v0.7.6
+   Compiling memchr v2.7.6
+   Compiling const-random-macro v0.1.16
+   Compiling parking_lot_core v0.9.12
+   Compiling ppv-lite86 v0.2.21
+   Compiling bevy_tasks v0.15.3
+   Compiling rand_core v0.6.4
+   Compiling raw-window-handle v0.6.2
+   Compiling itertools v0.13.0
+   Compiling naga v23.1.0
+   Compiling bitflags v2.10.0
+   Compiling rand_chacha v0.3.1
+   Compiling event-listener v5.4.1
+   Compiling unicode-width v0.1.14
+   Compiling scopeguard v1.2.0
+   Compiling const-random v0.1.18
+   Compiling bit-vec v0.8.0
+   Compiling termcolor v1.4.1
+   Compiling rustc-hash v1.1.0
+   Compiling rand v0.8.5
+   Compiling bit-set v0.8.0
+   Compiling event-listener-strategy v0.5.4
+   Compiling lock_api v0.4.14
+   Compiling spirv v0.3.0+sdk-1.3.268.0
+   Compiling codespan-reporting v0.11.1
+   Compiling aho-corasick v1.1.4
+   Compiling find-msvc-tools v0.1.6
+   Compiling hexf-parse v0.2.1
+   Compiling typewit v1.14.2
+   Compiling ash v0.38.0+1.3.281
+   Compiling simd-adler32 v0.3.8
+   Compiling regex-syntax v0.8.8
+   Compiling crc32fast v1.5.0
+   Compiling foldhash v0.1.5
+   Compiling ctrlc v3.5.1
+   Compiling khronos-egl v6.0.0
+   Compiling shlex v1.3.0
+   Compiling const_panic v0.2.15
+   Compiling rand_distr v0.4.3
+   Compiling hashbrown v0.15.5
+   Compiling cc v1.2.51
+   Compiling parking_lot v0.12.5
+   Compiling gpu-descriptor-types v0.2.0
+   Compiling gpu-alloc-types v0.3.0
+   Compiling wgpu-types v23.0.0
+   Compiling wgpu-hal v23.0.1
+   Compiling adler2 v2.0.1
+   Compiling atomic-waker v1.1.2
+   Compiling gpu-alloc v0.6.0
+   Compiling miniz_oxide v0.8.9
+   Compiling piper v0.2.4
+   Compiling async-channel v2.5.0
+   Compiling gpu-descriptor v0.3.2
+   Compiling wgpu-core v23.0.1
+   Compiling crossbeam-channel v0.5.15
+   Compiling tinyvec_macros v0.1.1
+   Compiling glow v0.14.2
+   Compiling profiling v1.0.17
+   Compiling litrs v1.0.0
+   Compiling renderdoc-sys v1.1.0
+   Compiling tinyvec v1.10.0
+   Compiling flate2 v1.1.5
+   Compiling blocking v1.6.2
+   Compiling fdeflate v0.3.7
+   Compiling bevy_macro_utils v0.15.3
+   Compiling encase_derive_impl v0.10.0
+   Compiling pxfm v0.1.27
+   Compiling regex-automata v0.4.13
+   Compiling async-lock v3.4.2
+   Compiling wgpu v23.0.1
+   Compiling blake3 v1.8.2
+   Compiling document-features v0.2.12
+   Compiling constant_time_eq v0.3.1
+   Compiling event-listener v2.5.3
+   Compiling base64 v0.21.7
+   Compiling arrayref v0.3.9
+   Compiling accesskit v0.17.1
+   Compiling png v0.18.0
+   Compiling async-broadcast v0.5.1
+   Compiling stackfuture v0.3.1
+   Compiling byteorder-lite v0.1.0
+   Compiling async-fs v2.2.0
+   Compiling rustix v1.1.3
+   Compiling static_assertions v1.1.0
+   Compiling const_soft_float v0.1.4
+   Compiling atomicow v1.1.0
+   Compiling bit-vec v0.6.3
+   Compiling linux-raw-sys v0.11.0
+   Compiling slotmap v1.1.1
+   Compiling const-fnv1a-hash v1.1.0
+   Compiling constgebra v0.1.4
+   Compiling bytemuck_derive v1.10.2
+   Compiling serde_derive v1.0.228
+   Compiling tracing-attributes v0.1.31
+   Compiling derive_more-impl v1.0.0
+   Compiling bevy_utils_proc_macros v0.15.3
+   Compiling assert_type_match v0.1.1
+   Compiling bevy_reflect_derive v0.15.3
+   Compiling bevy_ecs_macros v0.15.3
+   Compiling bevy_derive v0.15.3
+   Compiling thiserror-impl v1.0.69
+   Compiling encase_derive v0.10.0
+   Compiling bevy_asset_macros v0.15.3
+   Compiling moxcms v0.7.11
+   Compiling bit-set v0.5.3
+   Compiling data-encoding v2.9.0
+   Compiling bytemuck v1.24.0
+   Compiling tracing v0.1.44
+   Compiling regex v1.12.2
+   Compiling bevy_encase_derive v0.15.3
+   Compiling font-types v0.7.3
+   Compiling bevy_render_macros v0.15.3
+   Compiling offset-allocator v0.2.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling pkg-config v0.3.32
+   Compiling rustix v0.38.44
+   Compiling rayon-core v1.13.0
+   Compiling read-fonts v0.22.7
+   Compiling crossbeam-deque v0.8.6
+   Compiling roxmltree v0.20.0
+   Compiling linux-raw-sys v0.4.15
+   Compiling x11-dl v2.21.0
+   Compiling euclid v0.22.11
+   Compiling memmap2 v0.9.9
+   Compiling dlib v0.5.2
+   Compiling derive_more v1.0.0
+   Compiling fontconfig-parser v0.5.8
+   Compiling winit v0.30.12
+   Compiling yazi v0.1.6
+   Compiling x11rb-protocol v0.13.2
+   Compiling lazy_static v1.5.0
+   Compiling svg_fmt v0.4.5
+   Compiling glam v0.29.3
+   Compiling smol_str v0.2.2
+   Compiling hashbrown v0.14.5
+   Compiling ron v0.8.1
+   Compiling unicode-bidi-mirroring v0.2.0
+   Compiling unicode-ccc v0.2.0
+   Compiling unicode-script v0.5.8
+   Compiling zeno v0.2.3
+   Compiling unicode-properties v0.1.4
+   Compiling radsort v0.1.1
+   Compiling ttf-parser v0.20.0
+   Compiling xkeysym v0.2.1
+   Compiling ttf-parser v0.21.1
+   Compiling bevy_utils v0.15.3
+   Compiling as-raw-xcb-connection v1.0.1
+   Compiling guillotiere v0.6.2
+   Compiling image v0.25.9
+   Compiling polling v3.11.0
+   Compiling gethostname v1.1.0
+   Compiling xkbcommon-dl v0.4.2
+   Compiling sharded-slab v0.1.7
+   Compiling rayon v1.11.0
+   Compiling matchers v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling dpi v0.1.2
+   Compiling rangemap v1.7.1
+   Compiling cursor-icon v1.2.0
+   Compiling sys-locale v0.3.2
+   Compiling fontdb v0.16.2
+   Compiling unicode-segmentation v1.12.0
+   Compiling rectangle-pack v0.4.2
+   Compiling calloop v0.13.0
+   Compiling rustybuzz v0.14.1
+   Compiling unicode-bidi v0.3.18
+   Compiling unicode-linebreak v0.1.5
+   Compiling self_cell v1.2.1
+   Compiling percent-encoding v2.3.2
+   Compiling nu-ansi-term v0.50.3
+   Compiling grid v0.14.0
+   Compiling bevy_state_macros v0.15.3
+   Compiling tracing-subscriber v0.3.22
+   Compiling taffy v0.5.2
+   Compiling approx v0.5.1
+   Compiling serde_json v1.0.148
+   Compiling skrifa v0.22.3
+   Compiling naga_oil v0.16.0
+   Compiling itoa v1.0.17
+   Compiling zmij v1.0.0
+   Compiling bevy_reflect v0.15.3
+   Compiling encase v0.10.0
+   Compiling hexasphere v15.1.0
+   Compiling bevy_mikktspace v0.15.3
+   Compiling swash v0.1.19
+   Compiling cosmic-text v0.12.1
+   Compiling x11rb v0.13.2
+   Compiling bevy_ecs v0.15.4
+   Compiling bevy_math v0.15.3
+   Compiling accesskit_winit v0.23.1
+   Compiling bevy_color v0.15.4
+   Compiling bevy_app v0.15.3
+   Compiling bevy_core v0.15.3
+   Compiling bevy_asset v0.15.3
+   Compiling bevy_a11y v0.15.3
+   Compiling bevy_time v0.15.3
+   Compiling bevy_log v0.15.3
+   Compiling bevy_hierarchy v0.15.3
+   Compiling bevy_input v0.15.3
+   Compiling bevy_diagnostic v0.15.3
+   Compiling bevy_transform v0.15.3
+   Compiling bevy_state v0.15.3
+   Compiling bevy_window v0.15.3
+   Compiling bevy_image v0.15.3
+   Compiling bevy_mesh v0.15.3
+   Compiling bevy_winit v0.15.3
+   Compiling bevy_render v0.15.3
+   Compiling bevy_picking v0.15.3
+   Compiling bevy_core_pipeline v0.15.3
+   Compiling bevy_sprite v0.15.3
+   Compiling bevy_text v0.15.3
+   Compiling bevy_ui v0.15.3
+   Compiling bevy_internal v0.15.3
+   Compiling bevy v0.15.3
+   Compiling bevy_shaman_core v0.1.0 (/home/user/dba/crates/bevy_shaman_core)
+warning: unused variable: `enemy_health`
+   --> crates/bevy_shaman_core/src/components.rs:203:39
+    |
+203 |     pub fn add_from_combat(&mut self, enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+    |                                       ^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+help: if this is intentional, prefix it with an underscore
+    |
+203 |     pub fn add_from_combat(&mut self, _enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+    |                                       +
+help: you might have meant to pattern match on the similarly named constant `TILE_SIZE`
+    |
+203 -     pub fn add_from_combat(&mut self, enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+203 +     pub fn add_from_combat(&mut self, systems::movement::TILE_SIZE: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+    |
+
+   Compiling bevy_shaman_monsters v0.1.0 (/home/user/dba/crates/bevy_shaman_monsters)
+   Compiling bevy_shaman_items v0.1.0 (/home/user/dba/crates/bevy_shaman_items)
+warning: `bevy_shaman_core` (lib) generated 1 warning (run `cargo fix --lib -p bevy_shaman_core` to apply 1 suggestion)
+warning: unused variable: `time`
+  --> crates/bevy_shaman_items/src/systems/inventory.rs:66:5
+   |
+66 |     time: Res<Time>,
+   |     ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `effects_query`
+   --> crates/bevy_shaman_items/src/systems/plant_food.rs:226:5
+    |
+226 |     effects_query: Query<&mut ActiveEffects>,
+    |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_effects_query`
+
+   Compiling bevy_shaman_minions v0.1.0 (/home/user/dba/crates/bevy_shaman_minions)
+   Compiling bevy_shaman_dungeons v0.1.0 (/home/user/dba/crates/bevy_shaman_dungeons)
+   Compiling bevy_shaman_shop v0.1.0 (/home/user/dba/crates/bevy_shaman_shop)
+   Compiling bevy_shaman_world v0.1.0 (/home/user/dba/crates/bevy_shaman_world)
+   Compiling bevy_shaman_combat v0.1.0 (/home/user/dba/crates/bevy_shaman_combat)
+warning: use of deprecated struct `bevy::prelude::SpatialBundle`: Use the `Transform` and `Visibility` components instead.
+                 Inserting `Transform` will now also insert a `GlobalTransform` automatically.
+                 Inserting 'Visibility' will now also insert `InheritedVisibility` and `ViewVisibility` automatically.
+   --> crates/bevy_shaman_dungeons/src/lib.rs:136:21
+    |
+136 |                     SpatialBundle::default(),
+    |                     ^^^^^^^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated struct `bevy::prelude::SpatialBundle`: Use the `Transform` and `Visibility` components instead.
+                 Inserting `Transform` will now also insert a `GlobalTransform` automatically.
+                 Inserting 'Visibility' will now also insert `InheritedVisibility` and `ViewVisibility` automatically.
+   --> crates/bevy_shaman_dungeons/src/lib.rs:221:25
+    |
+221 |                         SpatialBundle::default(),
+    |                         ^^^^^^^^^^^^^
+
+warning: use of deprecated struct `bevy::prelude::SpatialBundle`: Use the `Transform` and `Visibility` components instead.
+                 Inserting `Transform` will now also insert a `GlobalTransform` automatically.
+                 Inserting 'Visibility' will now also insert `InheritedVisibility` and `ViewVisibility` automatically.
+   --> crates/bevy_shaman_dungeons/src/lib.rs:298:25
+    |
+298 |                         SpatialBundle::default(),
+    |                         ^^^^^^^^^^^^^
+
+warning: `bevy_shaman_items` (lib) generated 2 warnings
+warning: unused variable: `player`
+  --> crates/bevy_shaman_minions/src/lib.rs:89:13
+   |
+89 |             player: Query<Entity, With<Player>>,
+   |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_player`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `rng`
+   --> crates/bevy_shaman_dungeons/src/lib.rs:251:17
+    |
+251 |             let rng = rand::thread_rng();
+    |                 ^^^ help: if this is intentional, prefix it with an underscore: `_rng`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `boss_entity`
+   --> crates/bevy_shaman_dungeons/src/lib.rs:270:25
+    |
+270 |                     let boss_entity = commands.spawn((
+    |                         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_boss_entity`
+
+warning: unused variable: `commands`
+  --> crates/bevy_shaman_combat/src/systems/death.rs:30:5
+   |
+30 |     commands: Commands,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `state`
+   --> crates/bevy_shaman_combat/src/systems/monster_control.rs:128:31
+    |
+128 |             if let Ok((stats, state)) = monster_query.get(monster_entity) {
+    |                               ^^^^^ help: if this is intentional, prefix it with an underscore: `_state`
+
+warning: `bevy_shaman_minions` (lib) generated 1 warning
+   Compiling bevy_shaman_story v0.1.0 (/home/user/dba/crates/bevy_shaman_story)
+warning: `bevy_shaman_dungeons` (lib) generated 5 warnings
+warning: `bevy_shaman_combat` (lib) generated 2 warnings
+warning: unused variable: `sickness_opt`
+  --> crates/bevy_shaman_story/src/systems/dialogue.rs:40:55
+   |
+40 |     for (npc_entity, npc_pos, tree_opt, dialogue_opt, sickness_opt) in npcs.iter() {
+   |                                                       ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_sickness_opt`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `commands`
+  --> crates/bevy_shaman_story/src/systems/dialogue.rs:84:5
+   |
+84 |     commands: Commands,
+   |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: unused variable: `event`
+  --> crates/bevy_shaman_story/src/systems/quests.rs:12:9
+   |
+12 |     for event in fight_events.read() {
+   |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+   Compiling bevy_shaman_ai v0.1.0 (/home/user/dba/crates/bevy_shaman_ai)
+warning: `bevy_shaman_story` (lib) generated 3 warnings
+warning: unreachable pattern
+  --> crates/bevy_shaman_ai/src/systems/query_queue.rs:92:13
+   |
+92 |             _ => {}
+   |             ^ no value can reach this
+   |
+note: multiple earlier patterns match some of the same values
+  --> crates/bevy_shaman_ai/src/systems/query_queue.rs:92:13
+   |
+73 |             GenerationType::Dialogue | GenerationType::Both => {
+   |             ----------------------------------------------- matches some of the same values
+...
+83 |             GenerationType::CombatDecision => {
+   |             ------------------------------ matches some of the same values
+...
+92 |             _ => {}
+   |             ^ collectively making this unreachable
+   = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `prompt`
+   --> crates/bevy_shaman_ai/src/systems/query_queue.rs:173:13
+    |
+173 |         let prompt = build_combat_prompt(ai, i as u32, templates);
+    |             ^^^^^^ help: if this is intentional, prefix it with an underscore: `_prompt`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `current_time`
+   --> crates/bevy_shaman_ai/src/systems/query_queue.rs:166:5
+    |
+166 |     current_time: f64,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_current_time`
+
+warning: unused variable: `ai`
+   --> crates/bevy_shaman_ai/src/systems/boss_ai.rs:168:5
+    |
+168 |     ai: &LlmAi,
+    |     ^^ help: if this is intentional, prefix it with an underscore: `_ai`
+
+warning: unused variable: `ai`
+  --> crates/bevy_shaman_ai/src/systems/npc_dialogue.rs:75:31
+   |
+75 | fn determine_dialogue_context(ai: &LlmAi, history: &ConversationHistory) -> DialogueContext {
+   |                               ^^ help: if this is intentional, prefix it with an underscore: `_ai`
+
+warning: unused variable: `entity`
+   --> crates/bevy_shaman_ai/src/systems/npc_dialogue.rs:164:10
+    |
+164 |     for (entity, ai, mut queue) in brother_query.iter_mut() {
+    |          ^^^^^^ help: if this is intentional, prefix it with an underscore: `_entity`
+
+warning: unused variable: `commands`
+   --> crates/bevy_shaman_ai/src/systems/npc_dialogue.rs:161:5
+    |
+161 |     commands: Commands,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: unused variable: `brother_query`
+   --> crates/bevy_shaman_ai/src/systems/npc_dialogue.rs:190:5
+    |
+190 |     brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
+    |     ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_brother_query`
+
+warning: field `last_phase_transition` is never read
+   --> crates/bevy_shaman_ai/src/systems/boss_ai.rs:102:5
+    |
+100 | pub struct BossPhaseData {
+    |            ------------- field in this struct
+101 |     current_phase: u32,
+102 |     last_phase_transition: f32,
+    |     ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `BossPhaseData` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling bevy_shaman_save v0.1.0 (/home/user/dba/crates/bevy_shaman_save)
+warning: `bevy_shaman_ai` (lib) generated 9 warnings
+   Compiling bevy_shaman_ui v0.1.0 (/home/user/dba/crates/bevy_shaman_ui)
+warning: unused variable: `beat_indicators`
+   --> crates/bevy_shaman_ui/src/lib.rs:319:13
+    |
+319 |             beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
+    |             ^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_beat_indicators`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `time`
+   --> crates/bevy_shaman_ui/src/lib.rs:320:13
+    |
+320 |             time: Res<Time>,
+    |             ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+
+warning: unused variable: `time`
+    --> crates/bevy_shaman_ui/src/lib.rs:2121:13
+     |
+2121 |             time: Res<Time>,
+     |             ^^^^ help: if this is intentional, prefix it with an underscore: `_time`
+
+warning: unused variable: `festival_text_query`
+    --> crates/bevy_shaman_ui/src/lib.rs:3668:13
+     |
+3668 |             festival_text_query: Query<&mut Text, (With<CalendarFestivalText>, Without<CalendarTimeText>, Without<CalendarDateText>)>,
+     |             ^^^^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_festival_text_query`
+
+   Compiling bevy_shaman_tutorial v0.1.0 (/home/user/dba/crates/bevy_shaman_tutorial)
+warning: unused variable: `asset_server`
+   --> crates/bevy_shaman_tutorial/src/cutscene.rs:232:5
+    |
+232 |     asset_server: Res<AssetServer>,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_asset_server`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `commands`
+   --> crates/bevy_shaman_tutorial/src/cutscene.rs:307:5
+    |
+307 |     commands: &mut Commands,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: unused variable: `asset_server`
+   --> crates/bevy_shaman_tutorial/src/cutscene.rs:320:5
+    |
+320 |     asset_server: &AssetServer,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_asset_server`
+
+warning: unused variable: `asset_server`
+   --> crates/bevy_shaman_tutorial/src/overlay.rs:112:5
+    |
+112 |     asset_server: &AssetServer,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_asset_server`
+
+warning: unused variable: `asset_server`
+   --> crates/bevy_shaman_tutorial/src/overlay.rs:188:5
+    |
+188 |     asset_server: &AssetServer,
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_asset_server`
+
+warning: unused variable: `progress`
+   --> crates/bevy_shaman_tutorial/src/lib.rs:286:5
+    |
+286 |     progress: &TutorialProgress,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_progress`
+
+warning: unused variable: `step`
+   --> crates/bevy_shaman_tutorial/src/lib.rs:323:25
+    |
+323 |             if let Some(step) = mission.steps.get(step_idx) {
+    |                         ^^^^ help: if this is intentional, prefix it with an underscore: `_step`
+
+warning: unused variable: `commands`
+   --> crates/bevy_shaman_tutorial/src/lib.rs:312:5
+    |
+312 |     commands: Commands,
+    |     ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_commands`
+
+warning: unused variable: `event`
+   --> crates/bevy_shaman_tutorial/src/lib.rs:371:9
+    |
+371 |     for event in hit_events.read() {
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_event`
+
+warning: `bevy_shaman_ui` (lib) generated 4 warnings
+warning: `bevy_shaman_tutorial` (lib) generated 9 warnings
+   Compiling bevy_shaman v0.1.0 (/home/user/dba/crates/bevy_shaman)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 51s

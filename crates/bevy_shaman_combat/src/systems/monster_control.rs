@@ -125,7 +125,7 @@ pub fn controlled_monster_abilities(
         }
 
         if let Some(monster_entity) = control.controlled_monster {
-            if let Ok((stats, state)) = monster_query.get(monster_entity) {
+            if let Ok((stats, _state)) = monster_query.get(monster_entity) {
                 // Player can use the monster's abilities
                 // This would integrate with an ability system
                 // For now, just log that abilities are available
