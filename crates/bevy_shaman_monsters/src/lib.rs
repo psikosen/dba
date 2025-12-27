@@ -16,6 +16,9 @@ impl Plugin for MonstersPlugin {
             // Register resources
             .init_resource::<resources::MonsterSpriteDB>()
             .init_resource::<resources::MonsterTemplateDB>()
+            .init_resource::<systems::sprite_swap::MonsterSpritesRegistered>()
+            // Sprite DB population (runs every frame until complete)
+            .add_systems(Update, systems::sprite_swap::populate_monster_sprite_db)
             // Monster state machine systems
             .add_systems(Update, (
                 systems::state_machine::update_monster_state_meters,

@@ -180,24 +180,82 @@ pub mod systems {
 
         // System to apply loaded save data to the world
         pub fn apply_loaded_data(
+            mut commands: Commands,
             mut pending_load: ResMut<PendingLoadData>,
-            mut player_query: Query<(&mut GridPosition, &mut Health, &mut Spirit, &mut Stamina), With<Player>>,
+            mut player_query: Query<(Entity, &mut GridPosition, &mut Transform, &mut Health, &mut Spirit, &mut Stamina), With<Player>>,
             mut corrupted_query: Query<(&GridPosition, &mut TileCorruption)>,
+            mut player_spawned: ResMut<bevy_shaman_core::systems::player::PlayerSpawned>,
+            sprite_handle: Option<Res<bevy_shaman_core::systems::assets::PlayerSpriteHandle>>,
         ) {
             if let Some(save_data) = pending_load.data.take() {
                 info!("Applying loaded save data to world");
 
-                // Restore player data
-                if let Ok((mut pos, mut health, mut spirit, mut stamina)) = player_query.get_single_mut() {
-                    pos.x = save_data.player_position.0;
-                    pos.y = save_data.player_position.1;
-                    health.current = save_data.player_health.0;
-                    health.max = save_data.player_health.1;
-                    spirit.current = save_data.player_spirit.0;
-                    spirit.max = save_data.player_spirit.1;
-                    stamina.current = save_data.player_stamina.0;
-                    stamina.max = save_data.player_stamina.1;
-                    info!("Player data restored to position ({}, {})", pos.x, pos.y);
+                // Restore or spawn player data
+                match player_query.get_single_mut() {
+                    Ok((_, mut pos, mut transform, mut health, mut spirit, mut stamina)) => {
+                        // Player exists, update components
+                        pos.x = save_data.player_position.0;
+                        pos.y = save_data.player_position.1;
+                        transform.translation.x = pos.x as f32 * 32.0;
+                        transform.translation.y = pos.y as f32 * 32.0;
+                        health.current = save_data.player_health.0;
+                        health.max = save_data.player_health.1;
+                        spirit.current = save_data.player_spirit.0;
+                        spirit.max = save_data.player_spirit.1;
+                        stamina.current = save_data.player_stamina.0;
+                        stamina.max = save_data.player_stamina.1;
+                        info!("Player data restored to position ({}, {})", pos.x, pos.y);
+                    }
+                    Err(_) => {
+                        // Player doesn't exist, spawn new one with save data
+                        info!("Player entity not found, spawning from save data");
+
+                        if let Some(sprite_handle) = sprite_handle {
+                            use bevy_shaman_core::components::*;
+
+                            commands.spawn((
+                                Player,
+                                GridPosition {
+                                    x: save_data.player_position.0,
+                                    y: save_data.player_position.1,
+                                },
+                                Transform::from_xyz(
+                                    save_data.player_position.0 as f32 * 32.0,
+                                    save_data.player_position.1 as f32 * 32.0,
+                                    10.0,
+                                ),
+                                Sprite {
+                                    image: sprite_handle.0.clone(),
+                                    custom_size: Some(Vec2::new(32.0, 32.0)),
+                                    ..default()
+                                },
+                                Health {
+                                    current: save_data.player_health.0,
+                                    max: save_data.player_health.1,
+                                },
+                                Spirit {
+                                    current: save_data.player_spirit.0,
+                                    max: save_data.player_spirit.1,
+                                    regen_rate: 5.0,
+                                },
+                                Stamina {
+                                    current: save_data.player_stamina.0,
+                                    max: save_data.player_stamina.1,
+                                    regen_rate: 10.0,
+                                },
+                                MovementQueue::default(),
+                                BlocksMovement,
+                                CameraTarget,
+                                GlobalTransform::default(),
+                                Visibility::default(),
+                            ));
+
+                            player_spawned.0 = true;
+                            info!("Player spawned from save at ({}, {})", save_data.player_position.0, save_data.player_position.1);
+                        } else {
+                            error!("Cannot spawn player: PlayerSpriteHandle not available");
+                        }
+                    }
                 }
 
                 // Restore corruption data
