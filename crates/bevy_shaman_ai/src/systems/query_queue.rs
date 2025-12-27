@@ -163,13 +163,16 @@ fn generate_combat_decisions(
     queue: &mut LlmQueryQueue,
     templates: &PromptTemplates,
     model: &mut LlmModel,
+    // Placeholder for LLM integration: Will be used to add temporal context to prompts
+    // (e.g., time-of-day affects boss behavior, urgency in dialogue)
     _current_time: f64,
 ) {
     // Generate varied combat decisions
     let decision_count = 5;
 
     for i in 0..decision_count {
-        // Build combat prompt
+        // Placeholder for LLM integration: Prompt will be sent to GGUF model for inference
+        // Currently built but not used - awaiting model loading implementation
         let _prompt = build_combat_prompt(ai, i as u32, templates);
 
         // TODO: When GGUF model is loaded, use actual inference here

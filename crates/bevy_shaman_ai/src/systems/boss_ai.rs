@@ -165,6 +165,8 @@ fn find_suitable_decision(
 fn execute_combat_decision(
     decision: &QueuedCombatDecision,
     ai_state: &mut AiState,
+    // Placeholder for LLM integration: Will be used to customize execution based on AI personality
+    // (e.g., aggressive bosses execute moves faster, wise bosses add strategic delays)
     _ai: &LlmAi,
     commands: &mut Commands,
     boss_entity: Entity,

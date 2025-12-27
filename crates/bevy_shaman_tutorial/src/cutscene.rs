@@ -229,8 +229,9 @@ fn update_active_cutscenes(
     mut commands: Commands,
     mut tutorial_events: EventWriter<TutorialEvent>,
     mut end_events: EventWriter<CutsceneEndEvent>,
-    #[allow(unused_variables)]
-    asset_server: Res<AssetServer>,
+    // Placeholder for tutorial system: Will load cutscene image/audio assets
+    // (e.g., dream sequence flashes, narrative images, sound effects)
+    _asset_server: Res<AssetServer>,
     existing_roots: Query<Entity, With<CutsceneRoot>>,
 ) {
     let Some(mut cutscene) = active_cutscene else {
@@ -305,8 +306,9 @@ fn handle_cutscene_input(
 
 pub fn spawn_cutscene(
     cutscene_id: &str,
-    #[allow(unused_variables)]
-    commands: &mut Commands,
+    // Placeholder for tutorial system: Will spawn visual entities for cutscene effects
+    // (fade overlays, image flashes, text boxes)
+    _commands: &mut Commands,
 ) -> Option<ActiveCutscene> {
     match cutscene_id {
         "dream_grotesque_ball" => Some(create_dream_grotesque_ball_cutscene()),
@@ -319,8 +321,9 @@ pub fn spawn_cutscene(
 /// Render cutscene UI (called from update system)
 pub fn render_cutscene_frame(
     commands: &mut Commands,
-    #[allow(unused_variables)]
-    asset_server: &AssetServer,
+    // Placeholder for tutorial system: Will load frame-specific assets
+    // (dream images, narrative visuals, transition effects)
+    _asset_server: &AssetServer,
     frame: &CutsceneFrame,
     existing_roots: &Query<Entity, With<CutsceneRoot>>,
 ) {

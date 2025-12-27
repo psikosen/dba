@@ -283,6 +283,8 @@ fn check_tutorial_conditions(
 fn is_condition_met(
     condition: &TutorialCondition,
     event: &TutorialEvent,
+    // Placeholder for tutorial system: Will check player progress for conditional requirements
+    // (e.g., "only complete if player has unlocked rhythm combat", "skip if already mastered")
     _progress: &TutorialProgress,
 ) -> bool {
     match (condition, event) {
@@ -309,6 +311,8 @@ fn update_tutorial_ui(
     progress: Res<TutorialProgress>,
     settings: Res<TutorialSettings>,
     missions: Res<TutorialMissionRegistry>,
+    // Placeholder for tutorial system: Will spawn UI hints, arrows, and highlight overlays
+    // for guiding player through tutorial steps (see overlay.rs for visual implementation)
     _commands: Commands,
 ) {
     if !settings.show_hints || progress.tutorial_completed {
@@ -320,6 +324,8 @@ fn update_tutorial_ui(
     if let Some(mission_id) = &progress.current_mission {
         if let Some(mission) = missions.get(mission_id) {
             let step_idx = progress.current_step as usize;
+            // Placeholder for tutorial system: Step data will be used to render context-specific
+            // UI overlays, hints, and visual guides (implementation moved to overlay.rs)
             if let Some(_step) = mission.steps.get(step_idx) {
                 // UI overlay will be rendered here in overlay.rs
                 // For now, just track that we need to display it
