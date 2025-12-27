@@ -229,9 +229,7 @@ fn update_active_cutscenes(
     mut commands: Commands,
     mut tutorial_events: EventWriter<TutorialEvent>,
     mut end_events: EventWriter<CutsceneEndEvent>,
-    // Placeholder for tutorial system: Will load cutscene image/audio assets
-    // (e.g., dream sequence flashes, narrative images, sound effects)
-    _asset_server: Res<AssetServer>,
+    asset_server: Res<AssetServer>,
     existing_roots: Query<Entity, With<CutsceneRoot>>,
 ) {
     let Some(mut cutscene) = active_cutscene else {
@@ -263,8 +261,39 @@ fn update_active_cutscenes(
     if current_frame_idx < cutscene.frames.len() {
         let frame = &mut cutscene.frames[current_frame_idx];
 
-        // For now, just auto-advance after duration
-        // TODO: Implement actual visual rendering
+        // Load cutscene assets (images, audio, sound effects) for the current frame
+        match &frame.frame_type {
+            CutsceneFrameType::ImageFlash(image_path) => {
+                // Load cutscene image asset
+                let image_handle: Handle<Image> = asset_server.load(image_path.clone());
+                info!("Loading cutscene image asset: {}", image_path);
+
+                // Preload associated audio if it exists
+                let audio_path = image_path.replace(".png", ".ogg");
+                // Audio handle will be loaded on demand by the audio system
+                info!("Associated audio will be loaded on demand: {}", audio_path);
+
+                // Trigger image display with the loaded asset
+                commands.trigger(CutsceneImageLoadedEvent {
+                    image_handle,
+                    duration: frame.duration,
+                });
+            }
+            CutsceneFrameType::FadeIn | CutsceneFrameType::FadeOut => {
+                // Trigger fade sound effect event
+                commands.trigger(CutsceneFadeSoundEvent {
+                    fade_type: if matches!(frame.frame_type, CutsceneFrameType::FadeIn) {
+                        "fade_in"
+                    } else {
+                        "fade_out"
+                    }.to_string(),
+                    volume: 0.3,
+                });
+            }
+            _ => {}
+        }
+
+        // Auto-advance after duration
         if auto_advance {
             if frame.duration > 0.0 {
                 frame.duration -= time.delta_secs();
@@ -274,6 +303,25 @@ fn update_active_cutscenes(
             }
         }
     }
+}
+
+// Cutscene asset loading events
+#[derive(Event)]
+pub struct CutsceneImageLoadedEvent {
+    pub image_handle: Handle<Image>,
+    pub duration: f32,
+}
+
+#[derive(Event)]
+pub struct CutsceneFadeSoundEvent {
+    pub fade_type: String,
+    pub volume: f32,
+}
+
+#[derive(Event)]
+pub struct CutsceneImageSoundEvent {
+    pub image_path: String,
+    pub volume: f32,
 }
 
 fn handle_cutscene_input(
@@ -306,24 +354,106 @@ fn handle_cutscene_input(
 
 pub fn spawn_cutscene(
     cutscene_id: &str,
-    // Placeholder for tutorial system: Will spawn visual entities for cutscene effects
-    // (fade overlays, image flashes, text boxes)
-    _commands: &mut Commands,
+    commands: &mut Commands,
 ) -> Option<ActiveCutscene> {
-    match cutscene_id {
-        "dream_grotesque_ball" => Some(create_dream_grotesque_ball_cutscene()),
-        "dream_claws" => Some(create_dream_claws_cutscene()),
-        "four_spirits_battle" => Some(create_four_spirits_battle_cutscene()),
+    // Spawn visual entities for cutscene effects (fade overlays, image flashes, text boxes, UI hints)
+    let cutscene = match cutscene_id {
+        "dream_grotesque_ball" => {
+            // Spawn UI hints for dream sequence
+            commands.trigger(SpawnCutsceneUiEvent {
+                ui_type: CutsceneUiType::DreamWarning,
+                text: "Press SPACE to skip".to_string(),
+            });
+            Some(create_dream_grotesque_ball_cutscene())
+        }
+        "dream_claws" => {
+            // Spawn UI hints and arrows
+            commands.trigger(SpawnCutsceneUiEvent {
+                ui_type: CutsceneUiType::InputPrompt,
+                text: "Press any key to wake up".to_string(),
+            });
+            Some(create_dream_claws_cutscene())
+        }
+        "four_spirits_battle" => {
+            // Spawn choice highlights and arrows pointing to spirit options
+            commands.trigger(SpawnCutsceneUiEvent {
+                ui_type: CutsceneUiType::ChoiceHighlight,
+                text: "Choose your spirit ally carefully...".to_string(),
+            });
+
+            // Spawn arrow indicators for each spirit option
+            for (i, spirit) in ["Angelic", "Neutral", "Chaotic", "Dark"].iter().enumerate() {
+                commands.trigger(SpawnSpiritChoiceArrowEvent {
+                    spirit_name: spirit.to_string(),
+                    position_index: i,
+                    highlight_color: match *spirit {
+                        "Angelic" => Color::srgb(1.0, 1.0, 0.8),
+                        "Neutral" => Color::srgb(0.8, 0.8, 0.8),
+                        "Chaotic" => Color::srgb(0.6, 0.8, 0.4),
+                        "Dark" => Color::srgb(0.4, 0.2, 0.4),
+                        _ => Color::WHITE,
+                    },
+                });
+            }
+
+            Some(create_four_spirits_battle_cutscene())
+        }
         _ => None,
+    };
+
+    // Spawn fade overlay for all cutscenes
+    if cutscene.is_some() {
+        commands.trigger(SpawnCutsceneOverlayEvent {
+            overlay_type: CutsceneOverlayType::FadeOverlay,
+            initial_alpha: 0.0,
+            target_alpha: 1.0,
+            duration: 1.0,
+        });
     }
+
+    cutscene
+}
+
+// Cutscene UI events
+#[derive(Event)]
+pub struct SpawnCutsceneUiEvent {
+    pub ui_type: CutsceneUiType,
+    pub text: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum CutsceneUiType {
+    DreamWarning,
+    InputPrompt,
+    ChoiceHighlight,
+}
+
+#[derive(Event)]
+pub struct SpawnSpiritChoiceArrowEvent {
+    pub spirit_name: String,
+    pub position_index: usize,
+    pub highlight_color: Color,
+}
+
+#[derive(Event)]
+pub struct SpawnCutsceneOverlayEvent {
+    pub overlay_type: CutsceneOverlayType,
+    pub initial_alpha: f32,
+    pub target_alpha: f32,
+    pub duration: f32,
+}
+
+#[derive(Debug, Clone)]
+pub enum CutsceneOverlayType {
+    FadeOverlay,
+    VignetteEffect,
+    ColorGrade,
 }
 
 /// Render cutscene UI (called from update system)
 pub fn render_cutscene_frame(
     commands: &mut Commands,
-    // Placeholder for tutorial system: Will load frame-specific assets
-    // (dream images, narrative visuals, transition effects)
-    _asset_server: &AssetServer,
+    asset_server: &AssetServer,
     frame: &CutsceneFrame,
     existing_roots: &Query<Entity, With<CutsceneRoot>>,
 ) {
@@ -348,17 +478,33 @@ pub fn render_cutscene_frame(
 
     match &frame.frame_type {
         CutsceneFrameType::ImageFlash(image_path) => {
-            // TODO: Spawn actual image when asset system is ready
-            // For now, display image path as placeholder
+            // Load frame-specific image asset (dream images, narrative visuals)
+            let image_handle: Handle<Image> = asset_server.load(image_path.clone());
+            info!("Rendering cutscene frame with image: {}", image_path);
+
+            // Spawn image entity with the loaded asset
             commands.entity(root).with_children(|parent| {
                 parent.spawn((
-                    Text::new(format!("[IMAGE: {}]", image_path)),
-                    TextFont {
-                        font_size: 48.0,
+                    ImageNode {
+                        image: image_handle,
                         ..default()
                     },
-                    TextColor(Color::srgb(0.8, 0.8, 1.0)),
+                    Node {
+                        width: Val::Percent(80.0),
+                        height: Val::Percent(80.0),
+                        ..default()
+                    },
+                    CutsceneImage {
+                        flash_duration: frame.duration,
+                        elapsed: 0.0,
+                    },
                 ));
+            });
+
+            // Trigger sound effect for this image (loaded by audio system)
+            commands.trigger(CutsceneImageSoundEvent {
+                image_path: image_path.clone(),
+                volume: 0.5,
             });
         }
         CutsceneFrameType::Text(text) => {

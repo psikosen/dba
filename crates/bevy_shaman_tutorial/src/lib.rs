@@ -283,21 +283,59 @@ fn check_tutorial_conditions(
 fn is_condition_met(
     condition: &TutorialCondition,
     event: &TutorialEvent,
-    // Placeholder for tutorial system: Will check player progress for conditional requirements
-    // (e.g., "only complete if player has unlocked rhythm combat", "skip if already mastered")
-    _progress: &TutorialProgress,
+    progress: &TutorialProgress,
 ) -> bool {
+    // Check player progress for conditional requirements
+    // This allows for smart tutorial flow based on what the player has already learned
+
     match (condition, event) {
-        (TutorialCondition::DefeatMonster(_), TutorialEvent::MonsterDefeated) => true,
-        (TutorialCondition::LandCombo(required), TutorialEvent::ComboLanded(actual)) => {
-            actual >= required
+        (TutorialCondition::DefeatMonster(_), TutorialEvent::MonsterDefeated) => {
+            // Check if player has basic combat unlocked
+            if !progress.get_flag("basic_combat_unlocked") {
+                info!("Tutorial: Monster defeat not counted - basic combat not unlocked yet");
+                return false;
+            }
+            true
         }
-        (TutorialCondition::TriggerRhythmAttack(_), TutorialEvent::RhythmAttackTriggered) => true,
-        (TutorialCondition::PurifyTiles(_), TutorialEvent::TilePurified) => true,
+        (TutorialCondition::LandCombo(required), TutorialEvent::ComboLanded(actual)) => {
+            // Check if rhythm combat is unlocked
+            if !progress.get_flag("rhythm_combat_unlocked") {
+                info!("Tutorial: Combo not counted - rhythm combat not unlocked yet");
+                return false;
+            }
+            // Only complete if player has achieved the required combo length
+            if actual >= required {
+                info!("Tutorial: Combo requirement met ({} >= {})", actual, required);
+                true
+            } else {
+                false
+            }
+        }
+        (TutorialCondition::TriggerRhythmAttack(_), TutorialEvent::RhythmAttackTriggered) => {
+            // Skip if player has already mastered rhythm combat
+            if progress.get_flag("rhythm_combat_mastered") {
+                info!("Tutorial: Skipping rhythm attack tutorial - already mastered");
+                return false;
+            }
+            true
+        }
+        (TutorialCondition::PurifyTiles(_), TutorialEvent::TilePurified) => {
+            // Check if purification is unlocked
+            if !progress.get_flag("purification_unlocked") {
+                info!("Tutorial: Purification not counted - ability not unlocked yet");
+                return false;
+            }
+            true
+        }
         (TutorialCondition::InteractWithNpc(npc), TutorialEvent::DialogueCompleted(completed_npc)) => {
             npc == completed_npc
         }
         (TutorialCondition::WaitForCutscene(cutscene_id), TutorialEvent::CutsceneCompleted(completed_id)) => {
+            // Ensure cutscene hasn't been viewed before (skip on replay)
+            if progress.has_viewed_cutscene(completed_id) {
+                info!("Tutorial: Cutscene already viewed - skipping requirement");
+                return true; // Auto-complete if already seen
+            }
             cutscene_id == completed_id
         }
         (TutorialCondition::Custom(flag), TutorialEvent::FlagSet(set_flag, value)) => {
@@ -311,27 +349,106 @@ fn update_tutorial_ui(
     progress: Res<TutorialProgress>,
     settings: Res<TutorialSettings>,
     missions: Res<TutorialMissionRegistry>,
-    // Placeholder for tutorial system: Will spawn UI hints, arrows, and highlight overlays
-    // for guiding player through tutorial steps (see overlay.rs for visual implementation)
-    _commands: Commands,
+    mut commands: Commands,
 ) {
     if !settings.show_hints || progress.tutorial_completed {
         return;
     }
 
-    // This will be expanded with actual UI rendering
-    // For now, just log the current objective
+    // Render context-specific UI overlays, hints, and visual guides
     if let Some(mission_id) = &progress.current_mission {
         if let Some(mission) = missions.get(mission_id) {
             let step_idx = progress.current_step as usize;
-            // Placeholder for tutorial system: Step data will be used to render context-specific
-            // UI overlays, hints, and visual guides (implementation moved to overlay.rs)
-            if let Some(_step) = mission.steps.get(step_idx) {
-                // UI overlay will be rendered here in overlay.rs
-                // For now, just track that we need to display it
+            if let Some(step) = mission.steps.get(step_idx) {
+                // Render context-specific UI overlay based on step type
+                match &step.condition {
+                    TutorialCondition::DefeatMonster(_) => {
+                        // Spawn combat tutorial overlay
+                        commands.trigger(SpawnTutorialOverlayEvent {
+                            overlay_type: TutorialOverlayType::CombatGuide,
+                            objective: step.objective.clone(),
+                            hint: step.hint.clone(),
+                            highlight: step.ui_highlight,
+                        });
+                    }
+                    TutorialCondition::LandCombo(required) => {
+                        // Spawn rhythm combat overlay with combo counter
+                        commands.trigger(SpawnTutorialOverlayEvent {
+                            overlay_type: TutorialOverlayType::RhythmGuide {
+                                target_combo: *required,
+                            },
+                            objective: step.objective.clone(),
+                            hint: step.hint.clone(),
+                            highlight: step.ui_highlight,
+                        });
+                    }
+                    TutorialCondition::TriggerRhythmAttack(_) => {
+                        // Spawn rhythm timing overlay
+                        commands.trigger(SpawnTutorialOverlayEvent {
+                            overlay_type: TutorialOverlayType::TimingGuide,
+                            objective: step.objective.clone(),
+                            hint: step.hint.clone(),
+                            highlight: Some(UiHighlightZone::RhythmIndicator),
+                        });
+                    }
+                    TutorialCondition::PurifyTiles(_) => {
+                        // Spawn purification tutorial overlay
+                        commands.trigger(SpawnTutorialOverlayEvent {
+                            overlay_type: TutorialOverlayType::PurificationGuide,
+                            objective: step.objective.clone(),
+                            hint: step.hint.clone(),
+                            highlight: step.ui_highlight,
+                        });
+                    }
+                    TutorialCondition::ReachPosition(x, y) => {
+                        // Spawn navigation arrow overlay
+                        commands.trigger(SpawnTutorialOverlayEvent {
+                            overlay_type: TutorialOverlayType::NavigationArrow {
+                                target_x: *x,
+                                target_y: *y,
+                            },
+                            objective: step.objective.clone(),
+                            hint: step.hint.clone(),
+                            highlight: Some(UiHighlightZone::Minimap),
+                        });
+                    }
+                    _ => {
+                        // Generic tutorial overlay
+                        commands.trigger(SpawnTutorialOverlayEvent {
+                            overlay_type: TutorialOverlayType::Generic,
+                            objective: step.objective.clone(),
+                            hint: step.hint.clone(),
+                            highlight: step.ui_highlight,
+                        });
+                    }
+                }
+
+                info!(
+                    "Tutorial UI: Rendering overlay for step '{}' in mission '{}'",
+                    step.objective, mission_id
+                );
             }
         }
     }
+}
+
+// Tutorial overlay event
+#[derive(Event)]
+pub struct SpawnTutorialOverlayEvent {
+    pub overlay_type: TutorialOverlayType,
+    pub objective: String,
+    pub hint: Option<String>,
+    pub highlight: Option<UiHighlightZone>,
+}
+
+#[derive(Debug, Clone)]
+pub enum TutorialOverlayType {
+    Generic,
+    CombatGuide,
+    RhythmGuide { target_combo: usize },
+    TimingGuide,
+    PurificationGuide,
+    NavigationArrow { target_x: i32, target_y: i32 },
 }
 
 fn handle_skip_tutorial(
