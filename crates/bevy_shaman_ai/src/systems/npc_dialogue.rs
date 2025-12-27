@@ -72,7 +72,12 @@ pub fn brother_dialogue_system(
 }
 
 /// Determine dialogue context based on AI state and history
-fn determine_dialogue_context(_ai: &LlmAi, history: &ConversationHistory) -> DialogueContext {
+fn determine_dialogue_context(
+    // Placeholder for LLM integration: Will analyze AI personality and emotional state
+    // to determine appropriate dialogue context (e.g., worried brother vs. confident mentor)
+    _ai: &LlmAi,
+    history: &ConversationHistory,
+) -> DialogueContext {
     if history.messages.is_empty() {
         DialogueContext::Greeting
     } else {
@@ -158,9 +163,13 @@ pub fn brother_advice_system(
 
 /// System to generate dynamic greetings based on time of day/game state
 pub fn dynamic_greeting_system(
+    // Placeholder for LLM integration: Will spawn visual/audio effects for greetings
+    // (e.g., emotion particles, voice synthesis triggers)
     _commands: Commands,
     mut brother_query: Query<(Entity, &LlmAi, &mut LlmQueryQueue), Added<LlmAi>>,
 ) {
+    // Placeholder for LLM integration: Entity will be used to attach greeting animations
+    // or trigger location-specific dialogue based on where the brother is encountered
     for (_entity, ai, mut queue) in brother_query.iter_mut() {
         // Generate initial greeting when brother is first encountered
         if queue.dialogue_responses.is_empty() {
@@ -187,6 +196,8 @@ fn generate_initial_greeting(ai: &LlmAi) -> String {
 
 /// System to update conversation context based on game events
 pub fn update_conversation_context(
+    // Placeholder for LLM integration: Will update conversation history with context
+    // from game events (combat victories, quest progress, brother's emotional state)
     _brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
     // TODO: Add event readers for major game events
     // combat_events: EventReader<CombatEvent>,
