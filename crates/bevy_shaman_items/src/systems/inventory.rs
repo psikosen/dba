@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, Player, Health, Spirit, Stamina};
-// Removed to avoid circular dependency
-// use bevy_shaman_combat::components::BloodLust;
+use bevy_shaman_core::components::{GridPosition, Player, Health, Spirit, Stamina, BloodLust};
 use crate::components::{
     Inventory, Pickupable, Item, ItemType, PlantType, FoodType,
     ActiveEffects, ActiveEffect, EffectType
@@ -64,11 +62,11 @@ pub fn pickup_items(
 /// Use items from inventory (consume consumables)
 pub fn use_items(
     mut use_events: EventReader<ItemUsed>,
-    mut player: Query<(&mut Inventory, &mut Health, Option<&mut Spirit>, Option<&mut Stamina>, Option<&mut ActiveEffects>), With<Player>>,
+    mut player: Query<(&mut Inventory, &mut Health, Option<&mut Spirit>, Option<&mut Stamina>, Option<&mut BloodLust>, Option<&mut ActiveEffects>), With<Player>>,
     time: Res<Time>,
 ) {
     for event in use_events.read() {
-        let Ok((mut inventory, mut health, mut spirit_opt, mut stamina_opt, effects_opt)) = player.get_single_mut() else {
+        let Ok((mut inventory, mut health, mut spirit_opt, mut stamina_opt, mut blood_lust_opt, effects_opt)) = player.get_single_mut() else {
             continue;
         };
 
@@ -95,12 +93,11 @@ pub fn use_items(
 
             ItemType::Plant(plant_type) => {
                 // Apply plant effects
-                // NOTE: BloodLust interaction commented out to avoid circular dependency
-                // if plant_type.blood_lust_reduction() > 0.0 {
-                //     if let Some(mut blood_lust) = blood_lust_opt {
-                //         blood_lust.reduce_with_plant(plant_type.blood_lust_reduction());
-                //     }
-                // }
+                if plant_type.blood_lust_reduction() > 0.0 {
+                    if let Some(blood_lust) = blood_lust_opt.as_mut() {
+                        blood_lust.reduce_with_plant(plant_type.blood_lust_reduction());
+                    }
+                }
 
                 // Add active effect if it has duration
                 if let Some(mut effects) = effects_opt {
@@ -126,12 +123,11 @@ pub fn use_items(
 
             ItemType::Food(food_type) => {
                 // Apply food effects
-                // NOTE: BloodLust interaction commented out to avoid circular dependency
-                // if food_type.blood_lust_reduction() > 0.0 {
-                //     if let Some(mut blood_lust) = blood_lust_opt {
-                //         blood_lust.reduce_with_food(food_type.blood_lust_reduction());
-                //     }
-                // }
+                if food_type.blood_lust_reduction() > 0.0 {
+                    if let Some(blood_lust) = blood_lust_opt.as_mut() {
+                        blood_lust.reduce_with_food(food_type.blood_lust_reduction());
+                    }
+                }
 
                 // Add active effect for stat boost foods
                 if let Some(mut effects) = effects_opt {

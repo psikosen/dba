@@ -140,15 +140,13 @@ pub fn play_sound_effects(
 }
 
 /// Trigger sound effects on combat hits
-/// NOTE: Commented out due to circular dependency issue (combat depends on audio)
-/// To enable this, move HitLanded event to bevy_shaman_core
-#[allow(dead_code)]
-pub fn play_hit_sounds() {
-    // mut sfx_events: EventWriter<PlaySoundEffect>,
-    // mut hit_events: EventReader<bevy_shaman_combat::systems::events::HitLanded>,
-    // for _event in hit_events.read() {
-    //     sfx_events.send(PlaySoundEffect::Hit);
-    // }
+pub fn play_hit_sounds(
+    mut sfx_events: EventWriter<PlaySoundEffect>,
+    mut hit_events: EventReader<bevy_shaman_core::events::HitLanded>,
+) {
+    for _event in hit_events.read() {
+        sfx_events.send(PlaySoundEffect::Hit);
+    }
 }
 
 /// Trigger sound effect on level up
@@ -164,13 +162,11 @@ pub fn play_level_up_sound(
 }
 
 /// Trigger sound effect on quest completion
-/// NOTE: Commented out due to circular dependency issue (story depends on audio indirectly)
-/// To enable this, move QuestCompleted event to bevy_shaman_core
-#[allow(dead_code)]
-pub fn play_quest_complete_sound() {
-    // mut sfx_events: EventWriter<PlaySoundEffect>,
-    // mut quest_events: EventReader<bevy_shaman_story::systems::quest_system::QuestCompleted>,
-    // for _event in quest_events.read() {
-    //     sfx_events.send(PlaySoundEffect::QuestComplete);
-    // }
+pub fn play_quest_complete_sound(
+    mut sfx_events: EventWriter<PlaySoundEffect>,
+    mut quest_events: EventReader<bevy_shaman_core::events::QuestCompleted>,
+) {
+    for _event in quest_events.read() {
+        sfx_events.send(PlaySoundEffect::QuestComplete);
+    }
 }

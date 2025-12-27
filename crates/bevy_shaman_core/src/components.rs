@@ -163,3 +163,64 @@ impl Health {
         self.current = (self.current - amount).max(0.0);
     }
 }
+
+// ============================================================================
+// COMBAT RESOURCES
+// ============================================================================
+
+/// Combat difficulty levels (affects BloodLust gain)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CombatDifficulty {
+    Easy,
+    Normal,
+    Hard,
+    Boss,
+}
+
+/// Blood lust mechanic - rises from violence, reduced by music/plants
+#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct BloodLust {
+    pub current: f32,      // 0.0 to 100.0
+    pub threshold: f32,    // When it triggers corruption
+    pub decay_rate: f32,   // How fast it decays out of combat
+}
+
+impl Default for BloodLust {
+    fn default() -> Self {
+        Self {
+            current: 0.0,
+            threshold: 70.0,
+            decay_rate: 5.0,  // Per second
+        }
+    }
+}
+
+impl BloodLust {
+    pub fn is_corrupting(&self) -> bool {
+        self.current >= self.threshold
+    }
+
+    pub fn add_from_combat(&mut self, enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+        let base_gain = match difficulty {
+            CombatDifficulty::Easy => 2.0,
+            CombatDifficulty::Normal => 5.0,
+            CombatDifficulty::Hard => 10.0,
+            CombatDifficulty::Boss => 15.0,
+        };
+
+        let overkill_multiplier = if was_overkill { 2.0 } else { 1.0 };
+        self.current = (self.current + base_gain * overkill_multiplier).min(100.0);
+    }
+
+    pub fn reduce_with_music(&mut self, amount: f32) {
+        self.current = (self.current - amount).max(0.0);
+    }
+
+    pub fn reduce_with_plant(&mut self, amount: f32) {
+        self.current = (self.current - amount).max(0.0);
+    }
+
+    pub fn reduce_with_food(&mut self, amount: f32) {
+        self.current = (self.current - amount).max(0.0);
+    }
+}

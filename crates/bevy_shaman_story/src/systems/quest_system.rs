@@ -2,6 +2,9 @@ use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+// Re-export from core to avoid circular dependency
+pub use bevy_shaman_core::events::QuestCompleted;
+
 // ============================================================================
 // QUEST SYSTEM - Complete Quest Tracking with UI
 // ============================================================================
@@ -333,10 +336,7 @@ pub struct QuestStarted {
     pub quest_id: String,
 }
 
-#[derive(Event, Debug, Clone)]
-pub struct QuestCompleted {
-    pub quest_id: String,
-}
+// QuestCompleted moved to bevy_shaman_core and re-exported above
 
 #[derive(Event, Debug, Clone)]
 pub struct QuestFailed {

@@ -35,6 +35,8 @@ impl Plugin for CorePlugin {
             .add_event::<events::DialogueRequested>()
             .add_event::<events::PlayerDied>()
             .add_event::<events::EntityDied>()
+            .add_event::<events::HitLanded>()
+            .add_event::<events::QuestCompleted>()
             // Asset loading (runs in Boot state)
             .add_systems(Startup, (
                 systems::assets::load_game_assets,

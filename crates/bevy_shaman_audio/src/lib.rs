@@ -26,10 +26,9 @@ impl Plugin for AudioPlugin {
                 systems::song_manager::manage_active_song,
                 systems::audio_playback::play_music,
                 systems::audio_playback::play_sound_effects,
-                // Commented out due to circular dependency - these need combat/story events
-                // systems::audio_playback::play_hit_sounds,
+                systems::audio_playback::play_hit_sounds,
                 systems::audio_playback::play_level_up_sound,
-                // systems::audio_playback::play_quest_complete_sound,
+                systems::audio_playback::play_quest_complete_sound,
             ).run_if(in_state(GameState::Playing)))
             // Events
             .add_event::<systems::events::BeatHit>()
