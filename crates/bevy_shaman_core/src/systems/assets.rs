@@ -13,7 +13,7 @@ impl Default for AssetLoadingState {
         Self {
             loaded: false,
             pending_assets: Vec::new(),
-            use_placeholders: true, // Default to placeholders
+            use_placeholders: false, // Use real assets (fallback to placeholders if missing)
         }
     }
 }
