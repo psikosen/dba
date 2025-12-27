@@ -20,8 +20,8 @@ pub struct HasDialogueTree {
 
 /// Initiate dialogue when player interacts with NPC
 pub fn initiate_npc_dialogue(
-    player: Query<&Position, With<Player>>,
-    npcs: Query<(Entity, &Position, Option<&HasDialogueTree>, Option<&NpcDialogue>, Option<&NpcSicknessState>)>,
+    player: Query<&GridPosition, With<Player>>,
+    npcs: Query<(Entity, &GridPosition, Option<&HasDialogueTree>, Option<&NpcDialogue>, Option<&NpcSicknessState>)>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut dialogue_state: ResMut<ActiveDialogueState>,
     mut start_events: EventWriter<DialogueTreeStarted>,
