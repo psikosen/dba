@@ -372,14 +372,57 @@ pub fn handle_quest_completed(
     mut events: EventReader<QuestCompleted>,
     mut quest_log: ResMut<QuestLog>,
     mut registry: ResMut<QuestRegistry>,
+    mut player_level: ResMut<bevy_shaman_core::resources::PlayerLevel>,
+    mut currency: ResMut<bevy_shaman_shop::resources::Currency>,
+    mut player_inventory: Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
+    mut reputation: ResMut<super::dialogue_tree::DialogueReputation>,
 ) {
     for event in events.read() {
         quest_log.complete_quest(event.quest_id.clone());
         registry.complete_quest(&event.quest_id);
 
-        // TODO: Grant rewards
         if let Some(quest) = registry.get(&event.quest_id) {
             info!("Quest completed: {} - Rewards: {}", quest.title, quest.rewards.rewards_text());
+
+            // Grant XP
+            if quest.rewards.xp > 0 {
+                let leveled_up = player_level.add_experience(quest.rewards.xp);
+                info!("Granted {} XP", quest.rewards.xp);
+                if leveled_up {
+                    info!("Player leveled up to level {}!", player_level.current);
+                }
+            }
+
+            // Grant gold
+            if quest.rewards.gold > 0 {
+                currency.gold += quest.rewards.gold;
+                info!("Granted {} gold", quest.rewards.gold);
+            }
+
+            // Grant items
+            if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                for (item_id, quantity) in &quest.rewards.items {
+                    // Create a basic item (in a real system, you'd fetch from an item database)
+                    let item = bevy_shaman_items::components::Item {
+                        id: item_id.clone(),
+                        display_name: item_id.clone(),
+                        item_type: bevy_shaman_items::components::ItemType::KeyItem,
+                        max_stack: 99,
+                    };
+
+                    if inventory.add_item(item, *quantity) {
+                        info!("Granted {} x{}", item_id, quantity);
+                    } else {
+                        warn!("Failed to grant item: {} (inventory full)", item_id);
+                    }
+                }
+            }
+
+            // Grant reputation
+            for (faction, amount) in &quest.rewards.reputation {
+                reputation.change(faction, *amount);
+                info!("Granted {:+} reputation with {}", amount, faction);
+            }
         }
     }
 }

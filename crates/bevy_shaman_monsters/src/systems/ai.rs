@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Health, MovementCommand, MovementQueue, Player};
 use crate::components::{AiBehavior, AiState, MonsterState};
+use super::pathfinding::{PathfindingGrid, get_next_move, get_flee_direction};
 
-/// Basic AI system: monsters pursue player or flee based on health/state
+/// AI system: monsters pursue player or flee based on health/state using A* pathfinding
 pub fn process_monster_ai(
     player: Query<&GridPosition, With<Player>>,
     mut monsters: Query<
@@ -16,6 +17,7 @@ pub fn process_monster_ai(
         ),
         Without<Player>,
     >,
+    pathfinding_grid: Res<PathfindingGrid>,
 ) {
     let Ok(player_pos) = player.get_single() else {
         return;
@@ -25,10 +27,11 @@ pub fn process_monster_ai(
         // Fleeing logic
         if health.current / health.max < behavior.flee_threshold {
             *ai_state = AiState::Fleeing;
-            // Move away from player
-            let dx = (monster_pos.x - player_pos.x).signum();
-            let dy = (monster_pos.y - player_pos.y).signum();
-            movement_queue.commands.push(MovementCommand::Move(IVec2::new(dx, dy)));
+            // Use pathfinding-aware flee direction
+            let flee_dir = get_flee_direction(*monster_pos, *player_pos, &pathfinding_grid);
+            if flee_dir != IVec2::ZERO {
+                movement_queue.commands.push(MovementCommand::Move(flee_dir));
+            }
             continue;
         }
 
@@ -37,10 +40,10 @@ pub fn process_monster_ai(
             *ai_state = AiState::Idle;
         } else {
             *ai_state = AiState::Aggressive;
-            // Simple pursuit: move toward player
-            let dx = (player_pos.x - monster_pos.x).signum();
-            let dy = (player_pos.y - monster_pos.y).signum();
-            movement_queue.commands.push(MovementCommand::Move(IVec2::new(dx, dy)));
+            // Use A* pathfinding to pursue player
+            if let Some(next_move) = get_next_move(*monster_pos, *player_pos, &pathfinding_grid) {
+                movement_queue.commands.push(MovementCommand::Move(next_move));
+            }
         }
     }
 }

@@ -277,6 +277,10 @@ pub fn apply_dialogue_consequences(
     mut flags: ResMut<DialogueFlags>,
     mut reputation: ResMut<DialogueReputation>,
     registry: Res<DialogueTreeRegistry>,
+    mut player_inventory: Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
+    mut player_level: ResMut<bevy_shaman_core::resources::PlayerLevel>,
+    mut quest_started: EventWriter<super::quest_system::QuestStarted>,
+    mut quest_completed: EventWriter<super::quest_system::QuestCompleted>,
 ) {
     for event in choice_events.read() {
         if let Some(tree) = registry.get(&event.tree_id) {
@@ -284,7 +288,15 @@ pub fn apply_dialogue_consequences(
                 if let Some(choice) = node.choices.get(event.choice_index) {
                     // Apply all consequences
                     for consequence in &choice.consequences {
-                        apply_consequence(consequence, &mut flags, &mut reputation);
+                        apply_consequence(
+                            consequence,
+                            &mut flags,
+                            &mut reputation,
+                            &mut player_inventory,
+                            &mut player_level,
+                            &mut quest_started,
+                            &mut quest_completed,
+                        );
                     }
 
                     info!(
@@ -301,6 +313,10 @@ fn apply_consequence(
     consequence: &DialogueConsequence,
     flags: &mut DialogueFlags,
     reputation: &mut DialogueReputation,
+    player_inventory: &mut Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
+    player_level: &mut bevy_shaman_core::resources::PlayerLevel,
+    quest_started: &mut EventWriter<super::quest_system::QuestStarted>,
+    quest_completed: &mut EventWriter<super::quest_system::QuestCompleted>,
 ) {
     match consequence {
         DialogueConsequence::SetFlag(flag) => {
@@ -315,29 +331,53 @@ fn apply_consequence(
             reputation.change(faction, *amount);
             info!("Changed reputation with {}: {:+}", faction, amount);
         }
-        DialogueConsequence::GiveItem(item, count) => {
-            // TODO: Add item to inventory
-            info!("Give item: {} x{}", item, count);
+        DialogueConsequence::GiveItem(item_id, count) => {
+            if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                let item = bevy_shaman_items::components::Item {
+                    id: item_id.clone(),
+                    display_name: item_id.clone(),
+                    item_type: bevy_shaman_items::components::ItemType::KeyItem,
+                    max_stack: 99,
+                };
+
+                if inventory.add_item(item, *count) {
+                    info!("Gave item: {} x{}", item_id, count);
+                } else {
+                    warn!("Failed to give item: {} (inventory full)", item_id);
+                }
+            }
         }
-        DialogueConsequence::TakeItem(item, count) => {
-            // TODO: Remove item from inventory
-            info!("Take item: {} x{}", item, count);
+        DialogueConsequence::TakeItem(item_id, count) => {
+            if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                if inventory.remove_item(item_id, *count) {
+                    info!("Took item: {} x{}", item_id, count);
+                } else {
+                    warn!("Failed to take item: {} (not enough)", item_id);
+                }
+            }
         }
         DialogueConsequence::StartQuest(quest_id) => {
-            // TODO: Start quest
-            info!("Start quest: {}", quest_id);
+            quest_started.send(super::quest_system::QuestStarted {
+                quest_id: quest_id.clone(),
+            });
+            info!("Started quest: {}", quest_id);
         }
         DialogueConsequence::CompleteQuest(quest_id) => {
-            // TODO: Complete quest
-            info!("Complete quest: {}", quest_id);
+            quest_completed.send(super::quest_system::QuestCompleted {
+                quest_id: quest_id.clone(),
+            });
+            info!("Completed quest: {}", quest_id);
         }
         DialogueConsequence::GiveXP(xp) => {
-            // TODO: Give XP to player
-            info!("Give XP: {}", xp);
+            let leveled_up = player_level.add_experience(*xp);
+            info!("Gave {} XP", xp);
+            if leveled_up {
+                info!("Player leveled up to level {}!", player_level.current);
+            }
         }
         DialogueConsequence::TriggerEvent(event_name) => {
-            // TODO: Trigger custom event
-            info!("Trigger event: {}", event_name);
+            // Custom events would be handled here - for now just log
+            info!("Triggered event: {}", event_name);
         }
     }
 }
