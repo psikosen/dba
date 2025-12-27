@@ -172,8 +172,15 @@ pub enum CombatCondition {
     HealthAbove(f32),
     PlayerHealthBelow(f32),
     CorruptionAbove(f32),
-    DistanceToPlayer(f32),
+    DistanceToPlayer(DistanceCheck),
     PhaseNumber(u32),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DistanceCheck {
+    LessThan(f32),
+    GreaterThan(f32),
+    InRange(f32, f32), // min, max
 }
 
 // ============================================================================

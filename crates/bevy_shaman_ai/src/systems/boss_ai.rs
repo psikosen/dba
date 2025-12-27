@@ -1,34 +1,72 @@
 use bevy::prelude::*;
 use crate::components::*;
-use bevy_shaman_core::components::{Health, Player};
+use bevy_shaman_core::components::{Health, Player, GridPosition};
 use bevy_shaman_monsters::components::{MonsterState, AiState};
 
 /// System to apply LLM-driven combat decisions for bosses
 pub fn boss_combat_ai(
     mut boss_query: Query<(
+        Entity,
         &mut LlmAi,
         &mut LlmQueryQueue,
         &Health,
         &MonsterState,
         &mut AiState,
+        &GridPosition,
     )>,
-    player_query: Query<&Health, With<Player>>,
+    player_query: Query<(&Health, &GridPosition), With<Player>>,
     mut commands: Commands,
     time: Res<Time>,
+    mut phase_tracker: Local<std::collections::HashMap<Entity, BossPhaseData>>,
 ) {
-    let player_health = player_query.get_single().map(|h| h.current / h.max * 100.0).unwrap_or(100.0);
+    let (player_health_percent, player_pos) = player_query
+        .get_single()
+        .map(|(h, pos)| (h.current / h.max * 100.0, pos))
+        .unwrap_or((100.0, &GridPosition { x: 0, y: 0 }));
 
-    for (mut ai, mut queue, health, monster_state, mut ai_state) in boss_query.iter_mut() {
+    for (entity, mut ai, mut queue, health, monster_state, mut ai_state, boss_pos) in boss_query.iter_mut() {
+        // Calculate distance to player
+        let distance = calculate_distance(boss_pos, player_pos);
+
+        // Get or initialize phase data for this boss
+        let phase_data = phase_tracker.entry(entity).or_insert(BossPhaseData {
+            current_phase: 1,
+            last_phase_transition: 0.0,
+            special_move_cooldown: 0.0,
+        });
+
+        // Update phase based on health
+        let health_percent = health.current / health.max;
+        phase_data.current_phase = calculate_phase_from_health(health_percent);
+
+        // Update cooldowns
+        phase_data.special_move_cooldown = (phase_data.special_move_cooldown - time.delta_secs()).max(0.0);
+
         // Update emotional state based on health
         update_emotional_state(&mut ai, health, monster_state);
 
         // Try to use a queued combat decision
-        if let Some(decision) = find_suitable_decision(&mut queue, health, player_health, monster_state) {
-            execute_combat_decision(&decision, &mut ai_state, &ai);
+        if let Some(decision) = find_suitable_decision(
+            &mut queue,
+            health,
+            player_health_percent,
+            monster_state,
+            distance,
+            phase_data.current_phase,
+        ) {
+            execute_combat_decision(
+                &decision,
+                &mut ai_state,
+                &ai,
+                &mut commands,
+                entity,
+                phase_data,
+                distance,
+            );
 
             info!(
-                "Boss {} executes: {:?} - {}",
-                ai.character_name, decision.action, decision.reasoning
+                "Boss {} (Phase {}, Distance: {:.1}) executes: {:?} - {}",
+                ai.character_name, phase_data.current_phase, distance, decision.action, decision.reasoning
             );
 
             // Remove used decision from queue
@@ -38,6 +76,31 @@ pub fn boss_combat_ai(
             *ai_state = AiState::Aggressive;
         }
     }
+}
+
+/// Calculate grid distance between two positions
+fn calculate_distance(pos1: &GridPosition, pos2: &GridPosition) -> f32 {
+    let dx = (pos1.x - pos2.x) as f32;
+    let dy = (pos1.y - pos2.y) as f32;
+    (dx * dx + dy * dy).sqrt()
+}
+
+/// Calculate phase number from health percentage
+fn calculate_phase_from_health(health_percent: f32) -> u32 {
+    match health_percent {
+        p if p > 0.75 => 1,
+        p if p > 0.50 => 2,
+        p if p > 0.25 => 3,
+        _ => 4,
+    }
+}
+
+/// Boss phase tracking data
+#[derive(Clone)]
+struct BossPhaseData {
+    current_phase: u32,
+    last_phase_transition: f32,
+    special_move_cooldown: f32,
 }
 
 /// Update boss emotional state based on combat situation
@@ -69,6 +132,8 @@ fn find_suitable_decision(
     health: &Health,
     player_health: f32,
     monster_state: &MonsterState,
+    distance_to_player: f32,
+    current_phase: u32,
 ) -> Option<QueuedCombatDecision> {
     let health_percent = health.current / health.max * 100.0;
 
@@ -81,44 +146,150 @@ fn find_suitable_decision(
                 CombatCondition::CorruptionAbove(threshold) => {
                     monster_state.corruption_meter > *threshold
                 }
-                CombatCondition::DistanceToPlayer(_) => true, // TODO: Calculate actual distance
-                CombatCondition::PhaseNumber(_) => true,      // TODO: Track phases
+                CombatCondition::DistanceToPlayer(distance_check) => {
+                    match distance_check {
+                        DistanceCheck::LessThan(d) => distance_to_player < *d,
+                        DistanceCheck::GreaterThan(d) => distance_to_player > *d,
+                        DistanceCheck::InRange(min, max) => {
+                            distance_to_player >= *min && distance_to_player <= *max
+                        }
+                    }
+                }
+                CombatCondition::PhaseNumber(phase) => current_phase == *phase,
             }
         })
     }).cloned()
 }
 
 /// Execute a combat decision
-fn execute_combat_decision(decision: &QueuedCombatDecision, ai_state: &mut AiState, ai: &LlmAi) {
+fn execute_combat_decision(
+    decision: &QueuedCombatDecision,
+    ai_state: &mut AiState,
+    ai: &LlmAi,
+    commands: &mut Commands,
+    boss_entity: Entity,
+    phase_data: &mut BossPhaseData,
+    distance: f32,
+) {
     match &decision.action {
         CombatAction::BasicAttack => {
-            *ai_state = AiState::Aggressive;
+            *ai_state = if distance > 3.0 {
+                AiState::Pursuing
+            } else {
+                AiState::Aggressive
+            };
         }
-        CombatAction::SpecialMove(_move_name) => {
-            // TODO: Trigger special move animation/effect
-            *ai_state = AiState::Aggressive;
-            info!("Boss uses special move: {}", _move_name);
+        CombatAction::SpecialMove(move_name) => {
+            // Trigger special move with cooldown
+            if phase_data.special_move_cooldown <= 0.0 {
+                *ai_state = AiState::Aggressive;
+
+                // Trigger special move event
+                commands.trigger_targets(
+                    SpecialMoveTriggered {
+                        move_name: move_name.clone(),
+                        boss_phase: phase_data.current_phase,
+                        damage_multiplier: 1.5 + (phase_data.current_phase as f32 * 0.5),
+                    },
+                    boss_entity,
+                );
+
+                // Set cooldown based on phase (more powerful = longer cooldown)
+                phase_data.special_move_cooldown = 5.0 + (phase_data.current_phase as f32 * 2.0);
+
+                info!("Boss uses special move: {} (Phase {})", move_name, phase_data.current_phase);
+            }
         }
-        CombatAction::SummonMinion(_minion_type) => {
-            // TODO: Spawn minion entity
-            info!("Boss summons: {}", _minion_type);
+        CombatAction::SummonMinion(minion_type) => {
+            // Trigger minion summon event
+            commands.trigger_targets(
+                SummonMinionEvent {
+                    minion_type: minion_type.clone(),
+                    count: phase_data.current_phase.min(3), // More minions in later phases
+                },
+                boss_entity,
+            );
+
+            info!("Boss summons {} x{}", minion_type, phase_data.current_phase.min(3));
         }
         CombatAction::Retreat => {
             *ai_state = AiState::Fleeing;
         }
         CombatAction::ChangeStance(new_stance) => {
-            // Change combat stance
+            // Trigger stance change event
+            commands.trigger_targets(
+                StanceChangeEvent {
+                    new_stance: *new_stance,
+                },
+                boss_entity,
+            );
+
             info!("Boss changes stance to: {:?}", new_stance);
         }
-        CombatAction::UseAbility(_ability) => {
-            // TODO: Trigger ability
-            info!("Boss uses ability: {}", _ability);
+        CombatAction::UseAbility(ability) => {
+            // Trigger ability event
+            commands.trigger_targets(
+                AbilityTriggered {
+                    ability_name: ability.clone(),
+                    distance_to_target: distance,
+                },
+                boss_entity,
+            );
+
+            info!("Boss uses ability: {} (distance: {:.1})", ability, distance);
         }
         CombatAction::SpreadCorruption => {
-            // TODO: Apply corruption spread effect
-            info!("Boss spreads corruption!");
+            // Trigger corruption spread event
+            commands.trigger_targets(
+                CorruptionSpreadEvent {
+                    radius: 3.0 + phase_data.current_phase as f32,
+                    intensity: 0.3 * phase_data.current_phase as f32,
+                },
+                boss_entity,
+            );
+
+            info!("Boss spreads corruption! (radius: {:.1})", 3.0 + phase_data.current_phase as f32);
         }
     }
+}
+
+// ============================================================================
+// BOSS COMBAT EVENTS
+// ============================================================================
+
+/// Event triggered when a boss uses a special move
+#[derive(Event)]
+pub struct SpecialMoveTriggered {
+    pub move_name: String,
+    pub boss_phase: u32,
+    pub damage_multiplier: f32,
+}
+
+/// Event triggered when a boss summons minions
+#[derive(Event)]
+pub struct SummonMinionEvent {
+    pub minion_type: String,
+    pub count: u32,
+}
+
+/// Event triggered when a boss changes combat stance
+#[derive(Event)]
+pub struct StanceChangeEvent {
+    pub new_stance: CombatStance,
+}
+
+/// Event triggered when a boss uses an ability
+#[derive(Event)]
+pub struct AbilityTriggered {
+    pub ability_name: String,
+    pub distance_to_target: f32,
+}
+
+/// Event triggered when a boss spreads corruption
+#[derive(Event)]
+pub struct CorruptionSpreadEvent {
+    pub radius: f32,
+    pub intensity: f32,
 }
 
 /// System to generate boss taunts and dialogue during combat
