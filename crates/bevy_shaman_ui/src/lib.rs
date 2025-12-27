@@ -24,6 +24,8 @@ impl Plugin for UiPlugin {
                 systems::shop_ui::display_shop,
                 systems::inventory_ui::display_inventory,
                 systems::inventory_ui::handle_inventory_interactions,
+                systems::inventory_ui::display_inventory_tooltip,
+                systems::inventory_ui::display_context_menu,
                 systems::minimap::update_minimap,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, (
@@ -52,7 +54,10 @@ impl Plugin for UiPlugin {
                 systems::calendar_ui::display_calendar_button,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, systems::loading_screen::display_loading_screen.run_if(in_state(GameState::Boot)))
-            .add_systems(Update, systems::main_menu::display_main_menu.run_if(in_state(GameState::MainMenu)));
+            .add_systems(Update, (
+                systems::main_menu::display_main_menu,
+                systems::quick_wins::display_settings_panel,
+            ).run_if(in_state(GameState::MainMenu)));
     }
 }
 
@@ -608,6 +613,8 @@ pub mod systems {
                 (Changed<Interaction>, With<Button>),
             >,
             mut next_state: ResMut<NextState<GameState>>,
+            mut load_events: EventWriter<bevy_shaman_save::systems::events::LoadRequested>,
+            mut settings_state: ResMut<super::quick_wins::SettingsUIState>,
         ) {
             // Initialize main menu if it doesn't exist
             if menu_ui.is_empty() {
@@ -728,10 +735,13 @@ pub mod systems {
                 if *interaction == Interaction::Pressed {
                     // Check if save file exists
                     if std::path::Path::new("saves/autosave.json").exists() {
-                        info!("Loading game from autosave - transition to Playing where load will happen");
-                        // Note: Load event will be sent from the tutorial or save system on entering Playing state
+                        info!("Loading game from autosave (slot 0)");
+                        // Send LoadRequested event for autosave (slot 0)
+                        load_events.send(bevy_shaman_save::systems::events::LoadRequested {
+                            save_slot: 0,
+                        });
                     } else {
-                        warn!("No save file found, starting new game");
+                        warn!("No save file found, starting new game instead");
                     }
 
                     // Clean up menu and transition to Playing
@@ -745,8 +755,8 @@ pub mod systems {
             // Handle Settings button (main menu)
             for (interaction, _) in settings_interaction.iter() {
                 if *interaction == Interaction::Pressed {
-                    // Settings are toggled with F1 key - inform user
-                    info!("Settings menu can be accessed with F1 key in-game");
+                    info!("Opening settings panel");
+                    settings_state.visible = true;
                 }
             }
         }
@@ -1773,10 +1783,33 @@ pub mod systems {
             pub quantity: u32,
         }
 
+        #[derive(Component)]
+        pub struct TooltipUI;
+
+        #[derive(Component)]
+        pub struct ContextMenuUI;
+
+        #[derive(Component)]
+        pub struct ContextMenuItem {
+            pub action: ItemAction,
+        }
+
+        #[derive(Clone, Copy, PartialEq)]
+        pub enum ItemAction {
+            Use,
+            Drop,
+            DropStack,
+            Examine,
+        }
+
         #[derive(Resource)]
         pub struct InventoryUIState {
             pub visible: bool,
             pub selected_slot: Option<usize>,
+            pub dragging_slot: Option<usize>,
+            pub hovered_slot: Option<usize>,
+            pub show_context_menu: bool,
+            pub context_menu_slot: Option<usize>,
         }
 
         impl Default for InventoryUIState {
@@ -1784,6 +1817,10 @@ pub mod systems {
                 Self {
                     visible: false,
                     selected_slot: None,
+                    dragging_slot: None,
+                    hovered_slot: None,
+                    show_context_menu: false,
+                    context_menu_slot: None,
                 }
             }
         }
@@ -1792,6 +1829,44 @@ pub mod systems {
         const GRID_ROWS: usize = 6;
         const SLOT_SIZE: f32 = 70.0;
         const SLOT_SPACING: f32 = 5.0;
+
+        /// Get an icon emoji for an item based on its ID
+        fn get_item_icon(item_id: &str) -> &'static str {
+            match item_id {
+                // Potions
+                id if id.contains("health_potion") || id.contains("healing") => "🧪",
+                id if id.contains("mana_potion") || id.contains("spirit") => "💙",
+                id if id.contains("stamina") => "💚",
+                // Food
+                id if id.contains("bread") || id.contains("food") => "🍞",
+                id if id.contains("meat") => "🍖",
+                id if id.contains("berry") || id.contains("fruit") => "🍇",
+                // Weapons
+                id if id.contains("sword") => "⚔️",
+                id if id.contains("axe") => "🪓",
+                id if id.contains("bow") => "🏹",
+                id if id.contains("staff") => "🪄",
+                id if id.contains("dagger") => "🗡️",
+                // Armor
+                id if id.contains("helmet") || id.contains("head") => "⛑️",
+                id if id.contains("chest") || id.contains("armor") => "🛡️",
+                id if id.contains("boots") || id.contains("feet") => "🥾",
+                // Resources
+                id if id.contains("wood") || id.contains("log") => "🪵",
+                id if id.contains("stone") || id.contains("rock") => "🪨",
+                id if id.contains("ore") || id.contains("metal") => "⛏️",
+                id if id.contains("herb") || id.contains("plant") => "🌿",
+                id if id.contains("gem") || id.contains("crystal") => "💎",
+                // Tools
+                id if id.contains("key") => "🔑",
+                id if id.contains("book") || id.contains("scroll") => "📜",
+                id if id.contains("map") => "🗺️",
+                // Quest items
+                id if id.contains("quest") => "❗",
+                // Default
+                _ => "📦",
+            }
+        }
 
         pub fn display_inventory(
             mut commands: Commands,
@@ -1896,33 +1971,59 @@ pub mod systems {
                     for slot_index in 0..total_slots {
                         let item_stack: Option<&ItemStack> = inventory.items.get(slot_index);
 
+                        let is_selected = ui_state.selected_slot == Some(slot_index);
+                        let is_dragging = ui_state.dragging_slot == Some(slot_index);
+                        let is_hovered = ui_state.hovered_slot == Some(slot_index);
+
                         grid.spawn((
                             InventorySlot { slot_index },
                             Button,
                             Node {
                                 width: Val::Px(SLOT_SIZE),
                                 height: Val::Px(SLOT_SIZE),
-                                border: UiRect::all(Val::Px(2.0)),
+                                border: UiRect::all(Val::Px(if is_selected || is_dragging { 3.0 } else { 2.0 })),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 flex_direction: FlexDirection::Column,
                                 ..default()
                             },
-                            BackgroundColor(if item_stack.is_some() {
+                            BackgroundColor(if is_dragging {
+                                Color::srgba(0.4, 0.5, 0.6, 0.7)
+                            } else if is_hovered && item_stack.is_some() {
+                                Color::srgba(0.3, 0.35, 0.4, 0.95)
+                            } else if item_stack.is_some() {
                                 Color::srgba(0.2, 0.25, 0.3, 0.9)
                             } else {
                                 Color::srgba(0.1, 0.1, 0.15, 0.5)
                             }),
-                            BorderColor(if item_stack.is_some() {
+                            BorderColor(if is_selected {
+                                Color::srgb(0.9, 0.8, 0.3)
+                            } else if is_dragging {
+                                Color::srgb(0.7, 0.9, 1.0)
+                            } else if item_stack.is_some() {
                                 Color::srgb(0.4, 0.6, 0.8)
                             } else {
                                 Color::srgb(0.2, 0.2, 0.3)
                             }),
                         )).with_children(|slot| {
                             if let Some(stack) = item_stack {
+                                // Item icon
+                                slot.spawn((
+                                    InventoryItemIcon,
+                                    Text::new(get_item_icon(&stack.item.id)),
+                                    TextFont {
+                                        font_size: 28.0,
+                                        ..default()
+                                    },
+                                    Node {
+                                        margin: UiRect::bottom(Val::Px(2.0)),
+                                        ..default()
+                                    },
+                                ));
+
                                 // Item name (shortened)
-                                let display_name = if stack.item.display_name.len() > 10 {
-                                    format!("{}...", &stack.item.display_name[..7])
+                                let display_name = if stack.item.display_name.len() > 8 {
+                                    format!("{}...", &stack.item.display_name[..5])
                                 } else {
                                     stack.item.display_name.clone()
                                 };
@@ -1931,12 +2032,12 @@ pub mod systems {
                                     InventoryItemText,
                                     Text::new(&display_name),
                                     TextFont {
-                                        font_size: 12.0,
+                                        font_size: 9.0,
                                         ..default()
                                     },
                                     TextColor(Color::srgb(0.9, 0.9, 1.0)),
                                     Node {
-                                        margin: UiRect::bottom(Val::Px(2.0)),
+                                        margin: UiRect::bottom(Val::Px(1.0)),
                                         ..default()
                                     },
                                 ));
@@ -1945,7 +2046,7 @@ pub mod systems {
                                 slot.spawn((
                                     Text::new(format!("x{}", stack.quantity)),
                                     TextFont {
-                                        font_size: 14.0,
+                                        font_size: 11.0,
                                         ..default()
                                     },
                                     TextColor(Color::srgb(1.0, 0.9, 0.5)),
@@ -1978,7 +2079,7 @@ pub mod systems {
                     BackgroundColor(Color::srgba(0.15, 0.2, 0.25, 0.8)),
                 )).with_children(|footer| {
                     footer.spawn((
-                        Text::new("Press [I] to close | [ESC] to close"),
+                        Text::new("Press [I] or [ESC] to close"),
                         TextFont {
                             font_size: 14.0,
                             ..default()
@@ -1987,7 +2088,16 @@ pub mod systems {
                     ));
 
                     footer.spawn((
-                        Text::new("Left-click: Use item | Right-click: Drop item"),
+                        Text::new("Left-click & drag: Move item | Right-click: Item menu"),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.5, 0.5, 0.6)),
+                    ));
+
+                    footer.spawn((
+                        Text::new("Hover for details | Double-click: Use item"),
                         TextFont {
                             font_size: 12.0,
                             ..default()
@@ -1998,55 +2108,313 @@ pub mod systems {
             });
         }
 
-        /// Handle click interactions with inventory slots
+        /// Handle click interactions with inventory slots - drag-drop, tooltips, context menu
         pub fn handle_inventory_interactions(
-            ui_state: Res<InventoryUIState>,
+            mut ui_state: ResMut<InventoryUIState>,
             slot_query: Query<(&InventorySlot, &Interaction), Changed<Interaction>>,
-            player_inventory: Query<&Inventory, With<Player>>,
+            mut player_inventory: Query<&mut Inventory, With<Player>>,
             mouse_button: Res<ButtonInput<MouseButton>>,
+            keyboard: Res<ButtonInput<KeyCode>>,
             mut use_events: EventWriter<bevy_shaman_items::systems::inventory::ItemUsed>,
             mut drop_events: EventWriter<bevy_shaman_items::systems::inventory::ItemDropped>,
             player_query: Query<Entity, With<Player>>,
+            time: Res<Time>,
         ) {
-            if !ui_state.visible {
+            // Close inventory with ESC
+            if keyboard.just_pressed(KeyCode::Escape) && ui_state.visible {
+                ui_state.visible = false;
+                ui_state.dragging_slot = None;
+                ui_state.show_context_menu = false;
                 return;
             }
 
-            let Ok(inventory) = player_inventory.get_single() else {
+            if !ui_state.visible {
                 return;
-            };
+            }
 
             let Ok(player_entity) = player_query.get_single() else {
                 return;
             };
 
+            // Update hover state
+            let mut new_hovered_slot = None;
+            for (slot, interaction) in slot_query.iter() {
+                if *interaction == Interaction::Hovered {
+                    new_hovered_slot = Some(slot.slot_index);
+                    break;
+                }
+            }
+            ui_state.hovered_slot = new_hovered_slot;
+
+            // Handle mouse button releases
+            if mouse_button.just_released(MouseButton::Left) {
+                if let Some(dragging_from) = ui_state.dragging_slot {
+                    // Drop on hovered slot or back to original
+                    if let Some(target_slot) = ui_state.hovered_slot {
+                        if target_slot != dragging_from {
+                            // Swap items between slots
+                            if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                                let from_item = inventory.items.get(dragging_from).cloned();
+                                let to_item = inventory.items.get(target_slot).cloned();
+
+                                // Simple swap logic
+                                if let Some(from) = from_item {
+                                    inventory.items.remove(dragging_from);
+                                    if let Some(to) = to_item {
+                                        inventory.items.insert(dragging_from, to);
+                                    }
+                                    inventory.items.insert(target_slot, from);
+                                    info!("Moved item from slot {} to slot {}", dragging_from, target_slot);
+                                }
+                            }
+                        }
+                    }
+                    ui_state.dragging_slot = None;
+                }
+            }
+
+            // Handle slot interactions
             for (slot, interaction) in slot_query.iter() {
                 if *interaction != Interaction::Pressed {
                     continue;
                 }
 
-                // Get item at this slot
-                let Some(item_stack) = inventory.items.get(slot.slot_index) else {
+                let Ok(inventory) = player_inventory.get_single() else {
                     continue;
                 };
 
-                // Left click = Use item
-                if mouse_button.pressed(MouseButton::Left) {
-                    info!("Using item: {} (x{})", item_stack.item.display_name, item_stack.quantity);
-                    use_events.send(bevy_shaman_items::systems::inventory::ItemUsed {
-                        player: player_entity,
-                        item_id: item_stack.item.id.clone(),
-                    });
+                let has_item = inventory.items.get(slot.slot_index).is_some();
+
+                // Left click - start dragging if has item
+                if mouse_button.just_pressed(MouseButton::Left) && has_item {
+                    ui_state.dragging_slot = Some(slot.slot_index);
+                    ui_state.selected_slot = Some(slot.slot_index);
+                    ui_state.show_context_menu = false;
                 }
 
-                // Right click = Drop 1 item
-                if mouse_button.pressed(MouseButton::Right) {
-                    info!("Dropping 1x {}", item_stack.item.display_name);
-                    drop_events.send(bevy_shaman_items::systems::inventory::ItemDropped {
-                        player: player_entity,
-                        item_id: item_stack.item.id.clone(),
-                        quantity: 1,
-                    });
+                // Right click - show context menu
+                if mouse_button.just_pressed(MouseButton::Right) && has_item {
+                    ui_state.show_context_menu = true;
+                    ui_state.context_menu_slot = Some(slot.slot_index);
+                    ui_state.dragging_slot = None;
+                    info!("Opening context menu for slot {}", slot.slot_index);
+                }
+            }
+
+            // Handle context menu actions
+            if ui_state.show_context_menu {
+                if let Some(menu_slot) = ui_state.context_menu_slot {
+                    if let Ok(inventory) = player_inventory.get_single() {
+                        if let Some(item_stack) = inventory.items.get(menu_slot) {
+                            // For now, use keyboard shortcuts for actions
+                            // U = Use, D = Drop one, X = Drop stack
+                            if keyboard.just_pressed(KeyCode::KeyU) {
+                                info!("Using item: {}", item_stack.item.display_name);
+                                use_events.send(bevy_shaman_items::systems::inventory::ItemUsed {
+                                    player: player_entity,
+                                    item_id: item_stack.item.id.clone(),
+                                });
+                                ui_state.show_context_menu = false;
+                            } else if keyboard.just_pressed(KeyCode::KeyD) {
+                                info!("Dropping 1x {}", item_stack.item.display_name);
+                                drop_events.send(bevy_shaman_items::systems::inventory::ItemDropped {
+                                    player: player_entity,
+                                    item_id: item_stack.item.id.clone(),
+                                    quantity: 1,
+                                });
+                                ui_state.show_context_menu = false;
+                            } else if keyboard.just_pressed(KeyCode::KeyX) {
+                                info!("Dropping entire stack of {}", item_stack.item.display_name);
+                                drop_events.send(bevy_shaman_items::systems::inventory::ItemDropped {
+                                    player: player_entity,
+                                    item_id: item_stack.item.id.clone(),
+                                    quantity: item_stack.quantity,
+                                });
+                                ui_state.show_context_menu = false;
+                            }
+                        }
+                    }
+                }
+
+                // Close menu with ESC or any click outside
+                if keyboard.just_pressed(KeyCode::Escape) {
+                    ui_state.show_context_menu = false;
+                }
+            }
+        }
+
+        /// Display tooltip when hovering over inventory items
+        pub fn display_inventory_tooltip(
+            mut commands: Commands,
+            ui_state: Res<InventoryUIState>,
+            tooltip_query: Query<Entity, With<TooltipUI>>,
+            player_inventory: Query<&Inventory, With<Player>>,
+        ) {
+            // Remove existing tooltips
+            for entity in tooltip_query.iter() {
+                commands.entity(entity).despawn_recursive();
+            }
+
+            if !ui_state.visible {
+                return;
+            }
+
+            // Show tooltip for hovered slot
+            if let Some(hovered_slot) = ui_state.hovered_slot {
+                if let Ok(inventory) = player_inventory.get_single() {
+                    if let Some(item_stack) = inventory.items.get(hovered_slot) {
+                        // Spawn tooltip UI
+                        commands.spawn((
+                            TooltipUI,
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::Percent(50.0),
+                                top: Val::Percent(30.0),
+                                padding: UiRect::all(Val::Px(12.0)),
+                                flex_direction: FlexDirection::Column,
+                                row_gap: Val::Px(5.0),
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.05, 0.05, 0.08, 0.98)),
+                            BorderColor(Color::srgb(0.6, 0.7, 0.9)),
+                            ZIndex(1000),
+                        )).with_children(|parent| {
+                            // Item name
+                            parent.spawn((
+                                Text::new(&item_stack.item.display_name),
+                                TextFont {
+                                    font_size: 18.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                            ));
+
+                            // Item type
+                            parent.spawn((
+                                Text::new(format!("Type: {:?}", item_stack.item.item_type)),
+                                TextFont {
+                                    font_size: 13.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.7, 0.75, 0.8)),
+                            ));
+
+                            // Quantity
+                            parent.spawn((
+                                Text::new(format!("Quantity: {}", item_stack.quantity)),
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.9, 0.5)),
+                            ));
+
+                            // Item ID (for debugging)
+                            parent.spawn((
+                                Text::new(format!("ID: {}", item_stack.item.id)),
+                                TextFont {
+                                    font_size: 10.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.4, 0.4, 0.5)),
+                            ));
+                        });
+                    }
+                }
+            }
+        }
+
+        /// Display context menu for item actions
+        pub fn display_context_menu(
+            mut commands: Commands,
+            ui_state: Res<InventoryUIState>,
+            context_menu_query: Query<Entity, With<ContextMenuUI>>,
+            player_inventory: Query<&Inventory, With<Player>>,
+        ) {
+            // Remove existing context menus
+            for entity in context_menu_query.iter() {
+                commands.entity(entity).despawn_recursive();
+            }
+
+            if !ui_state.visible || !ui_state.show_context_menu {
+                return;
+            }
+
+            // Show context menu for selected slot
+            if let Some(menu_slot) = ui_state.context_menu_slot {
+                if let Ok(inventory) = player_inventory.get_single() {
+                    if let Some(item_stack) = inventory.items.get(menu_slot) {
+                        // Spawn context menu UI
+                        commands.spawn((
+                            ContextMenuUI,
+                            Node {
+                                position_type: PositionType::Absolute,
+                                left: Val::Percent(55.0),
+                                top: Val::Percent(40.0),
+                                padding: UiRect::all(Val::Px(15.0)),
+                                flex_direction: FlexDirection::Column,
+                                row_gap: Val::Px(8.0),
+                                border: UiRect::all(Val::Px(2.0)),
+                                min_width: Val::Px(200.0),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.08, 0.08, 0.12, 0.98)),
+                            BorderColor(Color::srgb(0.7, 0.8, 0.9)),
+                            ZIndex(1001),
+                        )).with_children(|parent| {
+                            // Header
+                            parent.spawn((
+                                Text::new(format!("⚙ {}", item_stack.item.display_name)),
+                                TextFont {
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(5.0)),
+                                    ..default()
+                                },
+                            ));
+
+                            // Action options
+                            parent.spawn((
+                                Text::new("[U] Use Item"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.6, 0.9, 0.6)),
+                            ));
+
+                            parent.spawn((
+                                Text::new("[D] Drop One"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.9, 0.7, 0.5)),
+                            ));
+
+                            parent.spawn((
+                                Text::new("[X] Drop Stack"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.9, 0.5, 0.5)),
+                            ));
+
+                            parent.spawn((
+                                Text::new("\n[ESC] Close Menu"),
+                                TextFont {
+                                    font_size: 12.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.5, 0.5, 0.6)),
+                            ));
+                        });
+                    }
                 }
             }
         }
