@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 // ============================================================================
 
 /// Grid position (data-oriented: single Vec2i for cache efficiency)
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct GridPosition {
     pub x: i32,
     pub y: i32,

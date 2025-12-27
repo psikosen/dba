@@ -7,4 +7,8 @@ license.workspace = true
 [dependencies]
 bevy.workspace = true
 bevy_shaman_core = { path = "../bevy_shaman_core" }
+# Note: Circular dependency issue - combat depends on audio, so we can't depend on combat here
+# These dependencies are commented out to prevent the cycle. The related sound systems are also commented out.
+# bevy_shaman_combat = { path = "../bevy_shaman_combat" }
+# bevy_shaman_story = { path = "../bevy_shaman_story" }
 serde.workspace = true

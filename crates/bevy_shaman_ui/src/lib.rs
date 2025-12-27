@@ -48,6 +48,8 @@ impl Plugin for UiPlugin {
                 systems::quick_wins::display_death_screen,
                 systems::quick_wins::display_combo_counter,
                 systems::quick_wins::display_settings_panel,
+                systems::calendar_ui::display_calendar,
+                systems::calendar_ui::display_calendar_button,
             ).run_if(in_state(GameState::Playing)))
             .add_systems(Update, systems::loading_screen::display_loading_screen.run_if(in_state(GameState::Boot)))
             .add_systems(Update, systems::main_menu::display_main_menu.run_if(in_state(GameState::MainMenu)));
@@ -3202,6 +3204,7 @@ pub mod systems {
                     ("I", "Inventory"),
                     ("B", "Bestiary"),
                     ("S", "Shop"),
+                    ("C", "Calendar & Time"),
                     ("ESC", "Pause Menu"),
                     ("F1", "Settings (this panel)"),
                 ];
@@ -3231,6 +3234,233 @@ pub mod systems {
                     },
                 ));
             });
+        }
+    }
+
+    pub mod calendar_ui {
+        use bevy::prelude::*;
+        use bevy_shaman_core::resources::{CalendarVisible, GameCalendar};
+
+        #[derive(Component)]
+        pub struct CalendarUIRoot;
+
+        #[derive(Component)]
+        pub struct CalendarTimeText;
+
+        #[derive(Component)]
+        pub struct CalendarDateText;
+
+        #[derive(Component)]
+        pub struct CalendarFestivalText;
+
+        #[derive(Component)]
+        pub struct CalendarToggleButton;
+
+        pub fn display_calendar(
+            mut commands: Commands,
+            keyboard: Res<ButtonInput<KeyCode>>,
+            mut calendar_visible: ResMut<CalendarVisible>,
+            ui_root_query: Query<Entity, With<CalendarUIRoot>>,
+            calendar: Res<GameCalendar>,
+            mut time_text_query: Query<&mut Text, (With<CalendarTimeText>, Without<CalendarDateText>, Without<CalendarFestivalText>)>,
+            mut date_text_query: Query<&mut Text, (With<CalendarDateText>, Without<CalendarTimeText>, Without<CalendarFestivalText>)>,
+            mut festival_text_query: Query<&mut Text, (With<CalendarFestivalText>, Without<CalendarTimeText>, Without<CalendarDateText>)>,
+        ) {
+            // Toggle visibility with C key
+            if keyboard.just_pressed(KeyCode::KeyC) {
+                calendar_visible.0 = !calendar_visible.0;
+            }
+
+            // Despawn UI if not visible
+            if !calendar_visible.0 {
+                for entity in ui_root_query.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                return;
+            }
+
+            // Spawn UI if visible and doesn't exist
+            if ui_root_query.is_empty() {
+                commands.spawn((
+                    CalendarUIRoot,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        right: Val::Px(10.0),
+                        top: Val::Px(10.0),
+                        width: Val::Px(350.0),
+                        height: Val::Auto,
+                        flex_direction: FlexDirection::Column,
+                        padding: UiRect::all(Val::Px(15.0)),
+                        row_gap: Val::Px(10.0),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.15, 0.95)),
+                    BorderColor(Color::srgb(0.5, 0.4, 0.3)),
+                    BorderRadius::all(Val::Px(8.0)),
+                )).with_children(|parent| {
+                    // Title
+                    parent.spawn((
+                        Text::new("Calendar & Time"),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.8, 0.6)),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+
+                    // Time display
+                    parent.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Auto,
+                            padding: UiRect::all(Val::Px(10.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.2, 0.2, 0.3, 0.5)),
+                        BorderRadius::all(Val::Px(5.0)),
+                    )).with_children(|time_panel| {
+                        time_panel.spawn((
+                            CalendarTimeText,
+                            Text::new(format!("Time: {}", calendar.time_string())),
+                            TextFont {
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                        ));
+                    });
+
+                    // Date display
+                    parent.spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Auto,
+                            padding: UiRect::all(Val::Px(10.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.2, 0.3, 0.2, 0.5)),
+                        BorderRadius::all(Val::Px(5.0)),
+                    )).with_children(|date_panel| {
+                        date_panel.spawn((
+                            CalendarDateText,
+                            Text::new(format!("Date: {}", calendar.date_string())),
+                            TextFont {
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.9, 1.0, 0.9)),
+                        ));
+                    });
+
+                    // Festival display (if active)
+                    if let Some(festival) = calendar.get_active_festival() {
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.0),
+                                height: Val::Auto,
+                                padding: UiRect::all(Val::Px(10.0)),
+                                flex_direction: FlexDirection::Column,
+                                row_gap: Val::Px(5.0),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.5, 0.3, 0.1, 0.7)),
+                            BorderRadius::all(Val::Px(5.0)),
+                        )).with_children(|festival_panel| {
+                            festival_panel.spawn((
+                                Text::new(format!("🎉 Festival: {}", festival.name)),
+                                TextFont {
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.9, 0.6)),
+                            ));
+                            festival_panel.spawn((
+                                CalendarFestivalText,
+                                Text::new(&festival.description),
+                                TextFont {
+                                    font_size: 13.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.9, 0.9, 0.8)),
+                            ));
+                        });
+                    }
+
+                    // Instructions
+                    parent.spawn((
+                        Text::new("\nPress C to close"),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
+                        Node {
+                            margin: UiRect::top(Val::Px(5.0)),
+                            ..default()
+                        },
+                    ));
+                });
+            } else {
+                // Update existing UI text
+                for mut text in time_text_query.iter_mut() {
+                    **text = format!("Time: {}", calendar.time_string());
+                }
+
+                for mut text in date_text_query.iter_mut() {
+                    **text = format!("Date: {}", calendar.date_string());
+                }
+            }
+        }
+
+        pub fn display_calendar_button(
+            mut commands: Commands,
+            button_query: Query<Entity, With<CalendarToggleButton>>,
+            mut calendar_visible: ResMut<CalendarVisible>,
+            interaction_query: Query<
+                (&Interaction, &CalendarToggleButton),
+                Changed<Interaction>
+            >,
+        ) {
+            // Spawn button if it doesn't exist
+            if button_query.is_empty() {
+                commands.spawn((
+                    CalendarToggleButton,
+                    Button,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        right: Val::Px(10.0),
+                        bottom: Val::Px(10.0),
+                        width: Val::Px(50.0),
+                        height: Val::Px(50.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.3, 0.3, 0.4, 0.9)),
+                    BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                    BorderRadius::all(Val::Px(8.0)),
+                )).with_children(|parent| {
+                    parent.spawn((
+                        Text::new("📅"),
+                        TextFont {
+                            font_size: 28.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+            }
+
+            // Handle button clicks
+            for (interaction, _) in interaction_query.iter() {
+                if *interaction == Interaction::Pressed {
+                    calendar_visible.0 = !calendar_visible.0;
+                }
+            }
         }
     }
 }
