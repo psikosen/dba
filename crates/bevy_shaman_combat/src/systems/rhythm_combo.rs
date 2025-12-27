@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::components::*;
 use bevy_shaman_core::components::Spirit;
-use bevy_shaman_audio::resources::TimingQuality;
+use bevy_shaman_core::resources::TimingQuality;
 
 /// Event for executing a special move from a combo
 #[derive(Event)]

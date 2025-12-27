@@ -4,10 +4,14 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+audio = ["bevy_shaman_audio"]
+
 [dependencies]
 bevy.workspace = true
 bevy_shaman_core = { path = "../bevy_shaman_core" }
-bevy_shaman_audio = { path = "../bevy_shaman_audio" }
+bevy_shaman_audio = { path = "../bevy_shaman_audio", optional = true }
 bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
 bevy_shaman_items = { path = "../bevy_shaman_items" }
 serde.workspace = true

@@ -4,11 +4,17 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+default = []
+# Audio feature requires ALSA on Linux (libasound2-dev)
+# Enable with: cargo build --features audio
+audio = ["bevy_shaman_audio", "bevy_shaman_ui/audio"]
+
 [dependencies]
 bevy.workspace = true
 bevy_shaman_core = { path = "../bevy_shaman_core" }
 bevy_shaman_combat = { path = "../bevy_shaman_combat" }
-bevy_shaman_audio = { path = "../bevy_shaman_audio" }
+bevy_shaman_audio = { path = "../bevy_shaman_audio", optional = true }
 bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
 bevy_shaman_minions = { path = "../bevy_shaman_minions" }
 bevy_shaman_world = { path = "../bevy_shaman_world" }

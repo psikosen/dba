@@ -11,15 +11,21 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
-        app
-            // Core combat systems
-            .add_systems(Update, (
+        let mut app = app;
+
+        // Core combat systems
+        app.add_systems(Update, (
                 systems::hit_resolution::resolve_hits,
                 systems::death::handle_entity_deaths,
                 systems::death::cleanup_dead_entities,
                 systems::status_effects::apply_status_effects,
-                systems::damage::apply_rhythm_based_damage,
-            ).run_if(in_state(GameState::Playing)))
+            ).run_if(in_state(GameState::Playing)));
+
+        // Rhythm-based damage (requires audio feature)
+        #[cfg(feature = "audio")]
+        app.add_systems(Update, systems::damage::apply_rhythm_based_damage.run_if(in_state(GameState::Playing)));
+
+        app
             // Weapon systems
             .add_systems(Update, (
                 systems::weapon::weapon_attack_system,

@@ -31,7 +31,7 @@ pub struct Attack {
     pub attacker: Entity,
     pub damage: f32,
     pub target: Entity,
-    pub rhythm_quality: bevy_shaman_audio::resources::TimingQuality,
+    pub rhythm_quality: bevy_shaman_core::resources::TimingQuality,
 }
 
 // ============================================================================

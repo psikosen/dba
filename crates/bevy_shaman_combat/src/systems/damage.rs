@@ -1,9 +1,11 @@
 use bevy::prelude::*;
+#[cfg(feature = "audio")]
 use bevy_shaman_audio::systems::events::RhythmInputEvaluated;
 use bevy_shaman_monsters::components::MonsterStats;
 use bevy_shaman_core::components::GridPosition;
 use crate::components::{Attack, EquippedWeapon};
 
+#[cfg(feature = "audio")]
 pub fn apply_rhythm_based_damage(
     mut commands: Commands,
     mut rhythm_events: EventReader<RhythmInputEvaluated>,

@@ -67,33 +67,8 @@ impl BeatClock {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum TimingQuality {
-    Perfect,
-    Great,
-    Good,
-    Miss,
-}
-
-impl TimingQuality {
-    pub fn damage_multiplier(&self) -> f32 {
-        match self {
-            TimingQuality::Perfect => 1.5,
-            TimingQuality::Great => 1.2,
-            TimingQuality::Good => 1.0,
-            TimingQuality::Miss => 0.5,
-        }
-    }
-
-    pub fn control_modifier(&self) -> f32 {
-        match self {
-            TimingQuality::Perfect => 1.3,
-            TimingQuality::Great => 1.1,
-            TimingQuality::Good => 1.0,
-            TimingQuality::Miss => 0.7,
-        }
-    }
-}
+// Re-export TimingQuality from core to maintain compatibility
+pub use bevy_shaman_core::resources::TimingQuality;
 
 // ============================================================================
 // SONG DATABASE
