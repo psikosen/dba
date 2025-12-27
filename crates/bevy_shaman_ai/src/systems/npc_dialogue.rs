@@ -163,27 +163,87 @@ pub fn brother_advice_system(
 
 /// System to generate dynamic greetings based on time of day/game state
 pub fn dynamic_greeting_system(
-    // Placeholder for LLM integration: Will spawn visual/audio effects for greetings
-    // (e.g., emotion particles, voice synthesis triggers)
-    _commands: Commands,
+    mut commands: Commands,
     mut brother_query: Query<(Entity, &LlmAi, &mut LlmQueryQueue), Added<LlmAi>>,
 ) {
-    // Placeholder for LLM integration: Entity will be used to attach greeting animations
-    // or trigger location-specific dialogue based on where the brother is encountered
-    for (_entity, ai, mut queue) in brother_query.iter_mut() {
+    for (entity, ai, mut queue) in brother_query.iter_mut() {
         // Generate initial greeting when brother is first encountered
         if queue.dialogue_responses.is_empty() {
             let greeting = generate_initial_greeting(ai);
 
             queue.dialogue_responses.push(QueuedResponse {
-                text: greeting,
+                text: greeting.clone(),
                 context: DialogueContext::Greeting,
                 generated_at: 0.0,
             });
 
-            info!("Generated initial greeting for brother {}", ai.character_name);
+            // Attach greeting animations based on personality
+            // Spawn visual/audio effects for greetings
+            if ai.personality.spirituality > 0.7 {
+                // Spiritual brothers get mystical particle effects
+                info!("Spawning mystical particle effects for {}", ai.character_name);
+                commands.trigger_targets(
+                    GreetingAnimationEvent {
+                        animation_type: GreetingAnimation::MysticalParticles,
+                        intensity: ai.personality.spirituality,
+                    },
+                    entity,
+                );
+            } else if ai.personality.chattiness > 0.7 {
+                // Chatty brothers get expressive gestures
+                info!("Spawning expressive gesture animation for {}", ai.character_name);
+                commands.trigger_targets(
+                    GreetingAnimationEvent {
+                        animation_type: GreetingAnimation::ExpressiveGesture,
+                        intensity: ai.personality.chattiness,
+                    },
+                    entity,
+                );
+            } else {
+                // Default subtle greeting animation
+                commands.trigger_targets(
+                    GreetingAnimationEvent {
+                        animation_type: GreetingAnimation::SubtleNod,
+                        intensity: 0.5,
+                    },
+                    entity,
+                );
+            }
+
+            // Trigger voice synthesis based on emotional state
+            commands.trigger_targets(
+                VoiceSynthesisEvent {
+                    text: greeting,
+                    emotion: ai.emotional_state,
+                    pitch: 1.0 - (ai.personality.wisdom * 0.3), // Wise characters speak lower
+                },
+                entity,
+            );
+
+            info!("Generated initial greeting with animations for brother {}", ai.character_name);
         }
     }
+}
+
+// Greeting animation events
+#[derive(Event)]
+pub struct GreetingAnimationEvent {
+    pub animation_type: GreetingAnimation,
+    pub intensity: f32,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum GreetingAnimation {
+    MysticalParticles,
+    ExpressiveGesture,
+    SubtleNod,
+}
+
+#[derive(Event)]
+pub struct VoiceSynthesisEvent {
+    pub text: String,
+    pub emotion: EmotionalState,
+    pub pitch: f32,
 }
 
 fn generate_initial_greeting(ai: &LlmAi) -> String {
@@ -196,23 +256,44 @@ fn generate_initial_greeting(ai: &LlmAi) -> String {
 
 /// System to update conversation context based on game events
 pub fn update_conversation_context(
-    // Placeholder for LLM integration: Will update conversation history with context
-    // from game events (combat victories, quest progress, brother's emotional state)
-    _brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
-    // TODO: Add event readers for major game events
-    // combat_events: EventReader<CombatEvent>,
-    // quest_events: EventReader<QuestEvent>,
+    mut brother_query: Query<(&LlmAi, &mut ConversationHistory)>,
+    combat_events: EventReader<bevy_shaman_combat::systems::events::HitLanded>,
+    time: Res<Time>,
 ) {
-    // This system will update conversation history with important game events
+    // Update conversation history with context from game events
     // so that brothers can reference what's happening in the game
+    let current_time = time.elapsed_secs_f64();
 
-    // Example:
-    // for event in combat_events.read() {
-    //     for (ai, mut history) in brother_query.iter_mut() {
-    //         history.add_npc_message(
-    //             format!("I sensed a great battle..."),
-    //             current_time
-    //         );
-    //     }
-    // }
+    // Track major combat events
+    let combat_count = combat_events.len();
+    if combat_count > 0 {
+        for (ai, mut history) in brother_query.iter_mut() {
+            // Add context about combat based on personality
+            let combat_message = if ai.personality.spirituality > 0.7 {
+                format!("The spirits are unsettled... I sense {} clashes of energy nearby.", combat_count)
+            } else if ai.personality.wisdom > 0.7 {
+                format!("Brother, I've been observing {} combat exchanges. Your technique improves.", combat_count)
+            } else {
+                format!("Sounds like you've been busy! {} hits landed!", combat_count)
+            };
+
+            // Update conversation history with context
+            history.add_npc_message(combat_message, current_time);
+
+            // Update emotional state based on combat intensity
+            // (This would be implemented in the actual game events system)
+        }
+
+        info!(
+            "Updated conversation history for {} brothers based on {} combat events",
+            brother_query.iter().count(),
+            combat_count
+        );
+    }
+
+    // TODO: Add more event readers for:
+    // - Quest progress
+    // - Corruption spreading
+    // - Spirit encounters
+    // - Player status changes
 }

@@ -165,14 +165,16 @@ fn find_suitable_decision(
 fn execute_combat_decision(
     decision: &QueuedCombatDecision,
     ai_state: &mut AiState,
-    // Placeholder for LLM integration: Will be used to customize execution based on AI personality
-    // (e.g., aggressive bosses execute moves faster, wise bosses add strategic delays)
-    _ai: &LlmAi,
+    ai: &LlmAi,
     commands: &mut Commands,
     boss_entity: Entity,
     phase_data: &mut BossPhaseData,
     distance: f32,
 ) {
+    // Customize execution based on AI personality traits
+    let aggression_multiplier = 0.5 + (ai.personality.aggression * 1.5);
+    let wisdom_delay = if ai.personality.wisdom > 0.7 { 0.5 } else { 0.0 };
+
     match &decision.action {
         CombatAction::BasicAttack => {
             *ai_state = if distance > 3.0 {
@@ -186,20 +188,30 @@ fn execute_combat_decision(
             if phase_data.special_move_cooldown <= 0.0 {
                 *ai_state = AiState::Aggressive;
 
+                // Customize damage based on aggression personality
+                let base_multiplier = 1.5 + (phase_data.current_phase as f32 * 0.5);
+                let personality_multiplier = base_multiplier * aggression_multiplier;
+
                 // Trigger special move event
                 commands.trigger_targets(
                     SpecialMoveTriggered {
                         move_name: move_name.clone(),
                         boss_phase: phase_data.current_phase,
-                        damage_multiplier: 1.5 + (phase_data.current_phase as f32 * 0.5),
+                        damage_multiplier: personality_multiplier,
                     },
                     boss_entity,
                 );
 
-                // Set cooldown based on phase (more powerful = longer cooldown)
-                phase_data.special_move_cooldown = 5.0 + (phase_data.current_phase as f32 * 2.0);
+                // Wise bosses add strategic delays (longer cooldowns)
+                // Aggressive bosses execute moves faster (shorter cooldowns)
+                let base_cooldown = 5.0 + (phase_data.current_phase as f32 * 2.0);
+                let personality_cooldown = base_cooldown + wisdom_delay - (ai.personality.aggression * 2.0);
+                phase_data.special_move_cooldown = personality_cooldown.max(2.0);
 
-                info!("Boss uses special move: {} (Phase {})", move_name, phase_data.current_phase);
+                info!(
+                    "Boss uses special move: {} (Phase {}, Aggression: {:.1}x, Cooldown: {:.1}s)",
+                    move_name, phase_data.current_phase, aggression_multiplier, personality_cooldown
+                );
             }
         }
         CombatAction::SummonMinion(minion_type) => {

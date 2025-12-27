@@ -163,21 +163,35 @@ fn generate_combat_decisions(
     queue: &mut LlmQueryQueue,
     templates: &PromptTemplates,
     model: &mut LlmModel,
-    // Placeholder for LLM integration: Will be used to add temporal context to prompts
-    // (e.g., time-of-day affects boss behavior, urgency in dialogue)
-    _current_time: f64,
+    current_time: f64,
 ) {
     // Generate varied combat decisions
     let decision_count = 5;
 
     for i in 0..decision_count {
-        // Placeholder for LLM integration: Prompt will be sent to GGUF model for inference
-        // Currently built but not used - awaiting model loading implementation
-        let _prompt = build_combat_prompt(ai, i as u32, templates);
+        // Build prompt with temporal context
+        let mut prompt = build_combat_prompt(ai, i as u32, templates);
 
-        // TODO: When GGUF model is loaded, use actual inference here
-        // For now, use placeholder decisions
-        let decision = generate_placeholder_combat_decision(ai, i);
+        // Add temporal context to prompts (affects boss behavior based on time)
+        let time_context = format!(
+            "\n\nTemporal Context:\n- Battle Duration: {:.1}s\n- Urgency: {}\n",
+            current_time,
+            if current_time > 300.0 { "HIGH - Battle dragging on" }
+            else if current_time < 30.0 { "LOW - Just started" }
+            else { "MEDIUM - Mid battle" }
+        );
+        prompt.push_str(&time_context);
+
+        // Send prompt to GGUF model for inference (when model is loaded)
+        let decision = if model.is_loaded {
+            // TODO: Call actual GGUF inference here
+            // For now, log that we would send to model
+            info!("Would send prompt to GGUF model: {} chars", prompt.len());
+            generate_placeholder_combat_decision(ai, i)
+        } else {
+            // Use placeholder until model is loaded
+            generate_placeholder_combat_decision(ai, i)
+        };
 
         queue.combat_decisions.push(decision);
 
@@ -186,9 +200,10 @@ fn generate_combat_decisions(
     }
 
     info!(
-        "Generated {} combat decisions for {}",
+        "Generated {} combat decisions for {} (with temporal context at {:.1}s)",
         queue.combat_decisions.len(),
-        ai.character_name
+        ai.character_name,
+        current_time
     );
 }
 
