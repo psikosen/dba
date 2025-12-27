@@ -122,6 +122,8 @@ pub mod systems {
             pub player_health: (f32, f32),
             pub player_spirit: (f32, f32),
             pub player_stamina: (f32, f32),
+            #[serde(default)]
+            pub player_gold: u32,
             pub corrupted_tiles: Vec<((i32, i32), f32)>,
             pub inventory_items: Vec<(String, String, u32)>, // (id, display_name, quantity)
             #[serde(default)]
@@ -130,6 +132,8 @@ pub mod systems {
             pub monsters: Vec<MonsterSaveData>,
             #[serde(default)]
             pub npcs: Vec<NpcSaveData>,
+            #[serde(default)]
+            pub minion_entities: Vec<String>, // Monster IDs that are tamed minions
             pub timestamp: f64,
             pub save_version: u32,
         }
@@ -143,7 +147,14 @@ pub mod systems {
         pub fn handle_save_requests(
             mut save_events: EventReader<super::events::SaveRequested>,
             mut load_events: EventReader<super::events::LoadRequested>,
-            player: Query<(&GridPosition, &Health, &Spirit, &Stamina, Option<&bevy_shaman_items::components::Inventory>), With<Player>>,
+            player: Query<(
+                &GridPosition,
+                &Health,
+                &Spirit,
+                &Stamina,
+                Option<&bevy_shaman_items::components::Inventory>,
+            ), With<Player>>,
+            currency: Option<Res<bevy_shaman_shop::resources::Currency>>,
             corrupted: Query<(&GridPosition, &TileCorruption)>,
             monsters: Query<(
                 &bevy_shaman_monsters::components::MonsterId,
@@ -160,6 +171,7 @@ pub mod systems {
             )>,
             time: Res<Time>,
             mut pending_load: ResMut<PendingLoadData>,
+            mut loading_flag: ResMut<bevy_shaman_core::resources::LoadingFromSave>,
         ) {
             // Handle save requests
             for _event in save_events.read() {
@@ -176,6 +188,9 @@ pub mod systems {
                     } else {
                         vec![]
                     };
+
+                    // Extract gold from Currency resource
+                    let player_gold = currency.as_ref().map(|c| c.gold).unwrap_or(0);
 
                     // Extract monster data
                     let monster_data: Vec<MonsterSaveData> = monsters
@@ -209,20 +224,32 @@ pub mod systems {
                         })
                         .collect();
 
+                    // TODO: Tutorial progress will be saved separately to avoid circular dependencies
+                    let tutorial_data = TutorialProgressData::default();
+
+                    // Get list of minion monster IDs
+                    let minion_entities: Vec<String> = monsters
+                        .iter()
+                        .filter(|(_, _, _, _, tamed)| tamed.is_some())
+                        .map(|(monster_id, _, _, _, _)| monster_id.0.clone())
+                        .collect();
+
                     let save_data = SaveData {
                         player_position: (pos.x, pos.y),
                         player_health: (health.current, health.max),
                         player_spirit: (spirit.current, spirit.max),
                         player_stamina: (stamina.current, stamina.max),
+                        player_gold,
                         corrupted_tiles: corrupted
                             .iter()
                             .filter(|(_, corruption)| corruption.is_corrupt())
                             .map(|(pos, corruption)| ((pos.x, pos.y), corruption.level))
                             .collect(),
                         inventory_items,
-                        tutorial_progress: TutorialProgressData::default(), // TODO: Tutorial crate should handle its own save/load
+                        tutorial_progress: tutorial_data,
                         monsters: monster_data,
                         npcs: npc_data,
+                        minion_entities,
                         timestamp: time.elapsed_secs_f64(),
                         save_version: 1,
                     };
@@ -261,6 +288,7 @@ pub mod systems {
                             Ok(save_data) => {
                                 info!("Save data loaded from {}, will apply next frame", filename);
                                 pending_load.data = Some(save_data);
+                                loading_flag.is_loading = true;
                             }
                             Err(e) => error!("Failed to deserialize save data: {}", e),
                         }
@@ -274,16 +302,46 @@ pub mod systems {
         pub fn apply_loaded_data(
             mut commands: Commands,
             mut pending_load: ResMut<PendingLoadData>,
+            mut loading_flag: ResMut<bevy_shaman_core::resources::LoadingFromSave>,
             mut player_query: Query<(Entity, &mut GridPosition, &mut Transform, &mut Health, &mut Spirit, &mut Stamina, Option<&mut bevy_shaman_items::components::Inventory>), With<Player>>,
+            mut currency: Option<ResMut<bevy_shaman_shop::resources::Currency>>,
             mut corrupted_query: Query<(&GridPosition, &mut TileCorruption)>,
             mut player_spawned: ResMut<bevy_shaman_core::systems::player::PlayerSpawned>,
+            mut world_generated: ResMut<bevy_shaman_world::systems::generation::WorldGenerated>,
             sprite_handle: Option<Res<bevy_shaman_core::systems::assets::PlayerSpriteHandle>>,
             monster_sprites: Option<Res<bevy_shaman_core::systems::assets::MonsterSpriteHandles>>,
             monster_template_db: Option<Res<bevy_shaman_monsters::resources::MonsterTemplateDB>>,
             item_db: Option<Res<bevy_shaman_items::resources::ItemDB>>,
+            // Queries for cleaning up existing entities
+            existing_monsters: Query<Entity, With<bevy_shaman_monsters::components::MonsterId>>,
+            existing_npcs: Query<Entity, With<bevy_shaman_story::components::NpcName>>,
         ) {
             if let Some(save_data) = pending_load.data.take() {
                 info!("Applying loaded save data to world");
+
+                // Despawn existing monsters and NPCs to prevent duplicates
+                for entity in existing_monsters.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                for entity in existing_npcs.iter() {
+                    commands.entity(entity).despawn_recursive();
+                }
+                info!("Cleared existing monsters and NPCs");
+
+                // Mark that we've generated world and spawned player to prevent duplicates
+                player_spawned.0 = true;
+                world_generated.0 = true;
+
+                // Restore currency resource
+                if let Some(ref mut curr) = currency {
+                    curr.gold = save_data.player_gold;
+                    info!("Restored {} gold", save_data.player_gold);
+                } else if save_data.player_gold > 0 {
+                    commands.insert_resource(bevy_shaman_shop::resources::Currency {
+                        gold: save_data.player_gold,
+                    });
+                    info!("Created currency resource with {} gold", save_data.player_gold);
+                }
 
                 // Restore or spawn player data
                 match player_query.get_single_mut() {
@@ -544,7 +602,12 @@ pub mod systems {
                 }
                 info!("Spawned {} NPCs from save data", save_data.npcs.len());
 
-                // TODO: Tutorial crate should listen for load events and restore its own progress
+                // TODO: Tutorial progress restoration will be handled by tutorial crate
+                // listening to save data events to avoid circular dependency
+
+                // Clear loading flag
+                loading_flag.is_loading = false;
+                info!("Save load complete!");
             }
         }
     }

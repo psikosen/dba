@@ -270,3 +270,14 @@ impl TimingQuality {
         }
     }
 }
+
+// ============================================================================
+// SAVE/LOAD
+// ============================================================================
+
+/// Flag to indicate we're loading from a save file
+/// This prevents duplicate world generation and player spawning
+#[derive(Resource, Default)]
+pub struct LoadingFromSave {
+    pub is_loading: bool,
+}

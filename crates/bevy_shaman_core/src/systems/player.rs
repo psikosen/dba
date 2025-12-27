@@ -11,9 +11,18 @@ pub fn spawn_player(
     mut commands: Commands,
     mut spawned: ResMut<PlayerSpawned>,
     sprite_handle: Res<PlayerSpriteHandle>,
+    loading_from_save: Option<Res<crate::resources::LoadingFromSave>>,
 ) {
     if spawned.0 {
         return;
+    }
+
+    // Don't spawn player if we're loading from a save
+    if let Some(loading) = loading_from_save {
+        if loading.is_loading {
+            info!("Skipping player spawn - loading from save");
+            return;
+        }
     }
 
     info!("Spawning player entity...");
