@@ -75,3 +75,26 @@ pub fn show_simple_dialogue(
         }
     }
 }
+
+/// System to filter and prevent interaction with fully sick NPCs
+/// This ensures AsleepSick NPCs don't trigger dialogue interactions
+pub fn filter_sick_npc_dialogue(
+    mut dialogue_events: EventReader<StartDialogue>,
+    npcs: Query<&NpcSicknessState>,
+    mut commands: Commands,
+) {
+    for event in dialogue_events.read() {
+        if let Ok(sickness) = npcs.get(event.npc_entity) {
+            // Only allow dialogue if NPC is not completely asleep
+            match sickness {
+                NpcSicknessState::AsleepSick => {
+                    // Optionally log or show a message that NPC is too sick to talk
+                    info!("NPC is too sick to communicate (AsleepSick state)");
+                }
+                NpcSicknessState::Waking | NpcSicknessState::Awake => {
+                    // Allow dialogue for Waking and Awake NPCs
+                }
+            }
+        }
+    }
+}

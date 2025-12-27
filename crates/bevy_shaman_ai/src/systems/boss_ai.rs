@@ -174,7 +174,7 @@ fn execute_combat_decision(
     match &decision.action {
         CombatAction::BasicAttack => {
             *ai_state = if distance > 3.0 {
-                AiState::Patrol
+                AiState::Pursuing
             } else {
                 AiState::Aggressive
             };

@@ -30,6 +30,7 @@ impl Plugin for StoryPlugin {
             // Systems
             .add_systems(Update, (
                 systems::npc_sickness::update_npc_waking_state,
+                systems::dialogue::filter_sick_npc_dialogue,
                 systems::instrument_choice::apply_instrument_modifiers,
                 systems::quests::update_brother_cleansing_progress,
                 systems::dialogue_tree::apply_dialogue_consequences,
