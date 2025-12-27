@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_shaman_core::components::{Spirit, Stamina};
-use crate::components::{Inventory, ItemType};
+use crate::components::Inventory;
 use crate::systems::events::SpiritOrbConsumed;
 
 const AUTO_USE_THRESHOLD_SPIRIT: f32 = 0.3;  // 30% of max

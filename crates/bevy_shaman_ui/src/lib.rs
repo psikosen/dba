@@ -311,7 +311,7 @@ pub mod systems {
             #[cfg(feature = "audio")]
             rhythm: Option<Res<BeatClock>>,
             visualizer: Query<Entity, With<RhythmVisualizer>>,
-            mut beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
+            beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
             time: Res<Time>,
         ) {
             // Initialize visualizer if it doesn't exist
@@ -726,8 +726,15 @@ pub mod systems {
             // Handle Load Game button
             for (interaction, _) in load_interaction.iter() {
                 if *interaction == Interaction::Pressed {
-                    // TODO: Implement load game functionality
-                    // For now, just transition to Playing
+                    // Check if save file exists
+                    if std::path::Path::new("saves/autosave.json").exists() {
+                        info!("Loading game from autosave - transition to Playing where load will happen");
+                        // Note: Load event will be sent from the tutorial or save system on entering Playing state
+                    } else {
+                        warn!("No save file found, starting new game");
+                    }
+
+                    // Clean up menu and transition to Playing
                     for entity in menu_ui.iter() {
                         commands.entity(entity).despawn_recursive();
                     }
@@ -735,11 +742,11 @@ pub mod systems {
                 }
             }
 
-            // Handle Settings button
+            // Handle Settings button (main menu)
             for (interaction, _) in settings_interaction.iter() {
                 if *interaction == Interaction::Pressed {
-                    // TODO: Implement settings menu
-                    // For now, do nothing
+                    // Settings are toggled with F1 key - inform user
+                    info!("Settings menu can be accessed with F1 key in-game");
                 }
             }
         }
@@ -1590,6 +1597,8 @@ pub mod systems {
             mut minimap_state: ResMut<MinimapState>,
             player_query: Query<&GridPosition, With<Player>>,
             tile_query: Query<(&GridPosition, &WorldTile)>,
+            npc_query: Query<&GridPosition, With<bevy_shaman_story::components::NpcName>>,
+            monster_query: Query<&GridPosition, With<bevy_shaman_monsters::components::MonsterId>>,
             minimap_root_query: Query<Entity, With<MinimapRoot>>,
             _keyboard: Res<ButtonInput<KeyCode>>,
         ) {
@@ -1688,12 +1697,31 @@ pub mod systems {
                                 Color::srgba(0.1, 0.1, 0.1, 0.5) // Fog of war
                             };
 
-                            // Player position marker
-                            let final_color = if dx == 0 && dy == 0 {
-                                Color::srgb(1.0, 1.0, 0.0) // Yellow for player
+                            // Check for entities at this position
+                            let mut final_color = tile_color;
+
+                            // Player position marker (highest priority)
+                            if dx == 0 && dy == 0 {
+                                final_color = Color::srgb(1.0, 1.0, 0.0); // Yellow for player
                             } else {
-                                tile_color
-                            };
+                                // Check for NPCs
+                                for npc_pos in npc_query.iter() {
+                                    if npc_pos.x == world_x && npc_pos.y == world_y {
+                                        final_color = Color::srgb(0.2, 1.0, 0.2); // Green for NPCs
+                                        break;
+                                    }
+                                }
+
+                                // Check for monsters (if no NPC found)
+                                if final_color == tile_color {
+                                    for monster_pos in monster_query.iter() {
+                                        if monster_pos.x == world_x && monster_pos.y == world_y {
+                                            final_color = Color::srgb(1.0, 0.2, 0.2); // Red for monsters
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
 
                             grid_parent.spawn((
                                 MinimapTile {
@@ -2384,7 +2412,7 @@ pub mod systems {
     // ============================================================================
     pub mod quest_ui {
         use bevy::prelude::*;
-        use bevy_shaman_story::systems::quest_system::{QuestLog, QuestRegistry, QuestStatus};
+        use bevy_shaman_story::systems::quest_system::{QuestLog, QuestRegistry};
 
         #[derive(Component)]
         pub struct QuestLogUI;
@@ -3269,7 +3297,7 @@ pub mod systems {
             calendar: Res<GameCalendar>,
             mut time_text_query: Query<&mut Text, (With<CalendarTimeText>, Without<CalendarDateText>, Without<CalendarFestivalText>)>,
             mut date_text_query: Query<&mut Text, (With<CalendarDateText>, Without<CalendarTimeText>, Without<CalendarFestivalText>)>,
-            mut festival_text_query: Query<&mut Text, (With<CalendarFestivalText>, Without<CalendarTimeText>, Without<CalendarDateText>)>,
+            festival_text_query: Query<&mut Text, (With<CalendarFestivalText>, Without<CalendarTimeText>, Without<CalendarDateText>)>,
         ) {
             // Toggle visibility with C key
             if keyboard.just_pressed(KeyCode::KeyC) {

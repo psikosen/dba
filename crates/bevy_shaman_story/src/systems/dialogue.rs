@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Player};
 use crate::components::{NpcDialogue, NpcSicknessState, NpcName};
 use crate::systems::dialogue_tree::{
-    ActiveDialogueState, DialogueTreeRegistry, DialogueTreeStarted
+    ActiveDialogueState, DialogueTreeStarted
 };
 
 /// Event for starting a dialogue with an NPC
@@ -81,7 +81,7 @@ pub fn show_simple_dialogue(
 pub fn filter_sick_npc_dialogue(
     mut dialogue_events: EventReader<StartDialogue>,
     npcs: Query<&NpcSicknessState>,
-    mut commands: Commands,
+    commands: Commands,
 ) {
     for event in dialogue_events.read() {
         if let Ok(sickness) = npcs.get(event.npc_entity) {

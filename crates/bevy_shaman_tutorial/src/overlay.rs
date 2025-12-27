@@ -216,7 +216,7 @@ pub fn animate_tutorial_arrows(
         arrow.bounce_timer += time.delta_secs() * 3.0;
 
         // Bounce up and down
-        let offset = (arrow.bounce_timer.sin() * 10.0);
+        let offset = arrow.bounce_timer.sin() * 10.0;
         style.top = Val::Px(arrow.target_position.y - 40.0 + offset);
     }
 }

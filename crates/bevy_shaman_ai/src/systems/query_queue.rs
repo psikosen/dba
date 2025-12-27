@@ -191,7 +191,7 @@ fn generate_combat_decisions(
 
 /// Build dialogue prompt from AI state and context
 fn build_dialogue_prompt(ai: &LlmAi, context: &DialogueContext, templates: &PromptTemplates) -> String {
-    let mut data = PromptData {
+    let data = PromptData {
         name: ai.character_name.clone(),
         role: format!("{:?}", ai.role),
         aggression: ai.personality.aggression,

@@ -5,13 +5,13 @@ pub mod systems;
 mod tests;
 
 use bevy::prelude::*;
-use bevy_shaman_core::states::{CombatState, GameState};
+use bevy_shaman_core::states::GameState;
 
 pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
-        let mut app = app;
+        let app = app;
 
         // Core combat systems
         app.add_systems(Update, (
