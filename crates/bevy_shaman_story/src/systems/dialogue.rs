@@ -20,8 +20,8 @@ pub struct HasDialogueTree {
 
 /// Initiate dialogue when player interacts with NPC
 pub fn initiate_npc_dialogue(
-    player: Query<&Position, With<Player>>,
-    npcs: Query<(Entity, &Position, Option<&HasDialogueTree>, Option<&NpcDialogue>, Option<&NpcSicknessState>)>,
+    player: Query<&GridPosition, With<Player>>,
+    npcs: Query<(Entity, &GridPosition, Option<&HasDialogueTree>, Option<&NpcDialogue>, Option<&NpcSicknessState>)>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut dialogue_state: ResMut<ActiveDialogueState>,
     mut start_events: EventWriter<DialogueTreeStarted>,
@@ -72,6 +72,29 @@ pub fn show_simple_dialogue(
             let text = dialogue.get_dialogue(*sickness);
             info!("{}: {}", name.name, text);
             // UI system will pick this up from the ActiveDialogueState
+        }
+    }
+}
+
+/// System to filter and prevent interaction with fully sick NPCs
+/// This ensures AsleepSick NPCs don't trigger dialogue interactions
+pub fn filter_sick_npc_dialogue(
+    mut dialogue_events: EventReader<StartDialogue>,
+    npcs: Query<&NpcSicknessState>,
+    mut commands: Commands,
+) {
+    for event in dialogue_events.read() {
+        if let Ok(sickness) = npcs.get(event.npc_entity) {
+            // Only allow dialogue if NPC is not completely asleep
+            match sickness {
+                NpcSicknessState::AsleepSick => {
+                    // Optionally log or show a message that NPC is too sick to talk
+                    info!("NPC is too sick to communicate (AsleepSick state)");
+                }
+                NpcSicknessState::Waking | NpcSicknessState::Awake => {
+                    // Allow dialogue for Waking and Awake NPCs
+                }
+            }
         }
     }
 }

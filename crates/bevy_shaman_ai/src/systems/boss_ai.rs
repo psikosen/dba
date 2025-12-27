@@ -97,7 +97,7 @@ fn calculate_phase_from_health(health_percent: f32) -> u32 {
 
 /// Boss phase tracking data
 #[derive(Clone)]
-struct BossPhaseData {
+pub struct BossPhaseData {
     current_phase: u32,
     last_phase_transition: f32,
     special_move_cooldown: f32,
@@ -317,7 +317,7 @@ pub fn boss_combat_dialogue(
         if let Some(response_idx) = queue
             .dialogue_responses
             .iter()
-            .position(|r| matches!(r.context, context) || matches!(r.context, DialogueContext::Combat))
+            .position(|r| matches!(&r.context, ctx if ctx == &context) || matches!(r.context, DialogueContext::Combat))
         {
             let response = queue.dialogue_responses.remove(response_idx);
             // Add to conversation history

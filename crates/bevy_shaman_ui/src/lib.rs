@@ -294,6 +294,7 @@ pub mod systems {
 
     pub mod rhythm_ui {
         use bevy::prelude::*;
+        #[cfg(feature = "audio")]
         use bevy_shaman_audio::resources::BeatClock;
 
         #[derive(Component)]
@@ -307,6 +308,7 @@ pub mod systems {
 
         pub fn display_rhythm_visualizer(
             mut commands: Commands,
+            #[cfg(feature = "audio")]
             rhythm: Option<Res<BeatClock>>,
             visualizer: Query<Entity, With<RhythmVisualizer>>,
             mut beat_indicators: Query<&mut BackgroundColor, With<BeatIndicator>>,
@@ -356,6 +358,7 @@ pub mod systems {
             }
 
             // Update beat indicator color based on rhythm clock
+            #[cfg(feature = "audio")]
             if let Some(rhythm_clock) = rhythm {
                 for mut bg_color in beat_indicators.iter_mut() {
                     // Calculate beat phase (0.0 to 1.0)
@@ -1213,6 +1216,7 @@ pub mod systems {
             time: Res<Time>,
             keyboard: Res<ButtonInput<KeyCode>>,
             mut typewriter_query: Query<(&mut TypewriterText, &mut Text)>,
+            #[cfg(feature = "audio")]
             mut sfx_events: EventWriter<bevy_shaman_audio::systems::audio_playback::PlaySoundEffect>,
         ) {
             for (mut typewriter, mut text) in typewriter_query.iter_mut() {
@@ -1228,6 +1232,7 @@ pub mod systems {
                 if typewriter.timer.just_finished() && !typewriter.is_complete() {
                     typewriter.current_index += 1;
                     // Play typewriter sound effect every few characters to avoid spam
+                    #[cfg(feature = "audio")]
                     if typewriter.current_index % 3 == 0 {
                         sfx_events.send(bevy_shaman_audio::systems::audio_playback::PlaySoundEffect::TypewriterBeep);
                     }

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_shaman_core::components::GridPosition;
 use bevy_shaman_world::components::{BiomeType, WorldTile};
-use crate::components::{NpcName, NpcDialogue, NpcSicknessState, HeadShaman, PlayerBrother};
+use crate::components::{NpcName, NpcDialogue, NpcSicknessState, HeadShaman, PlayerBrother, VillageMarker};
 use crate::resources::{AfricanNamesDB, CharacterType, PortraitEmotion};
 use rand::seq::SliceRandom;
 use rand::Rng;
@@ -15,7 +15,7 @@ pub fn spawn_village_npcs(
     mut commands: Commands,
     mut spawned: ResMut<NpcsSpawned>,
     names_db: Res<AfricanNamesDB>,
-    village_tiles: Query<&GridPosition, With<crate::components::VillageMarker>>,
+    village_tiles: Query<&GridPosition, With<VillageMarker>>,
 ) {
     if spawned.0 {
         return;
@@ -38,7 +38,7 @@ pub fn spawn_village_npcs(
             head_shaman_name,
             first_village.x,
             first_village.y,
-            Some(HeadShamanBundle),
+            Some(HeadShamanBundle { head_shaman: HeadShaman }),
             "Welcome, young shaman. The spirits are restless and corruption spreads across our land.".to_string(),
             Some("I sense... the awakening begins. Your brothers stir.".to_string()),
         );
@@ -159,7 +159,7 @@ fn get_name_by_type(
 fn spawn_npcs_by_type(
     commands: &mut Commands,
     names_db: &AfricanNamesDB,
-    village_tiles: &Query<&GridPosition, With<crate::components::VillageMarker>>,
+    village_tiles: &Query<&GridPosition, With<VillageMarker>>,
     char_type: CharacterType,
     count: usize,
     rng: &mut impl Rng,
@@ -252,10 +252,6 @@ fn spawn_brother(
         Name::new(format!("Brother: {}", name)),
     ));
 }
-
-/// Marker component for village tiles
-#[derive(Component)]
-pub struct VillageMarker;
 
 /// System to mark village tiles (runs before NPC spawning)
 pub fn mark_village_tiles(

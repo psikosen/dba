@@ -132,7 +132,7 @@ pub struct QueuedResponse {
     pub generated_at: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DialogueContext {
     Greeting,
     Combat,

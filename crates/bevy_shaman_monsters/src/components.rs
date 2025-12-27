@@ -160,6 +160,7 @@ impl Default for AiBehavior {
 pub enum AiState {
     Idle,
     Patrol,
+    Pursuing,
     Aggressive,
     Fleeing,
     Stunned,
