@@ -238,7 +238,7 @@ pub mod systems {
                         })
                         .collect();
 
-                    // TODO: Tutorial progress will be saved separately to avoid circular dependencies
+                    // Tutorial progress will be saved by the tutorial crate to avoid circular dependencies
                     let tutorial_data = TutorialProgressData::default();
 
                     // Get list of minion monster IDs
@@ -356,6 +356,8 @@ pub mod systems {
                     });
                     info!("Created currency resource with {} gold", save_data.player_gold);
                 }
+
+                // Tutorial progress will be restored by the tutorial crate
 
                 // Restore or spawn player data
                 match player_query.get_single_mut() {

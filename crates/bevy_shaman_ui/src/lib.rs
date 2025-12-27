@@ -1,11 +1,20 @@
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
 
+pub mod ancestral_theme;
+pub mod ancestral_hud;
+pub mod ancestral_inventory;
+
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app
+            // Ancestral UI resources
+            .init_resource::<ancestral_hud::AncestralHudState>()
+            .init_resource::<ancestral_inventory::AncestralInventoryState>()
+
+            // Legacy UI resources
             .init_resource::<systems::bestiary::BestiaryVisible>()
             .init_resource::<systems::loading_screen::VideoIntroTimer>()
             .init_resource::<systems::shop_ui::ShopVisible>()
@@ -17,6 +26,22 @@ impl Plugin for UiPlugin {
             .init_resource::<systems::quick_wins::DeathScreenState>()
             .init_resource::<systems::quick_wins::SettingsUIState>()
             .init_resource::<systems::combat_feedback::ScreenShake>()
+
+            // Ancestral HUD systems (run when entering Playing state)
+            .add_systems(OnEnter(GameState::Playing), ancestral_hud::setup_ancestral_hud)
+
+            // Ancestral UI update systems
+            .add_systems(Update, (
+                ancestral_hud::update_vitality_bars,
+                ancestral_hud::animate_health_bar,
+                ancestral_hud::animate_spirit_bar,
+                ancestral_inventory::display_ancestral_inventory,
+                ancestral_inventory::handle_tab_clicks,
+                ancestral_inventory::handle_compartment_hover,
+                ancestral_inventory::handle_compartment_clicks,
+            ).run_if(in_state(GameState::Playing)))
+
+            // Legacy UI systems
             .add_systems(Update, (
                 systems::hud::update_hud,
                 systems::rhythm_ui::display_rhythm_visualizer,

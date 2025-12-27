@@ -33,6 +33,8 @@ impl Plugin for TutorialPlugin {
                     handle_skip_tutorial,
                     track_combat_events,
                     track_purification_events,
+                    save_tutorial_progress,
+                    load_tutorial_progress,
                 ).run_if(in_state(GameState::Playing))
             )
 
@@ -505,6 +507,73 @@ fn track_purification_events(
     for corruption in corruption_query.iter() {
         if corruption.level == 0.0 {
             tutorial_events.send(TutorialEvent::TilePurified);
+        }
+    }
+}
+
+/// Save tutorial progress to the save file when a save is requested
+fn save_tutorial_progress(
+    mut save_events: EventReader<bevy_shaman_save::systems::events::SaveRequested>,
+    tutorial_progress: Res<TutorialProgress>,
+) {
+    use std::fs;
+
+    for _event in save_events.read() {
+        // Read the existing save file
+        if let Ok(json_str) = fs::read_to_string("saves/autosave.json") {
+            if let Ok(mut save_data) = serde_json::from_str::<bevy_shaman_save::systems::save_load::SaveData>(&json_str) {
+                // Update tutorial progress in save data
+                save_data.tutorial_progress.tutorial_started = tutorial_progress.tutorial_started;
+                save_data.tutorial_progress.tutorial_completed = tutorial_progress.tutorial_completed;
+                save_data.tutorial_progress.current_mission = tutorial_progress.current_mission.clone();
+                save_data.tutorial_progress.current_step = tutorial_progress.current_step;
+                save_data.tutorial_progress.completed_missions = tutorial_progress.completed_missions.clone();
+                save_data.tutorial_progress.mission_flags = tutorial_progress.mission_flags.clone();
+                save_data.tutorial_progress.cutscene_viewed = tutorial_progress.cutscene_viewed.clone();
+
+                // Write back to file
+                if let Ok(updated_json) = serde_json::to_string_pretty(&save_data) {
+                    if fs::write("saves/autosave.json", updated_json).is_ok() {
+                        info!("Tutorial progress saved successfully");
+                    } else {
+                        error!("Failed to write updated tutorial progress to save file");
+                    }
+                } else {
+                    error!("Failed to serialize updated save data");
+                }
+            } else {
+                warn!("Could not parse save file to update tutorial progress");
+            }
+        }
+    }
+}
+
+/// Load tutorial progress from the save file when a load is completed
+fn load_tutorial_progress(
+    mut tutorial_progress: ResMut<TutorialProgress>,
+    loading_flag: Res<bevy_shaman_core::resources::LoadingFromSave>,
+) {
+    use std::fs;
+
+    // Only load when the loading flag is set (indicates a load just completed)
+    if !loading_flag.is_loading {
+        return;
+    }
+
+    // Read the save file
+    if let Ok(json_str) = fs::read_to_string("saves/autosave.json") {
+        if let Ok(save_data) = serde_json::from_str::<bevy_shaman_save::systems::save_load::SaveData>(&json_str) {
+            // Restore tutorial progress
+            tutorial_progress.tutorial_started = save_data.tutorial_progress.tutorial_started;
+            tutorial_progress.tutorial_completed = save_data.tutorial_progress.tutorial_completed;
+            tutorial_progress.current_mission = save_data.tutorial_progress.current_mission.clone();
+            tutorial_progress.current_step = save_data.tutorial_progress.current_step;
+            tutorial_progress.completed_missions = save_data.tutorial_progress.completed_missions.clone();
+            tutorial_progress.mission_flags = save_data.tutorial_progress.mission_flags.clone();
+            tutorial_progress.cutscene_viewed = save_data.tutorial_progress.cutscene_viewed.clone();
+
+            info!("Tutorial progress loaded successfully (started: {}, completed: {}, missions: {})",
+                tutorial_progress.tutorial_started, tutorial_progress.tutorial_completed, tutorial_progress.completed_missions.len());
         }
     }
 }

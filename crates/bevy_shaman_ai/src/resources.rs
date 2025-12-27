@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::llm_backend::{LlmBackend, create_backend};
 
 // ============================================================================
 // LLM MODEL RESOURCE
@@ -16,16 +17,53 @@ pub struct LlmModel {
     pub config: ModelConfig,
     /// Generation statistics
     pub stats: GenerationStats,
+    /// Active backend (boxed to allow different implementations)
+    #[allow(dead_code)]
+    backend: Option<Box<dyn LlmBackend>>,
 }
 
 impl Default for LlmModel {
     fn default() -> Self {
-        Self {
-            model_path: "gemma3:270m".to_string(),
+        let mut model = Self {
+            model_path: "models/gemma3-270m.gguf".to_string(),
             is_loaded: false,
             config: ModelConfig::default(),
             stats: GenerationStats::default(),
+            backend: None,
+        };
+
+        // Initialize backend
+        model.backend = Some(create_backend(&model));
+        info!("LLM backend initialized: {}", model.backend.as_ref().unwrap().name());
+
+        model
+    }
+}
+
+impl LlmModel {
+    /// Generate text using the active backend
+    pub fn generate(&mut self, prompt: &str) -> Result<String, String> {
+        if let Some(backend) = &mut self.backend {
+            self.stats.total_requests += 1;
+
+            match backend.generate(prompt, &self.config) {
+                Ok(response) => {
+                    self.stats.successful_generations += 1;
+                    Ok(response)
+                }
+                Err(e) => {
+                    self.stats.failed_generations += 1;
+                    Err(format!("{}", e))
+                }
+            }
+        } else {
+            Err("No backend available".to_string())
         }
+    }
+
+    /// Check if backend is ready
+    pub fn is_backend_ready(&self) -> bool {
+        self.backend.as_ref().map(|b| b.is_ready()).unwrap_or(false)
     }
 }
 
