@@ -1,3 +1,4 @@
+use crate::ancestral_theme::*;
 /// Ancestral HUD System
 /// Implements the "Ancestral Legacy" HUD design with:
 /// - Bronze-framed character portrait
@@ -5,10 +6,8 @@
 /// - Sun compass mini-map
 /// - Fetish belt combat abilities
 /// - Griot's scroll quest tracker
-
 use bevy::prelude::*;
-use bevy_shaman_core::components::{Health, Spirit, Stamina, Player};
-use crate::ancestral_theme::*;
+use bevy_shaman_core::components::{Health, Player, Spirit, Stamina};
 
 // ============================================================================
 // COMPONENTS
@@ -123,10 +122,7 @@ const ABILITY_SLOT_SIZE: f32 = SLOT_MEDIUM;
 // SETUP SYSTEM
 // ============================================================================
 
-pub fn setup_ancestral_hud(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+pub fn setup_ancestral_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Root HUD container
     commands
         .spawn((
@@ -188,15 +184,13 @@ pub fn setup_ancestral_hud(
 
 fn spawn_character_portrait(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
     parent
-        .spawn((
-            Node {
-                width: Val::Px(PORTRAIT_OUTER_SIZE),
-                height: Val::Px(PORTRAIT_OUTER_SIZE),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-        ))
+        .spawn((Node {
+            width: Val::Px(PORTRAIT_OUTER_SIZE),
+            height: Val::Px(PORTRAIT_OUTER_SIZE),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        },))
         .with_children(|frame_parent| {
             // Bronze frame outer ring with glossy effect
             frame_parent
@@ -229,11 +223,13 @@ fn spawn_character_portrait(parent: &mut ChildBuilder, _asset_server: &Res<Asset
             // Cowrie shell decorations around frame (4 corners)
             for i in 0..4 {
                 let (x, y) = match i {
-                    0 => (0.0, 0.0),                                          // Top-left
-                    1 => (PORTRAIT_OUTER_SIZE - COWRIE_SIZE, 0.0),            // Top-right
-                    2 => (0.0, PORTRAIT_OUTER_SIZE - COWRIE_SIZE),            // Bottom-left
-                    3 => (PORTRAIT_OUTER_SIZE - COWRIE_SIZE,
-                          PORTRAIT_OUTER_SIZE - COWRIE_SIZE),                 // Bottom-right
+                    0 => (0.0, 0.0),                               // Top-left
+                    1 => (PORTRAIT_OUTER_SIZE - COWRIE_SIZE, 0.0), // Top-right
+                    2 => (0.0, PORTRAIT_OUTER_SIZE - COWRIE_SIZE), // Bottom-left
+                    3 => (
+                        PORTRAIT_OUTER_SIZE - COWRIE_SIZE,
+                        PORTRAIT_OUTER_SIZE - COWRIE_SIZE,
+                    ), // Bottom-right
                     _ => (0.0, 0.0),
                 };
 
@@ -455,8 +451,16 @@ fn spawn_fetish_belt(parent: &mut ChildBuilder) {
 }
 
 fn spawn_ability_slot(parent: &mut ChildBuilder, index: usize, size: f32, is_main_weapon: bool) {
-    let border_width = if is_main_weapon { BORDER_THICK } else { BORDER_MEDIUM };
-    let border_color = if is_main_weapon { metal::BRONZE } else { wood::CARVED_LIGHT };
+    let border_width = if is_main_weapon {
+        BORDER_THICK
+    } else {
+        BORDER_MEDIUM
+    };
+    let border_color = if is_main_weapon {
+        metal::BRONZE
+    } else {
+        wood::CARVED_LIGHT
+    };
 
     parent
         .spawn((
@@ -552,9 +556,30 @@ fn spawn_griot_scroll(parent: &mut ChildBuilder) {
 
 pub fn update_vitality_bars(
     player_query: Query<(&Health, &Spirit, &Stamina), With<Player>>,
-    mut health_fill_query: Query<&mut Node, (With<HealthBarFill>, Without<SpiritBarFill>, Without<StaminaBarFill>)>,
-    mut spirit_fill_query: Query<&mut Node, (With<SpiritBarFill>, Without<HealthBarFill>, Without<StaminaBarFill>)>,
-    mut stamina_fill_query: Query<&mut Node, (With<StaminaBarFill>, Without<HealthBarFill>, Without<SpiritBarFill>)>,
+    mut health_fill_query: Query<
+        &mut Node,
+        (
+            With<HealthBarFill>,
+            Without<SpiritBarFill>,
+            Without<StaminaBarFill>,
+        ),
+    >,
+    mut spirit_fill_query: Query<
+        &mut Node,
+        (
+            With<SpiritBarFill>,
+            Without<HealthBarFill>,
+            Without<StaminaBarFill>,
+        ),
+    >,
+    mut stamina_fill_query: Query<
+        &mut Node,
+        (
+            With<StaminaBarFill>,
+            Without<HealthBarFill>,
+            Without<SpiritBarFill>,
+        ),
+    >,
 ) {
     let Ok((health, spirit, stamina)) = player_query.get_single() else {
         return;
@@ -752,7 +777,10 @@ pub fn update_dev_mode_panel(
 /// Handle dev mode toggle button clicks
 pub fn handle_dev_mode_toggle(
     mut dev_mode: ResMut<bevy_shaman_core::resources::DevMode>,
-    mut toggle_query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<DevModeToggleButton>)>,
+    mut toggle_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<DevModeToggleButton>),
+    >,
 ) {
     for (interaction, mut bg_color) in toggle_query.iter_mut() {
         match *interaction {
@@ -784,7 +812,10 @@ pub fn handle_spawn_brother_button(
     commands: Commands,
     button_query: Query<&Interaction, (Changed<Interaction>, With<SpawnBrotherButton>)>,
     names_db: Res<bevy_shaman_story::resources::AfricanNamesDB>,
-    player_query: Query<&bevy_shaman_core::components::GridPosition, With<bevy_shaman_core::components::Player>>,
+    player_query: Query<
+        &bevy_shaman_core::components::GridPosition,
+        With<bevy_shaman_core::components::Player>,
+    >,
 ) {
     for interaction in button_query.iter() {
         if *interaction == Interaction::Pressed {
@@ -805,7 +836,10 @@ pub fn handle_spawn_boss_button(
     commands: Commands,
     button_query: Query<&Interaction, (Changed<Interaction>, With<SpawnBossButton>)>,
     template_db: Res<bevy_shaman_monsters::resources::MonsterTemplateDB>,
-    player_query: Query<&bevy_shaman_core::components::GridPosition, With<bevy_shaman_core::components::Player>>,
+    player_query: Query<
+        &bevy_shaman_core::components::GridPosition,
+        With<bevy_shaman_core::components::Player>,
+    >,
 ) {
     for interaction in button_query.iter() {
         if *interaction == Interaction::Pressed {

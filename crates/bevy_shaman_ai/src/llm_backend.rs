@@ -1,13 +1,12 @@
+use crate::components::*;
+use crate::resources::*;
 /// LLM Backend Abstraction Layer
 /// Provides a unified interface for different LLM backends:
 /// - Placeholder (rule-based responses for development/fallback)
 /// - GGUF Local (via llama.cpp when model is available)
 /// - HTTP API (for remote LLM services)
-
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::components::*;
-use crate::resources::*;
 
 // ============================================================================
 // BACKEND TRAIT
@@ -68,7 +67,12 @@ impl PlaceholderBackend {
     }
 
     /// Generate dialogue based on personality traits and context
-    fn generate_dialogue_response(&self, personality: &PersonalityTraits, context: &str, role: &str) -> String {
+    fn generate_dialogue_response(
+        &self,
+        personality: &PersonalityTraits,
+        context: &str,
+        role: &str,
+    ) -> String {
         let templates = match role.to_lowercase().as_str() {
             "boss" => &self.response_templates.boss_dialogue,
             "brother" => &self.response_templates.brother_dialogue,
@@ -88,7 +92,8 @@ impl PlaceholderBackend {
         };
 
         let default_template = "...".to_string();
-        let template = templates.get(template_index % templates.len())
+        let template = templates
+            .get(template_index % templates.len())
             .unwrap_or(&default_template);
 
         // Simple context-aware modifications
@@ -106,7 +111,11 @@ impl PlaceholderBackend {
     }
 
     /// Generate combat decision based on personality and situation
-    fn generate_combat_decision(&self, personality: &PersonalityTraits, health_pct: f32) -> CombatDecision {
+    fn generate_combat_decision(
+        &self,
+        personality: &PersonalityTraits,
+        health_pct: f32,
+    ) -> CombatDecision {
         // Aggressive personalities attack more
         if personality.aggression > 0.7 && health_pct > 30.0 {
             if rand::random::<f32>() > 0.5 {
@@ -161,8 +170,9 @@ impl LlmBackend for PlaceholderBackend {
                 "taunt": "Face my ancestral power!"
             });
 
-            serde_json::to_string_pretty(&json)
-                .map_err(|e| LlmError::GenerationFailed(format!("JSON serialization failed: {}", e)))
+            serde_json::to_string_pretty(&json).map_err(|e| {
+                LlmError::GenerationFailed(format!("JSON serialization failed: {}", e))
+            })
         } else {
             // Dialogue generation
             let personality = PersonalityTraits {
@@ -261,14 +271,26 @@ pub enum CombatDecision {
 }
 
 // ============================================================================
-// GGUF BACKEND (Stub for future implementation)
+// GGUF BACKEND (Actual implementation with llama-cpp-2)
 // ============================================================================
+
+#[cfg(feature = "llm")]
+use llama_cpp_2::{
+    context::params::LlamaContextParams,
+    llama_backend::LlamaBackend as LlamaCppBackend,
+    llama_batch::LlamaBatch,
+    model::{params::LlamaModelParams, AddBos, LlamaModel as LlamaCppModel},
+    token::data_array::LlamaTokenDataArray,
+};
 
 #[cfg(feature = "llm")]
 pub struct GgufBackend {
     model_path: String,
     is_loaded: bool,
-    // Will add llama-cpp-2 model handle when feature is enabled
+    model: Option<LlamaCppModel>,
+    backend: Option<LlamaCppBackend>,
+    n_ctx: u32,
+    n_batch: u32,
 }
 
 #[cfg(feature = "llm")]
@@ -277,17 +299,129 @@ impl GgufBackend {
         Self {
             model_path,
             is_loaded: false,
+            model: None,
+            backend: None,
+            n_ctx: 2048,  // Context window size
+            n_batch: 512, // Batch size for processing
         }
     }
 
     pub fn load_model(&mut self) -> Result<(), LlmError> {
-        // TODO: Implement actual model loading with llama-cpp-2
-        // This would:
-        // 1. Load GGUF file from model_path
-        // 2. Initialize llama context
-        // 3. Set up sampling parameters
-        warn!("GGUF model loading not yet implemented");
-        Err(LlmError::ModelNotLoaded)
+        info!("Loading GGUF model from: {}", self.model_path);
+
+        // Check if file exists
+        if !std::path::Path::new(&self.model_path).exists() {
+            return Err(LlmError::GenerationFailed(format!(
+                "Model file not found: {}",
+                self.model_path
+            )));
+        }
+
+        // Initialize llama.cpp backend
+        let backend = LlamaCppBackend::init()
+            .map_err(|e| LlmError::GenerationFailed(format!("Backend init failed: {}", e)))?;
+
+        // Set up model parameters
+        let model_params = LlamaModelParams::default();
+
+        // Load the model
+        let model = LlamaCppModel::load_from_file(&backend, &self.model_path, &model_params)
+            .map_err(|e| LlmError::GenerationFailed(format!("Model load failed: {}", e)))?;
+
+        self.model = Some(model);
+        self.backend = Some(backend);
+        self.is_loaded = true;
+
+        info!("GGUF model loaded successfully");
+        Ok(())
+    }
+
+    #[allow(dead_code)]
+    fn generate_impl(&mut self, prompt: &str, config: &ModelConfig) -> Result<String, LlmError> {
+        let model = self.model.as_ref().ok_or(LlmError::ModelNotLoaded)?;
+
+        let backend = self.backend.as_ref().ok_or(LlmError::ModelNotLoaded)?;
+
+        // Create context parameters
+        let ctx_params = LlamaContextParams::default()
+            .with_n_ctx(std::num::NonZeroU32::new(self.n_ctx))
+            .with_n_batch(self.n_batch)
+            .with_seed(config.seed.unwrap_or(42));
+
+        // Create context
+        let mut ctx = model
+            .new_context(backend, ctx_params)
+            .map_err(|e| LlmError::GenerationFailed(format!("Context creation failed: {}", e)))?;
+
+        // Tokenize the prompt
+        let tokens = model
+            .str_to_token(prompt, AddBos::Always)
+            .map_err(|e| LlmError::GenerationFailed(format!("Tokenization failed: {}", e)))?;
+
+        if tokens.is_empty() {
+            return Err(LlmError::InvalidPrompt);
+        }
+
+        info!("Tokenized prompt: {} tokens", tokens.len());
+
+        // Create batch for processing
+        let mut batch = LlamaBatch::new(self.n_batch as usize, 1);
+
+        // Add tokens to batch
+        let last_index = (tokens.len() - 1) as i32;
+        for (i, token) in tokens.into_iter().enumerate() {
+            let is_last = i as i32 == last_index;
+            batch
+                .add(token, i as i32, &[0], is_last)
+                .map_err(|e| LlmError::GenerationFailed(format!("Batch add failed: {}", e)))?;
+        }
+
+        // Decode the batch
+        ctx.decode(&mut batch)
+            .map_err(|e| LlmError::GenerationFailed(format!("Decode failed: {}", e)))?;
+
+        // Generate response tokens
+        let mut response_tokens = Vec::new();
+        let max_tokens = config.max_tokens.unwrap_or(256);
+
+        for _ in 0..max_tokens {
+            // Get logits for the last token
+            let candidates = ctx.candidates_ith(batch.n_tokens() - 1);
+
+            let mut candidates_array = LlamaTokenDataArray::from_iter(candidates, false);
+
+            // Sample next token using temperature
+            let next_token = if config.temperature > 0.0 {
+                candidates_array.sample_token_greedy(&mut ctx)
+            } else {
+                candidates_array.sample_token_greedy(&mut ctx)
+            };
+
+            // Check for end of sequence
+            if model.is_eog_token(next_token) {
+                break;
+            }
+
+            response_tokens.push(next_token);
+
+            // Clear batch and add new token
+            batch.clear();
+            batch
+                .add(next_token, response_tokens.len() as i32, &[0], true)
+                .map_err(|e| LlmError::GenerationFailed(format!("Batch add failed: {}", e)))?;
+
+            // Decode for next iteration
+            ctx.decode(&mut batch)
+                .map_err(|e| LlmError::GenerationFailed(format!("Decode failed: {}", e)))?;
+        }
+
+        // Convert tokens back to string
+        let response = model
+            .token_to_str(response_tokens.as_slice())
+            .map_err(|e| LlmError::GenerationFailed(format!("Detokenization failed: {}", e)))?;
+
+        info!("Generated response: {} tokens", response_tokens.len());
+        Ok(response)
     }
 }
 
@@ -298,14 +432,7 @@ impl LlmBackend for GgufBackend {
             return Err(LlmError::ModelNotLoaded);
         }
 
-        // TODO: Implement actual inference with llama-cpp-2
-        // This would:
-        // 1. Tokenize prompt
-        // 2. Run inference with config parameters
-        // 3. Detokenize and return result
-
-        warn!("GGUF inference not yet implemented, using fallback");
-        Err(LlmError::GenerationFailed("Not implemented".to_string()))
+        self.generate_impl(prompt, config)
     }
 
     fn is_ready(&self) -> bool {

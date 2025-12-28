@@ -1,14 +1,14 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, BlocksMovement};
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use bevy_shaman_core::components::{BlocksMovement, GridPosition};
 use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 /// A* pathfinding node
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct PathNode {
     position: GridPosition,
-    g_cost: u32,  // Cost from start
-    h_cost: u32,  // Heuristic cost to goal
+    g_cost: u32, // Cost from start
+    h_cost: u32, // Heuristic cost to goal
 }
 
 impl PathNode {
@@ -20,7 +20,9 @@ impl PathNode {
 impl Ord for PathNode {
     fn cmp(&self, other: &Self) -> Ordering {
         // Reverse ordering for min-heap
-        other.f_cost().cmp(&self.f_cost())
+        other
+            .f_cost()
+            .cmp(&self.f_cost())
             .then_with(|| other.h_cost.cmp(&self.h_cost))
     }
 }
@@ -132,7 +134,10 @@ pub fn find_path(
 }
 
 /// Reconstruct the path from the came_from map
-fn reconstruct_path(came_from: &HashMap<GridPosition, GridPosition>, mut current: GridPosition) -> Vec<GridPosition> {
+fn reconstruct_path(
+    came_from: &HashMap<GridPosition, GridPosition>,
+    mut current: GridPosition,
+) -> Vec<GridPosition> {
     let mut path = vec![current];
     while let Some(&previous) = came_from.get(&current) {
         path.push(previous);

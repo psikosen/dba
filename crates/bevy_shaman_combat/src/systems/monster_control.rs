@@ -1,7 +1,7 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_core::components::Spirit;
-use bevy_shaman_monsters::components::{MonsterState, AiState, MonsterStats};
+use bevy_shaman_monsters::components::{AiState, MonsterState, MonsterStats};
 
 /// Event for attempting to control a monster
 #[derive(Event)]
@@ -56,15 +56,20 @@ pub fn monster_control_attempt(
                 control.can_use_abilities = control.control_strength > 0.7;
 
                 // Mark monster as controlled
-                commands.entity(event.target_monster).insert(UnderPlayerControl {
-                    controller: event.player,
-                    started_at: time.elapsed_secs_f64(),
-                });
+                commands
+                    .entity(event.target_monster)
+                    .insert(UnderPlayerControl {
+                        controller: event.player,
+                        started_at: time.elapsed_secs_f64(),
+                    });
 
                 // Override AI state
                 *ai_state = AiState::Stunned;
 
-                info!("Monster control successful! Duration: {:.1}s", control.control_duration);
+                info!(
+                    "Monster control successful! Duration: {:.1}s",
+                    control.control_duration
+                );
             }
         }
     }
@@ -84,7 +89,9 @@ pub fn monster_control_update(
             // Release control when duration expires
             if control.control_duration <= 0.0 {
                 if controlled_monsters.get(monster_entity).is_ok() {
-                    commands.entity(monster_entity).remove::<UnderPlayerControl>();
+                    commands
+                        .entity(monster_entity)
+                        .remove::<UnderPlayerControl>();
                 }
                 control.controlled_monster = None;
                 info!("Monster control expired!");
@@ -104,7 +111,9 @@ pub fn monster_control_release(
         if let Ok(mut control) = player_query.get_mut(event.player) {
             if let Some(monster_entity) = control.controlled_monster {
                 if controlled_monsters.get(monster_entity).is_ok() {
-                    commands.entity(monster_entity).remove::<UnderPlayerControl>();
+                    commands
+                        .entity(monster_entity)
+                        .remove::<UnderPlayerControl>();
                 }
                 control.controlled_monster = None;
                 info!("Released monster control.");

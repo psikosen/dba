@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 pub struct ShamanFocus {
     pub current: f32,
     pub max: f32,
-    pub regen_rate: f32,  // Per second
+    pub regen_rate: f32, // Per second
 }
 
 impl Default for ShamanFocus {
@@ -36,21 +36,21 @@ pub struct ActiveFocusAbility {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FocusAbilityType {
     // Support abilities
-    Heal,                 // Restore health to target
-    Purify,              // Remove status effects / purify spirits
+    Heal,   // Restore health to target
+    Purify, // Remove status effects / purify spirits
 
     // Control abilities
-    Stun,                // Disable target temporarily
-    Disable,             // Reduce target's capabilities
-    Pacify,              // Calm aggressive entities
+    Stun,    // Disable target temporarily
+    Disable, // Reduce target's capabilities
+    Pacify,  // Calm aggressive entities
 
     // Movement abilities
-    PushBack,            // Force push target away
-    PullIn,              // Pull target closer
-    Lift,                // Levitate target (disable movement)
+    PushBack, // Force push target away
+    PullIn,   // Pull target closer
+    Lift,     // Levitate target (disable movement)
 
     // Spirit infusion
-    SpiritInfusion,      // Merge with spirits for combat power
+    SpiritInfusion, // Merge with spirits for combat power
 }
 
 impl FocusAbilityType {
@@ -80,7 +80,7 @@ impl FocusAbilityType {
             FocusAbilityType::PushBack => 0.3,
             FocusAbilityType::PullIn => 0.3,
             FocusAbilityType::Lift => 1.2,
-            FocusAbilityType::SpiritInfusion => 2.0,  // Fixed 2s cast
+            FocusAbilityType::SpiritInfusion => 2.0, // Fixed 2s cast
         }
     }
 
@@ -91,7 +91,7 @@ impl FocusAbilityType {
             FocusAbilityType::Disable => Some(5.0),
             FocusAbilityType::Pacify => Some(10.0),
             FocusAbilityType::Lift => Some(4.0),
-            FocusAbilityType::SpiritInfusion => None,  // Random duration handled separately
+            FocusAbilityType::SpiritInfusion => None, // Random duration handled separately
             _ => None,
         }
     }
@@ -107,7 +107,7 @@ impl FocusAbilityType {
             FocusAbilityType::PushBack => 3.0,
             FocusAbilityType::PullIn => 3.0,
             FocusAbilityType::Lift => 12.0,
-            FocusAbilityType::SpiritInfusion => 0.0,  // Random cooldown handled separately
+            FocusAbilityType::SpiritInfusion => 0.0, // Random cooldown handled separately
         }
     }
 
@@ -122,7 +122,7 @@ impl FocusAbilityType {
             FocusAbilityType::PushBack => 5,
             FocusAbilityType::PullIn => 5,
             FocusAbilityType::Lift => 6,
-            FocusAbilityType::SpiritInfusion => 0,  // Self-cast
+            FocusAbilityType::SpiritInfusion => 0, // Self-cast
         }
     }
 }
@@ -148,7 +148,9 @@ impl FocusAbilityCooldowns {
     }
 
     pub fn is_on_cooldown(&self, ability: FocusAbilityType) -> bool {
-        self.cooldowns.iter().any(|cd| cd.ability == ability && cd.remaining > 0.0)
+        self.cooldowns
+            .iter()
+            .any(|cd| cd.ability == ability && cd.remaining > 0.0)
     }
 
     pub fn get_remaining(&self, ability: FocusAbilityType) -> f32 {
@@ -171,7 +173,7 @@ pub struct SpiritInfused {
     pub power_multiplier: f32,
     pub speed_multiplier: f32,
     pub damage_multiplier: f32,
-    pub cooldown_override: f32,  // Random cooldown for next use
+    pub cooldown_override: f32, // Random cooldown for next use
 }
 
 impl SpiritInfused {
@@ -207,8 +209,8 @@ impl SpiritInfused {
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
 pub struct ManipulableObject {
     pub object_type: ObjectType,
-    pub weight: f32,            // Affects push/pull strength needed
-    pub durability: f32,        // For breaking objects
+    pub weight: f32,     // Affects push/pull strength needed
+    pub durability: f32, // For breaking objects
     pub is_breakable: bool,
 }
 
@@ -217,7 +219,7 @@ pub enum ObjectType {
     Box,
     Rock,
     Debris,
-    Monster,  // Yes, monsters can be pushed!
+    Monster, // Yes, monsters can be pushed!
 }
 
 impl ManipulableObject {

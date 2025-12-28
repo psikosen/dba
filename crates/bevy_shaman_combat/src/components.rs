@@ -23,7 +23,7 @@ pub struct StatusEffect {
 pub enum StatusEffectType {
     Burn,
     Poison,
-    SpiritualPoison,  // From Mambele plant-based weapons
+    SpiritualPoison, // From Mambele plant-based weapons
     Stun,
     Slow,
     Purifying,
@@ -53,8 +53,8 @@ pub struct EquippedWeapon {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum WeaponType {
     Crossbow,
-    Mambele,  // Spiritual poison-tipped throwing weapon
-    Staff,    // Magic staff
+    Mambele, // Spiritual poison-tipped throwing weapon
+    Staff,   // Magic staff
 }
 
 impl WeaponType {
@@ -68,9 +68,9 @@ impl WeaponType {
 
     pub fn spirit_cost(&self) -> f32 {
         match self {
-            WeaponType::Crossbow => 0.0,   // Physical weapon, no spirit cost
-            WeaponType::Mambele => 5.0,    // Uses spiritual poison
-            WeaponType::Staff => 10.0,     // Pure magic
+            WeaponType::Crossbow => 0.0, // Physical weapon, no spirit cost
+            WeaponType::Mambele => 5.0,  // Uses spiritual poison
+            WeaponType::Staff => 10.0,   // Pure magic
         }
     }
 
@@ -108,9 +108,9 @@ impl Default for EquippedWeapon {
 /// Triggers random combat events with 18% chance
 #[derive(Component)]
 pub struct CombatWheel {
-    pub trigger_chance: f32,  // 0.18 for 18%
-    pub last_trigger: f64,    // Timestamp to prevent spam
-    pub cooldown: f32,        // Minimum time between triggers
+    pub trigger_chance: f32, // 0.18 for 18%
+    pub last_trigger: f64,   // Timestamp to prevent spam
+    pub cooldown: f32,       // Minimum time between triggers
 }
 
 impl Default for CombatWheel {
@@ -118,17 +118,17 @@ impl Default for CombatWheel {
         Self {
             trigger_chance: 0.18,
             last_trigger: 0.0,
-            cooldown: 2.0,  // 2 seconds minimum between wheel spins
+            cooldown: 2.0, // 2 seconds minimum between wheel spins
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WheelOutcome {
-    CriticalHit,         // Double physical damage
-    DoubleSpellDamage,   // Double magic damage
-    SelfCorruption,      // Add corruption to player
-    SpiritCorruption,    // Add corruption to player's spirits/minions
+    CriticalHit,       // Double physical damage
+    DoubleSpellDamage, // Double magic damage
+    SelfCorruption,    // Add corruption to player
+    SpiritCorruption,  // Add corruption to player's spirits/minions
 }
 
 impl WheelOutcome {
@@ -152,9 +152,9 @@ impl WheelOutcome {
 #[derive(Component, Debug, Clone, Serialize, Deserialize)]
 pub struct MonsterControl {
     pub controlled_monster: Option<Entity>,
-    pub control_duration: f32,      // How long control lasts
-    pub control_strength: f32,      // 0.0 to 1.0, affects success
-    pub can_use_abilities: bool,    // Can use monster's special abilities
+    pub control_duration: f32,   // How long control lasts
+    pub control_strength: f32,   // 0.0 to 1.0, affects success
+    pub can_use_abilities: bool, // Can use monster's special abilities
 }
 
 impl Default for MonsterControl {
@@ -248,7 +248,8 @@ impl WeaponEnhancement {
         strength: f32,
     ) {
         // Remove existing enchantment of same type
-        self.active_enchantments.retain(|e| e.enchantment_type != enchantment_type);
+        self.active_enchantments
+            .retain(|e| e.enchantment_type != enchantment_type);
 
         self.active_enchantments.push(Enchantment {
             enchantment_type,
@@ -262,7 +263,8 @@ impl WeaponEnhancement {
         for enchantment in &mut self.active_enchantments {
             enchantment.duration_remaining -= delta;
         }
-        self.active_enchantments.retain(|e| e.duration_remaining > 0.0);
+        self.active_enchantments
+            .retain(|e| e.duration_remaining > 0.0);
     }
 
     /// Get total damage bonus percentage
@@ -273,7 +275,7 @@ impl WeaponEnhancement {
     /// Get spirit efficiency (reduces spirit cost)
     pub fn spirit_cost_multiplier(&self) -> f32 {
         let reduction = self.permanent_bonuses.spirit_efficiency;
-        (100.0 - reduction).max(20.0) / 100.0  // Minimum 20% cost
+        (100.0 - reduction).max(20.0) / 100.0 // Minimum 20% cost
     }
 
     fn unlock_special_ability(&mut self) {
@@ -317,10 +319,10 @@ pub struct Enchantment {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EnchantmentType {
-    BloodFury,          // Temporary damage boost from blood plants
-    SpiritInfusion,     // Reduced spirit cost from spirit plants
-    VenomCoating,       // Poison damage from poison plants
-    AncestralBlessing,  // Blessing from rare plants
+    BloodFury,         // Temporary damage boost from blood plants
+    SpiritInfusion,    // Reduced spirit cost from spirit plants
+    VenomCoating,      // Poison damage from poison plants
+    AncestralBlessing, // Blessing from rare plants
 }
 
 // ============================================================================
@@ -333,7 +335,7 @@ pub struct RhythmCombo {
     pub current_combo: Vec<ComboInput>,
     pub max_combo_length: usize,
     pub last_input_time: f64,
-    pub combo_window: f32,  // Time window to continue combo
+    pub combo_window: f32, // Time window to continue combo
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -397,7 +399,7 @@ impl RhythmCombo {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpecialMove {
-    FlurryFinisher,   // Light, Light, Heavy - Extra damage burst
-    PerfectCast,      // Perfect, Perfect, Magic - Zero spirit cost cast
-    SpiritStrike,     // Heavy, Magic, Heavy - Damage + heal spirit
+    FlurryFinisher, // Light, Light, Heavy - Extra damage burst
+    PerfectCast,    // Perfect, Perfect, Magic - Zero spirit cost cast
+    SpiritStrike,   // Heavy, Magic, Heavy - Damage + heal spirit
 }

@@ -56,7 +56,7 @@ mod monster_tests {
     fn test_monster_state_evaluate_harmony() {
         let state = MonsterState {
             state: StateType::Stable,
-            stability_meter: 0.9, // > 0.85
+            stability_meter: 0.9,   // > 0.85
             corruption_meter: 0.05, // < 0.1
             obedience_meter: 0.5,
             chaos_output: 1.0,
@@ -68,7 +68,7 @@ mod monster_tests {
     fn test_monster_state_corruption_takes_priority() {
         let state = MonsterState {
             state: StateType::Stable,
-            stability_meter: 0.1, // Would be chaos
+            stability_meter: 0.1,  // Would be chaos
             corruption_meter: 0.8, // But corruption takes priority
             obedience_meter: 0.5,
             chaos_output: 1.0,
@@ -80,7 +80,7 @@ mod monster_tests {
     fn test_monster_state_chaos_takes_priority_over_harmony() {
         let state = MonsterState {
             state: StateType::Stable,
-            stability_meter: 0.2, // < 0.3 = chaos
+            stability_meter: 0.2,   // < 0.3 = chaos
             corruption_meter: 0.05, // < 0.1 but chaos takes priority
             obedience_meter: 0.5,
             chaos_output: 1.0,
@@ -409,7 +409,7 @@ mod monster_tests {
         // Test with meters outside normal 0-1 range (shouldn't crash)
         let state = MonsterState {
             state: StateType::Stable,
-            stability_meter: 1.5, // > 1.0
+            stability_meter: 1.5,   // > 1.0
             corruption_meter: -0.5, // < 0.0
             obedience_meter: 2.0,
             chaos_output: 1.0,

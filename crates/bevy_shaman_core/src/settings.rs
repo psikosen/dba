@@ -21,9 +21,9 @@ impl Default for GameSettings {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AudioSettings {
-    pub master_volume: f32,      // 0.0 to 1.0
-    pub music_volume: f32,        // 0.0 to 1.0
-    pub sfx_volume: f32,          // 0.0 to 1.0
+    pub master_volume: f32, // 0.0 to 1.0
+    pub music_volume: f32,  // 0.0 to 1.0
+    pub sfx_volume: f32,    // 0.0 to 1.0
 }
 
 impl Default for AudioSettings {
@@ -85,7 +85,7 @@ impl Difficulty {
 pub struct ControlSettings {
     pub scheme: ControlScheme,
     pub gamepad_enabled: bool,
-    pub gamepad_deadzone: u8,  // 0-100 (percentage)
+    pub gamepad_deadzone: u8, // 0-100 (percentage)
 }
 
 impl Default for ControlSettings {
@@ -93,7 +93,7 @@ impl Default for ControlSettings {
         Self {
             scheme: ControlScheme::WASD,
             gamepad_enabled: true,
-            gamepad_deadzone: 15,  // 15% deadzone
+            gamepad_deadzone: 15, // 15% deadzone
         }
     }
 }

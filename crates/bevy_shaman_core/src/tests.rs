@@ -132,7 +132,6 @@ mod core_tests {
         assert_eq!(spirit.current, 100.0);
     }
 
-
     // ============================================================================
     // STAMINA TESTS
     // ============================================================================
@@ -244,7 +243,9 @@ mod core_tests {
         let mut queue = MovementQueue::default();
         assert_eq!(queue.commands.len(), 0);
 
-        queue.commands.push(MovementCommand::Move(bevy::prelude::IVec2::new(1, 0)));
+        queue
+            .commands
+            .push(MovementCommand::Move(bevy::prelude::IVec2::new(1, 0)));
         assert_eq!(queue.commands.len(), 1);
     }
 

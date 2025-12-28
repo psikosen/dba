@@ -65,7 +65,11 @@ impl Quest {
 
     /// Get current objective progress as a string
     pub fn progress_summary(&self) -> String {
-        let completed = self.objectives.iter().filter(|obj| obj.is_complete()).count();
+        let completed = self
+            .objectives
+            .iter()
+            .filter(|obj| obj.is_complete())
+            .count();
         format!("{}/{} objectives", completed, self.objectives.len())
     }
 
@@ -118,10 +122,18 @@ impl QuestObjective {
             ObjectiveType::Kill(_) => format!("{}/{}", self.progress, self.required),
             ObjectiveType::Collect(_) => format!("{}/{}", self.progress, self.required),
             ObjectiveType::Reach(_) => {
-                if self.completed { "Complete".to_string() } else { "Incomplete".to_string() }
+                if self.completed {
+                    "Complete".to_string()
+                } else {
+                    "Incomplete".to_string()
+                }
             }
             ObjectiveType::Talk(_) => {
-                if self.completed { "Complete".to_string() } else { "Talk to NPC".to_string() }
+                if self.completed {
+                    "Complete".to_string()
+                } else {
+                    "Talk to NPC".to_string()
+                }
             }
             ObjectiveType::Purify => format!("{}/{}", self.progress, self.required),
             ObjectiveType::Custom => format!("{}/{}", self.progress, self.required),
@@ -131,12 +143,12 @@ impl QuestObjective {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ObjectiveType {
-    Kill(String),           // Kill specific monster type
-    Collect(String),        // Collect specific items
-    Reach(String),          // Reach a location
-    Talk(String),           // Talk to an NPC
-    Purify,                 // Purify corrupted tiles
-    Custom,                 // Custom objective
+    Kill(String),    // Kill specific monster type
+    Collect(String), // Collect specific items
+    Reach(String),   // Reach a location
+    Talk(String),    // Talk to an NPC
+    Purify,          // Purify corrupted tiles
+    Custom,          // Custom objective
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -144,7 +156,7 @@ pub struct QuestRewards {
     pub gold: u32,
     pub xp: u32,
     pub skill_points: u32,
-    pub items: Vec<(String, u32)>, // (item_id, quantity)
+    pub items: Vec<(String, u32)>,      // (item_id, quantity)
     pub reputation: Vec<(String, i32)>, // (faction, amount)
 }
 
@@ -319,12 +331,19 @@ impl QuestRegistry {
         }
     }
 
-    pub fn update_objective_progress(&mut self, quest_id: &str, objective_index: usize, amount: u32) {
+    pub fn update_objective_progress(
+        &mut self,
+        quest_id: &str,
+        objective_index: usize,
+        amount: u32,
+    ) {
         if let Some(quest) = self.get_mut(quest_id) {
             if let Some(objective) = quest.objectives.get_mut(objective_index) {
                 objective.add_progress(amount);
-                info!("Quest '{}' objective {} progress: {}/{}",
-                    quest.title, objective_index, objective.progress, objective.required);
+                info!(
+                    "Quest '{}' objective {} progress: {}/{}",
+                    quest.title, objective_index, objective.progress, objective.required
+                );
 
                 // Auto-complete quest if all objectives done
                 if quest.is_complete() && quest.status == QuestStatus::Active {
@@ -383,8 +402,14 @@ pub fn handle_quest_completed(
     mut registry: ResMut<QuestRegistry>,
     mut player_level: ResMut<bevy_shaman_core::resources::PlayerLevel>,
     mut currency: ResMut<bevy_shaman_shop::resources::Currency>,
-    mut player_inventory: Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
-    mut skill_tree_query: Query<&mut bevy_shaman_combat::systems::skill_tree::SkillTree, With<bevy_shaman_core::components::Player>>,
+    mut player_inventory: Query<
+        &mut bevy_shaman_items::components::Inventory,
+        With<bevy_shaman_core::components::Player>,
+    >,
+    mut skill_tree_query: Query<
+        &mut bevy_shaman_combat::systems::skill_tree::SkillTree,
+        With<bevy_shaman_core::components::Player>,
+    >,
     mut reputation: ResMut<super::dialogue_tree::DialogueReputation>,
 ) {
     for event in events.read() {
@@ -392,7 +417,11 @@ pub fn handle_quest_completed(
         registry.complete_quest(&event.quest_id);
 
         if let Some(quest) = registry.get(&event.quest_id) {
-            info!("Quest completed: {} - Rewards: {}", quest.title, quest.rewards.rewards_text());
+            info!(
+                "Quest completed: {} - Rewards: {}",
+                quest.title,
+                quest.rewards.rewards_text()
+            );
 
             // Grant XP
             if quest.rewards.xp > 0 {
@@ -413,8 +442,10 @@ pub fn handle_quest_completed(
             if quest.rewards.skill_points > 0 {
                 if let Ok(mut skill_tree) = skill_tree_query.get_single_mut() {
                     skill_tree.award_points(quest.rewards.skill_points);
-                    info!("Granted {} skill points (Total: {})",
-                        quest.rewards.skill_points, skill_tree.skill_points);
+                    info!(
+                        "Granted {} skill points (Total: {})",
+                        quest.rewards.skill_points, skill_tree.skill_points
+                    );
                 }
             }
 
@@ -504,32 +535,26 @@ pub fn create_tutorial_quest() -> Quest {
         "Head Shaman".to_string(),
     )
     .with_type(QuestType::Tutorial)
-    .with_objective(
-        QuestObjective::new(
-            "Defeat a corrupted monster".to_string(),
-            ObjectiveType::Kill("Corrupted Spirit".to_string()),
-            1,
-        )
-    )
-    .with_objective(
-        QuestObjective::new(
-            "Purify corrupted tiles".to_string(),
-            ObjectiveType::Purify,
-            3,
-        )
-    )
-    .with_objective(
-        QuestObjective::new(
-            "Choose your spirit companion".to_string(),
-            ObjectiveType::Talk("Head Shaman".to_string()),
-            1,
-        )
-    )
+    .with_objective(QuestObjective::new(
+        "Defeat a corrupted monster".to_string(),
+        ObjectiveType::Kill("Corrupted Spirit".to_string()),
+        1,
+    ))
+    .with_objective(QuestObjective::new(
+        "Purify corrupted tiles".to_string(),
+        ObjectiveType::Purify,
+        3,
+    ))
+    .with_objective(QuestObjective::new(
+        "Choose your spirit companion".to_string(),
+        ObjectiveType::Talk("Head Shaman".to_string()),
+        1,
+    ))
     .with_reward(
         QuestRewards::default()
             .with_xp(100)
             .with_skill_points(1)
-            .with_item("Beginner's Staff".to_string(), 1)
+            .with_item("Beginner's Staff".to_string(), 1),
     )
 }
 
@@ -538,30 +563,27 @@ pub fn create_village_corruption_quest() -> Quest {
     Quest::new(
         "village_corruption".to_string(),
         "Cleanse the Village".to_string(),
-        "Dark forces have corrupted the village. Purify the corruption and defeat the demons.".to_string(),
+        "Dark forces have corrupted the village. Purify the corruption and defeat the demons."
+            .to_string(),
         "Village Elder".to_string(),
     )
     .with_type(QuestType::Main)
-    .with_objective(
-        QuestObjective::new(
-            "Defeat demons in the village".to_string(),
-            ObjectiveType::Kill("Demon".to_string()),
-            10,
-        )
-    )
-    .with_objective(
-        QuestObjective::new(
-            "Purify corrupted village tiles".to_string(),
-            ObjectiveType::Purify,
-            20,
-        )
-    )
+    .with_objective(QuestObjective::new(
+        "Defeat demons in the village".to_string(),
+        ObjectiveType::Kill("Demon".to_string()),
+        10,
+    ))
+    .with_objective(QuestObjective::new(
+        "Purify corrupted village tiles".to_string(),
+        ObjectiveType::Purify,
+        20,
+    ))
     .with_reward(
         QuestRewards::default()
             .with_xp(300)
             .with_gold(100)
             .with_skill_points(1)
-            .with_reputation("village".to_string(), 15)
+            .with_reputation("village".to_string(), 15),
     )
     .with_location_hint("Village Center".to_string())
 }

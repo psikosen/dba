@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, Player};
 use crate::components::{Inventory, Pickupable};
 use crate::systems::events::ItemPickedUp;
+use bevy::prelude::*;
+use bevy_shaman_core::components::{GridPosition, Player};
 
 const PICKUP_RADIUS: f32 = 1.5;
 

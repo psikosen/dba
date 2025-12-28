@@ -22,11 +22,11 @@ pub struct LlmAi {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AiRole {
-    Boss,           // Major boss encounters
-    MiniBoss,       // Mini-boss encounters
-    Brother,        // Player's brother NPCs
-    SpiritGuide,    // Spirit world guides
-    Antagonist,     // Story antagonists
+    Boss,        // Major boss encounters
+    MiniBoss,    // Mini-boss encounters
+    Brother,     // Player's brother NPCs
+    SpiritGuide, // Spirit world guides
+    Antagonist,  // Story antagonists
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,7 +64,7 @@ pub enum EmotionalState {
     Desperate,
     Mocking,
     Respectful,
-    Corrupted,    // For corrupted entities
+    Corrupted, // For corrupted entities
 }
 
 impl Default for EmotionalState {
@@ -75,12 +75,12 @@ impl Default for EmotionalState {
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum CombatStance {
-    Aggressive,   // Rush down, high damage
-    Defensive,    // Block, counter
-    Tactical,     // Use environment, special moves
-    Evasive,      // Dodge-focused
-    Summoner,     // Call minions
-    Corrupting,   // Spread corruption
+    Aggressive, // Rush down, high damage
+    Defensive,  // Block, counter
+    Tactical,   // Use environment, special moves
+    Evasive,    // Dodge-focused
+    Summoner,   // Call minions
+    Corrupting, // Spread corruption
 }
 
 impl Default for CombatStance {
@@ -281,5 +281,5 @@ pub enum RequestPriority {
     Low = 0,
     Normal = 1,
     High = 2,
-    Critical = 3,  // Boss encounters
+    Critical = 3, // Boss encounters
 }

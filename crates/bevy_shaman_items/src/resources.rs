@@ -1,7 +1,7 @@
+use crate::components::{Item, ItemType, SpiritOrbSize};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::components::{Item, ItemType, SpiritOrbSize};
 
 // ============================================================================
 // LOOT TABLES

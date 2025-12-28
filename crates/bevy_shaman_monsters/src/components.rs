@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct MonsterState {
     pub state: StateType,
-    pub stability_meter: f32,     // 0.0 = fully chaotic, 1.0 = fully stable
-    pub corruption_meter: f32,    // 0.0 = pure, 1.0 = fully corrupt
-    pub obedience_meter: f32,     // 0.0 = wild, 1.0 = tame
-    pub chaos_output: f32,        // damage multiplier when chaotic
+    pub stability_meter: f32,  // 0.0 = fully chaotic, 1.0 = fully stable
+    pub corruption_meter: f32, // 0.0 = pure, 1.0 = fully corrupt
+    pub obedience_meter: f32,  // 0.0 = wild, 1.0 = tame
+    pub chaos_output: f32,     // damage multiplier when chaotic
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -20,11 +20,11 @@ pub enum StateType {
     Stable,
     Chaos,
     Corrupt,
-    Harmony,    // Spirit World alignment
-    Decay,      // Spirit World alignment
-    Rage,       // Spirit World alignment
-    Void,       // Spirit World alignment
-    Ancestral,  // Spirit World alignment
+    Harmony,   // Spirit World alignment
+    Decay,     // Spirit World alignment
+    Rage,      // Spirit World alignment
+    Void,      // Spirit World alignment
+    Ancestral, // Spirit World alignment
 }
 
 impl Default for MonsterState {

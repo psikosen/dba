@@ -1,6 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use bevy::prelude::*;
 use bevy_shaman_world::systems::generation::{WorldGenConfig, WorldGenerated, WorldSeed};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 fn setup_test_app() -> App {
     let mut app = App::new();

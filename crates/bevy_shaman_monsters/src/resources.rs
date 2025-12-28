@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use crate::components::{MonsterStats, MusicAffinityProfile, StateType};
+use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // MONSTER SPRITE DATABASE

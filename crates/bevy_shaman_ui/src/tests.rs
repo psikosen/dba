@@ -1,13 +1,13 @@
 /// Tests for UI systems
 #[cfg(test)]
 mod tests {
-    use bevy::prelude::*;
-    use bevy_shaman_core::components::{Health, Spirit, Stamina, Player};
-    use bevy_shaman_items::components::{Inventory, Item, ItemStack};
-    use bevy_shaman_story::systems::quest_system::*;
     use crate::ancestral_hud::*;
     use crate::ancestral_inventory::*;
     use crate::ancestral_quest_tracker::*;
+    use bevy::prelude::*;
+    use bevy_shaman_core::components::{Health, Player, Spirit, Stamina};
+    use bevy_shaman_items::components::{Inventory, Item, ItemStack};
+    use bevy_shaman_story::systems::quest_system::*;
 
     // ========================================================================
     // HUD TESTS
@@ -19,37 +19,58 @@ mod tests {
         app.add_plugins(MinimalPlugins);
 
         // Spawn player with stats
-        let player = app.world_mut().spawn((
-            Player,
-            Health { current: 75.0, max: 100.0 },
-            Spirit { current: 50.0, max: 100.0 },
-            Stamina { current: 30.0, max: 100.0 },
-        )).id();
+        let player = app
+            .world_mut()
+            .spawn((
+                Player,
+                Health {
+                    current: 75.0,
+                    max: 100.0,
+                },
+                Spirit {
+                    current: 50.0,
+                    max: 100.0,
+                },
+                Stamina {
+                    current: 30.0,
+                    max: 100.0,
+                },
+            ))
+            .id();
 
         // Spawn HUD bars
-        let health_bar = app.world_mut().spawn((
-            HealthBarFill,
-            Node {
-                width: Val::Percent(100.0),
-                ..default()
-            },
-        )).id();
+        let health_bar = app
+            .world_mut()
+            .spawn((
+                HealthBarFill,
+                Node {
+                    width: Val::Percent(100.0),
+                    ..default()
+                },
+            ))
+            .id();
 
-        let spirit_bar = app.world_mut().spawn((
-            SpiritBarFill,
-            Node {
-                width: Val::Percent(100.0),
-                ..default()
-            },
-        )).id();
+        let spirit_bar = app
+            .world_mut()
+            .spawn((
+                SpiritBarFill,
+                Node {
+                    width: Val::Percent(100.0),
+                    ..default()
+                },
+            ))
+            .id();
 
-        let stamina_bar = app.world_mut().spawn((
-            StaminaBarFill,
-            Node {
-                width: Val::Percent(100.0),
-                ..default()
-            },
-        )).id();
+        let stamina_bar = app
+            .world_mut()
+            .spawn((
+                StaminaBarFill,
+                Node {
+                    width: Val::Percent(100.0),
+                    ..default()
+                },
+            ))
+            .id();
 
         // Add update system
         app.add_systems(Update, update_vitality_bars);
@@ -85,8 +106,14 @@ mod tests {
         let mut state = AncestralHudState::default();
 
         assert!(state.show_minimap, "Minimap should be visible by default");
-        assert!(state.show_abilities, "Abilities should be visible by default");
-        assert!(state.show_quest_tracker, "Quest tracker should be visible by default");
+        assert!(
+            state.show_abilities,
+            "Abilities should be visible by default"
+        );
+        assert!(
+            state.show_quest_tracker,
+            "Quest tracker should be visible by default"
+        );
 
         state.show_minimap = false;
         assert!(!state.show_minimap, "Minimap should be toggleable");
@@ -155,7 +182,7 @@ mod tests {
                 "Collect 5 herbs".to_string(),
                 ObjectiveType::Collect("herb".to_string()),
                 5,
-            ))
+            )),
         );
         quest_log.quests[0].status = QuestStatus::Active;
 
@@ -163,7 +190,9 @@ mod tests {
 
         // Verify quest log has active quest
         let quest_log = app.world().resource::<QuestLog>();
-        let active_quests: Vec<_> = quest_log.quests.iter()
+        let active_quests: Vec<_> = quest_log
+            .quests
+            .iter()
             .filter(|q| q.status == QuestStatus::Active)
             .collect();
 
@@ -185,7 +214,10 @@ mod tests {
             10,
         ));
 
-        assert!(!quest.is_complete(), "Quest should not be complete initially");
+        assert!(
+            !quest.is_complete(),
+            "Quest should not be complete initially"
+        );
 
         // Add progress
         quest.objectives[0].add_progress(5);
@@ -245,7 +277,10 @@ mod tests {
         assert!(text.contains("100 gold"), "Should show gold reward");
         assert!(text.contains("500 XP"), "Should show XP reward");
         assert!(text.contains("sword"), "Should show item reward");
-        assert!(text.contains("+10 village"), "Should show reputation reward");
+        assert!(
+            text.contains("+10 village"),
+            "Should show reputation reward"
+        );
     }
 
     // ========================================================================
@@ -258,24 +293,46 @@ mod tests {
         app.add_plugins(MinimalPlugins);
 
         // Spawn complete player
-        let player = app.world_mut().spawn((
-            Player,
-            Health { current: 100.0, max: 100.0 },
-            Spirit { current: 100.0, max: 100.0 },
-            Stamina { current: 100.0, max: 100.0 },
-        )).id();
+        let player = app
+            .world_mut()
+            .spawn((
+                Player,
+                Health {
+                    current: 100.0,
+                    max: 100.0,
+                },
+                Spirit {
+                    current: 100.0,
+                    max: 100.0,
+                },
+                Stamina {
+                    current: 100.0,
+                    max: 100.0,
+                },
+            ))
+            .id();
 
         // Spawn HUD
-        let health_bar = app.world_mut().spawn((
-            HealthBarFill,
-            Node { width: Val::Percent(0.0), ..default() },
-        )).id();
+        let health_bar = app
+            .world_mut()
+            .spawn((
+                HealthBarFill,
+                Node {
+                    width: Val::Percent(0.0),
+                    ..default()
+                },
+            ))
+            .id();
 
         app.add_systems(Update, update_vitality_bars);
         app.update();
 
         // Damage player
-        let mut health = app.world_mut().entity_mut(player).get_mut::<Health>().unwrap();
+        let mut health = app
+            .world_mut()
+            .entity_mut(player)
+            .get_mut::<Health>()
+            .unwrap();
         health.current = 25.0;
         drop(health);
 
@@ -307,16 +364,16 @@ mod tests {
         }));
 
         // Spawn player with inventory
-        let player = app.world_mut().spawn((
-            Player,
-            inventory,
-        )).id();
+        let player = app.world_mut().spawn((Player, inventory)).id();
 
         // Verify inventory has items
         let player_inv = app.world().entity(player).get::<Inventory>().unwrap();
         assert_eq!(player_inv.items.len(), 1);
         assert_eq!(player_inv.items[0].as_ref().unwrap().quantity, 3);
-        assert_eq!(player_inv.items[0].as_ref().unwrap().item.id, "health_potion");
+        assert_eq!(
+            player_inv.items[0].as_ref().unwrap().item.id,
+            "health_potion"
+        );
     }
 
     #[test]

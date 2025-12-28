@@ -3,8 +3,21 @@ use sentry::{ClientOptions, IntoDsn};
 
 /// Initialize Sentry error tracking
 pub fn init_sentry(dsn: &str) {
+    // Parse DSN, disabling Sentry if invalid
+    let parsed_dsn = match dsn.into_dsn() {
+        Ok(Some(dsn)) => dsn,
+        Ok(None) => {
+            warn!("Empty Sentry DSN provided - error tracking disabled");
+            return;
+        }
+        Err(e) => {
+            error!("Invalid Sentry DSN: {} - error tracking disabled", e);
+            return;
+        }
+    };
+
     let _guard = sentry::init((
-        dsn.into_dsn().unwrap(),
+        parsed_dsn,
         ClientOptions {
             release: sentry::release_name!(),
             environment: Some(
@@ -22,10 +35,7 @@ pub fn init_sentry(dsn: &str) {
 
     // Set up panic hook
     std::panic::set_hook(Box::new(|panic_info| {
-        sentry::capture_message(
-            &format!("Panic: {:?}", panic_info),
-            sentry::Level::Error,
-        );
+        sentry::capture_message(&format!("Panic: {:?}", panic_info), sentry::Level::Error);
         eprintln!("{}", panic_info);
     }));
 }

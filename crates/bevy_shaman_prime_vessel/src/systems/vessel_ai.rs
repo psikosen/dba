@@ -99,18 +99,16 @@ pub fn move_vessel(
     mut vessel_query: Query<(&mut PrimeVessel, &mut GridPosition)>,
     spirit_query: Query<&GridPosition, (With<WorldSpirit>, Without<PrimeVessel>)>,
     time: Res<Time>,
+    mut move_timer: Local<f32>,
 ) {
     // Movement cooldown tracking
-    static mut MOVE_TIMER: f32 = 0.0;
     const MOVE_INTERVAL: f32 = 0.2; // Move every 0.2 seconds
 
-    unsafe {
-        MOVE_TIMER += time.delta_secs();
-        if MOVE_TIMER < MOVE_INTERVAL {
-            return;
-        }
-        MOVE_TIMER = 0.0;
+    *move_timer += time.delta_secs();
+    if *move_timer < MOVE_INTERVAL {
+        return;
     }
+    *move_timer = 0.0;
 
     for (mut vessel, mut vessel_pos) in vessel_query.iter_mut() {
         if !vessel.is_active {

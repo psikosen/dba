@@ -8,14 +8,17 @@ pub struct MinionsPlugin;
 
 impl Plugin for MinionsPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<systems::formation::FormationConfig>()
-            .add_systems(Update, (
-                systems::taming::process_taming_attempts,
-                systems::taming::update_taming_progress,
-                systems::formation::update_minion_formation,
-                systems::commands::process_minion_commands,
-            ).run_if(in_state(GameState::Playing)))
+        app.init_resource::<systems::formation::FormationConfig>()
+            .add_systems(
+                Update,
+                (
+                    systems::taming::process_taming_attempts,
+                    systems::taming::update_taming_progress,
+                    systems::formation::update_minion_formation,
+                    systems::commands::process_minion_commands,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             .add_event::<systems::events::MinionTamed>()
             .add_event::<systems::events::MinionCommandIssued>();
     }
@@ -87,7 +90,10 @@ pub mod systems {
             mut commands: Commands,
             keyboard: Res<ButtonInput<KeyCode>>,
             _player: Query<Entity, With<Player>>,
-            monsters: Query<(Entity, &MonsterState), (Without<Tamed>, Without<crate::components::TamingProgress>)>,
+            monsters: Query<
+                (Entity, &MonsterState),
+                (Without<Tamed>, Without<crate::components::TamingProgress>),
+            >,
         ) {
             if !keyboard.just_pressed(KeyCode::KeyT) {
                 return;
@@ -96,7 +102,9 @@ pub mod systems {
             // Start taming the nearest controllable monster
             for (entity, state) in monsters.iter() {
                 if state.is_controllable() {
-                    commands.entity(entity).insert(crate::components::TamingProgress::new(3.0)); // 3 seconds to tame
+                    commands
+                        .entity(entity)
+                        .insert(crate::components::TamingProgress::new(3.0)); // 3 seconds to tame
                     info!("Started taming monster...");
                     break;
                 }
@@ -106,14 +114,19 @@ pub mod systems {
         pub fn update_taming_progress(
             mut commands: Commands,
             time: Res<Time>,
-            mut taming_query: Query<(Entity, &mut crate::components::TamingProgress), Without<Tamed>>,
+            mut taming_query: Query<
+                (Entity, &mut crate::components::TamingProgress),
+                Without<Tamed>,
+            >,
         ) {
             for (entity, mut taming) in taming_query.iter_mut() {
                 taming.timer.tick(time.delta());
                 taming.progress = taming.timer.fraction();
 
                 if taming.is_complete() {
-                    commands.entity(entity).remove::<crate::components::TamingProgress>();
+                    commands
+                        .entity(entity)
+                        .remove::<crate::components::TamingProgress>();
                     commands.entity(entity).insert(Tamed {
                         tamed_at: time.elapsed_secs_f64(),
                     });
@@ -124,10 +137,10 @@ pub mod systems {
     }
 
     pub mod formation {
-        use bevy::prelude::*;
-        use bevy_shaman_core::components::{GridPosition, MovementQueue, MovementCommand, Player};
-        use bevy_shaman_monsters::components::Tamed;
         use crate::components::MinionFormation;
+        use bevy::prelude::*;
+        use bevy_shaman_core::components::{GridPosition, MovementCommand, MovementQueue, Player};
+        use bevy_shaman_monsters::components::Tamed;
 
         #[derive(Resource)]
         pub struct FormationConfig {
@@ -157,8 +170,13 @@ pub mod systems {
             keyboard: Res<ButtonInput<KeyCode>>,
             player: Query<(Entity, &GridPosition), With<Player>>,
             mut minions: Query<
-                (Entity, &mut GridPosition, &mut MovementQueue, Option<&MinionFormation>),
-                With<Tamed>
+                (
+                    Entity,
+                    &mut GridPosition,
+                    &mut MovementQueue,
+                    Option<&MinionFormation>,
+                ),
+                With<Tamed>,
             >,
             mut config: ResMut<FormationConfig>,
         ) {
@@ -186,7 +204,9 @@ pub mod systems {
             }
 
             // Assign formation positions to minions
-            for (i, (minion_entity, minion_pos, mut movement_queue, formation)) in minions.iter_mut().enumerate() {
+            for (i, (minion_entity, minion_pos, mut movement_queue, formation)) in
+                minions.iter_mut().enumerate()
+            {
                 // Add formation component if missing
                 if formation.is_none() {
                     commands.entity(minion_entity).insert(MinionFormation {
@@ -200,19 +220,17 @@ pub mod systems {
                     FormationPattern::VShape => {
                         let side = if i % 2 == 0 { 1 } else { -1 };
                         let row = (i / 2) as i32;
-                        IVec2::new(side * (row + 1) * config.spacing, -(row + 1) * config.spacing)
+                        IVec2::new(
+                            side * (row + 1) * config.spacing,
+                            -(row + 1) * config.spacing,
+                        )
                     }
                     FormationPattern::Circle => {
                         let angle = (i as f32 / minion_count as f32) * std::f32::consts::TAU;
                         let radius = 3.0;
-                        IVec2::new(
-                            (angle.cos() * radius) as i32,
-                            (angle.sin() * radius) as i32,
-                        )
+                        IVec2::new((angle.cos() * radius) as i32, (angle.sin() * radius) as i32)
                     }
-                    FormationPattern::Line => {
-                        IVec2::new(0, -(i as i32 + 1) * config.spacing)
-                    }
+                    FormationPattern::Line => IVec2::new(0, -(i as i32 + 1) * config.spacing),
                     FormationPattern::Box => {
                         let side = (minion_count as f32).sqrt().ceil() as i32;
                         let x = (i as i32 % side) - side / 2;
@@ -230,26 +248,34 @@ pub mod systems {
                 if minion_pos.x != target_pos.x || minion_pos.y != target_pos.y {
                     let dx = (target_pos.x - minion_pos.x).signum();
                     let dy = (target_pos.y - minion_pos.y).signum();
-                    movement_queue.commands.push(MovementCommand::Move(IVec2::new(dx, dy)));
+                    movement_queue
+                        .commands
+                        .push(MovementCommand::Move(IVec2::new(dx, dy)));
                 }
             }
         }
     }
 
     pub mod commands {
-        use bevy::prelude::*;
-        use bevy_shaman_core::components::{GridPosition, MovementQueue, MovementCommand, Player};
-        use bevy_shaman_monsters::components::{Tamed, AiState};
-        use crate::components::{MinionCommand, CommandType};
         use super::events::MinionCommandIssued;
+        use crate::components::{CommandType, MinionCommand};
+        use bevy::prelude::*;
+        use bevy_shaman_core::components::{GridPosition, MovementCommand, MovementQueue, Player};
+        use bevy_shaman_monsters::components::{AiState, Tamed};
 
         pub fn process_minion_commands(
             mut commands: Commands,
             keyboard: Res<ButtonInput<KeyCode>>,
             _player: Query<&GridPosition, With<Player>>,
             mut minions: Query<
-                (Entity, &GridPosition, &mut MovementQueue, &mut AiState, Option<&MinionCommand>),
-                With<Tamed>
+                (
+                    Entity,
+                    &GridPosition,
+                    &mut MovementQueue,
+                    &mut AiState,
+                    Option<&MinionCommand>,
+                ),
+                With<Tamed>,
             >,
             enemies: Query<(Entity, &GridPosition), (Without<Tamed>, Without<Player>)>,
             mut command_events: EventWriter<MinionCommandIssued>,
@@ -309,7 +335,9 @@ pub mod systems {
             }
 
             // Execute commands for minions
-            for (_minion_entity, minion_pos, mut movement_queue, mut ai_state, command_opt) in minions.iter_mut() {
+            for (_minion_entity, minion_pos, mut movement_queue, mut ai_state, command_opt) in
+                minions.iter_mut()
+            {
                 if let Some(command) = command_opt {
                     match command.command_type {
                         CommandType::Follow => {
@@ -323,7 +351,9 @@ pub mod systems {
                                 let dx = (target_pos.x - minion_pos.x).signum();
                                 let dy = (target_pos.y - minion_pos.y).signum();
                                 if dx != 0 || dy != 0 {
-                                    movement_queue.commands.push(MovementCommand::Move(IVec2::new(dx, dy)));
+                                    movement_queue
+                                        .commands
+                                        .push(MovementCommand::Move(IVec2::new(dx, dy)));
                                 }
                             }
                         }

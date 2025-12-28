@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::resources::BeatClock;
 use crate::systems::events::BeatHit;
+use bevy::prelude::*;
 
 /// Updates the global beat clock
 pub fn update_beat_clock(

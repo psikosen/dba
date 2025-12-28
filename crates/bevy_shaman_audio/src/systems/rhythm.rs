@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::resources::{ActiveSong, BeatClock, TimingQuality};
 use crate::systems::events::RhythmInputEvaluated;
+use bevy::prelude::*;
 
 /// Evaluates rhythm inputs from player (triggered by input system)
 pub fn evaluate_rhythm_inputs(

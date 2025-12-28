@@ -1,5 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use bevy::prelude::*;
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 /// Benchmark ECS query performance
 fn benchmark_ecs_queries(c: &mut Criterion) {
@@ -40,9 +40,13 @@ fn benchmark_state_transitions(c: &mut Criterion) {
 
     group.bench_function("state_transition", |b| {
         b.iter(|| {
-            app.world_mut().resource_mut::<NextState<GameState>>().set(GameState::Playing);
+            app.world_mut()
+                .resource_mut::<NextState<GameState>>()
+                .set(GameState::Playing);
             app.update();
-            app.world_mut().resource_mut::<NextState<GameState>>().set(GameState::Paused);
+            app.world_mut()
+                .resource_mut::<NextState<GameState>>()
+                .set(GameState::Paused);
             app.update();
         });
     });
@@ -137,7 +141,11 @@ fn benchmark_serialization(c: &mut Criterion) {
         player_level: 10,
         monsters_defeated: 150,
         corruption_level: 0.75,
-        inventory: vec!["item1".to_string(), "item2".to_string(), "item3".to_string()],
+        inventory: vec![
+            "item1".to_string(),
+            "item2".to_string(),
+            "item3".to_string(),
+        ],
     };
 
     group.bench_function("serialize_json", |b| {

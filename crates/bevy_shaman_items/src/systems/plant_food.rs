@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_core::components::{Health, Spirit};
 
 /// Event for using a plant
@@ -74,7 +74,10 @@ pub fn plant_usage(
                 amount: blood_lust_reduction,
                 source: BloodLustReductionSource::Plant,
             });
-            info!("Used {:?} - Blood lust reduced by {}", plant, blood_lust_reduction);
+            info!(
+                "Used {:?} - Blood lust reduced by {}",
+                plant, blood_lust_reduction
+            );
         }
 
         // Add active effect if applicable
@@ -96,14 +99,12 @@ pub fn plant_usage(
                         is_permanent: false,
                     })
                 }
-                PlantType::EternalBark => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::HealthRegen,
-                        duration_remaining: 0.0,
-                        strength: 1.0,
-                        is_permanent: true,
-                    })
-                }
+                PlantType::EternalBark => Some(ActiveEffect {
+                    effect_type: EffectType::HealthRegen,
+                    duration_remaining: 0.0,
+                    strength: 1.0,
+                    is_permanent: true,
+                }),
                 PlantType::AetherGrass => {
                     Some(ActiveEffect {
                         effect_type: EffectType::SpiritRegen,
@@ -137,14 +138,12 @@ pub fn plant_usage(
                         is_permanent: false,
                     })
                 }
-                PlantType::Ingazi => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::StrengthBoost,
-                        duration_remaining: plant.effect_duration(),
-                        strength: plant.human_stat_boost(),
-                        is_permanent: false,
-                    })
-                }
+                PlantType::Ingazi => Some(ActiveEffect {
+                    effect_type: EffectType::StrengthBoost,
+                    duration_remaining: plant.effect_duration(),
+                    strength: plant.human_stat_boost(),
+                    is_permanent: false,
+                }),
                 PlantType::Mwazi => {
                     Some(ActiveEffect {
                         effect_type: EffectType::DamageResistance,
@@ -153,14 +152,12 @@ pub fn plant_usage(
                         is_permanent: false,
                     })
                 }
-                PlantType::Jini => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::VitalityBoost,
-                        duration_remaining: plant.effect_duration(),
-                        strength: plant.spirit_stat_boost(),
-                        is_permanent: false,
-                    })
-                }
+                PlantType::Jini => Some(ActiveEffect {
+                    effect_type: EffectType::VitalityBoost,
+                    duration_remaining: plant.effect_duration(),
+                    strength: plant.spirit_stat_boost(),
+                    is_permanent: false,
+                }),
                 PlantType::Ropa => {
                     Some(ActiveEffect {
                         effect_type: EffectType::BloodFury,
@@ -169,14 +166,12 @@ pub fn plant_usage(
                         is_permanent: false,
                     })
                 }
-                PlantType::Samaki => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::StrengthBoost,
-                        duration_remaining: plant.effect_duration(),
-                        strength: plant.human_stat_boost(),
-                        is_permanent: false,
-                    })
-                }
+                PlantType::Samaki => Some(ActiveEffect {
+                    effect_type: EffectType::StrengthBoost,
+                    duration_remaining: plant.effect_duration(),
+                    strength: plant.human_stat_boost(),
+                    is_permanent: false,
+                }),
                 PlantType::Umthombo => {
                     Some(ActiveEffect {
                         effect_type: EffectType::LegendaryHealing,
@@ -194,22 +189,18 @@ pub fn plant_usage(
                         is_permanent: true,
                     })
                 }
-                PlantType::Moya => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::SpiritSight,
-                        duration_remaining: plant.effect_duration(),
-                        strength: 1.0,
-                        is_permanent: false,
-                    })
-                }
-                PlantType::Emi => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::WisdomBoost,
-                        duration_remaining: plant.effect_duration(),
-                        strength: plant.human_stat_boost(),
-                        is_permanent: false,
-                    })
-                }
+                PlantType::Moya => Some(ActiveEffect {
+                    effect_type: EffectType::SpiritSight,
+                    duration_remaining: plant.effect_duration(),
+                    strength: 1.0,
+                    is_permanent: false,
+                }),
+                PlantType::Emi => Some(ActiveEffect {
+                    effect_type: EffectType::WisdomBoost,
+                    duration_remaining: plant.effect_duration(),
+                    strength: plant.human_stat_boost(),
+                    is_permanent: false,
+                }),
                 PlantType::Moyo => {
                     Some(ActiveEffect {
                         effect_type: EffectType::SpiritShield,
@@ -218,30 +209,24 @@ pub fn plant_usage(
                         is_permanent: false,
                     })
                 }
-                PlantType::Elima => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::SpiritualPower,
-                        duration_remaining: plant.effect_duration(),
-                        strength: plant.spirit_stat_boost(),
-                        is_permanent: false,
-                    })
-                }
-                PlantType::Pepo => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::EtherealMovement,
-                        duration_remaining: plant.effect_duration(),
-                        strength: 1.0,
-                        is_permanent: false,
-                    })
-                }
-                PlantType::Sankofa => {
-                    Some(ActiveEffect {
-                        effect_type: EffectType::WisdomBoost,
-                        duration_remaining: plant.effect_duration(),
-                        strength: plant.human_stat_boost(),
-                        is_permanent: false,
-                    })
-                }
+                PlantType::Elima => Some(ActiveEffect {
+                    effect_type: EffectType::SpiritualPower,
+                    duration_remaining: plant.effect_duration(),
+                    strength: plant.spirit_stat_boost(),
+                    is_permanent: false,
+                }),
+                PlantType::Pepo => Some(ActiveEffect {
+                    effect_type: EffectType::EtherealMovement,
+                    duration_remaining: plant.effect_duration(),
+                    strength: 1.0,
+                    is_permanent: false,
+                }),
+                PlantType::Sankofa => Some(ActiveEffect {
+                    effect_type: EffectType::WisdomBoost,
+                    duration_remaining: plant.effect_duration(),
+                    strength: plant.human_stat_boost(),
+                    is_permanent: false,
+                }),
                 PlantType::Nommo => {
                     Some(ActiveEffect {
                         effect_type: EffectType::SpiritAscension,
@@ -287,7 +272,10 @@ pub fn food_usage(
                 amount: blood_lust_reduction,
                 source: BloodLustReductionSource::Food,
             });
-            info!("Ate {:?} - Blood lust reduced by {}", food, blood_lust_reduction);
+            info!(
+                "Ate {:?} - Blood lust reduced by {}",
+                food, blood_lust_reduction
+            );
         }
 
         // Add stat boost effects
@@ -328,10 +316,7 @@ pub fn food_usage(
 }
 
 /// System to update active effects over time
-pub fn active_effects_update(
-    mut effects_query: Query<&mut ActiveEffects>,
-    time: Res<Time>,
-) {
+pub fn active_effects_update(mut effects_query: Query<&mut ActiveEffects>, time: Res<Time>) {
     for mut effects in effects_query.iter_mut() {
         effects.update(time.delta_secs());
     }
@@ -407,8 +392,10 @@ pub fn feed_blood_plant(
 
             // Check if player has enough HP
             if health.current <= blood_cost {
-                warn!("Not enough HP to feed blood plant! Need {}, have {}",
-                    blood_cost, health.current);
+                warn!(
+                    "Not enough HP to feed blood plant! Need {}, have {}",
+                    blood_cost, health.current
+                );
                 continue;
             }
 
@@ -418,7 +405,10 @@ pub fn feed_blood_plant(
             // Add penalty (reduces max HP until rest)
             penalty.add_penalty(blood_cost);
 
-            info!("Sacrificed {} HP to feed {:?} plant", blood_cost, event.plant_type);
+            info!(
+                "Sacrificed {} HP to feed {:?} plant",
+                blood_cost, event.plant_type
+            );
 
             // Feed the plant
             if let Ok(mut plant_care) = plant_query.get_mut(event.plant) {
@@ -442,15 +432,20 @@ pub fn feed_spirit_plant(
 
             // Check if player has enough spirit
             if spirit.current < spirit_cost {
-                warn!("Not enough spirit to feed plant! Need {}, have {}",
-                    spirit_cost, spirit.current);
+                warn!(
+                    "Not enough spirit to feed plant! Need {}, have {}",
+                    spirit_cost, spirit.current
+                );
                 continue;
             }
 
             // Take spirit from player
             spirit.current -= spirit_cost;
 
-            info!("Sacrificed {} spirit to feed {:?} plant", spirit_cost, event.plant_type);
+            info!(
+                "Sacrificed {} spirit to feed {:?} plant",
+                spirit_cost, event.plant_type
+            );
 
             // Feed the plant
             if let Ok(mut plant_care) = plant_query.get_mut(event.plant) {
@@ -478,14 +473,15 @@ pub fn apply_blood_sacrifice_penalty(
 }
 
 /// System to advance plant care days (should be called once per in-game day)
-pub fn advance_plant_care_days(
-    mut plant_query: Query<&mut PlantCare>,
-) {
+pub fn advance_plant_care_days(mut plant_query: Query<&mut PlantCare>) {
     for mut plant_care in plant_query.iter_mut() {
         plant_care.advance_day();
 
         if plant_care.is_withering {
-            warn!("Plant {:?} is withering! It needs feeding!", plant_care.plant_type);
+            warn!(
+                "Plant {:?} is withering! It needs feeding!",
+                plant_care.plant_type
+            );
         }
     }
 }
@@ -497,7 +493,8 @@ pub fn apply_passive_hp_regen(
     time: Res<Time>,
 ) {
     // Count healthy Umdhlebi plants
-    let umdhlebi_count = plant_query.iter()
+    let umdhlebi_count = plant_query
+        .iter()
         .filter(|care| care.plant_type == PlantType::Umdhlebi && !care.is_withering)
         .count();
 
@@ -517,7 +514,8 @@ pub fn apply_passive_spirit_regen(
     time: Res<Time>,
 ) {
     // Count healthy Baobab plants
-    let baobab_count = plant_query.iter()
+    let baobab_count = plant_query
+        .iter()
         .filter(|care| care.plant_type == PlantType::Baobab && !care.is_withering)
         .count();
 
@@ -549,8 +547,10 @@ pub fn harvest_passive_plant_items(
         if let Ok(mut plant_care) = plant_query.get_mut(event.plant) {
             // Check if plant can be harvested
             if !plant_care.can_harvest() {
-                warn!("Plant {:?} cannot be harvested yet! Days since harvest: {}, Is withering: {}",
-                    plant_care.plant_type, plant_care.days_since_harvest, plant_care.is_withering);
+                warn!(
+                    "Plant {:?} cannot be harvested yet! Days since harvest: {}, Is withering: {}",
+                    plant_care.plant_type, plant_care.days_since_harvest, plant_care.is_withering
+                );
                 continue;
             }
 
@@ -599,7 +599,10 @@ pub fn harvest_passive_plant_items(
                     }
                 }
                 _ => {
-                    warn!("Tried to harvest non-passive plant: {:?}", plant_care.plant_type);
+                    warn!(
+                        "Tried to harvest non-passive plant: {:?}",
+                        plant_care.plant_type
+                    );
                 }
             }
 

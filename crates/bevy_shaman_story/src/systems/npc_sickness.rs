@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use bevy_shaman_world::resources::BossUnlockFlags;
-use crate::components::{NpcSicknessState, NpcName};
+use crate::components::{NpcName, NpcSicknessState};
 use crate::resources::BrotherCleansingProgress;
 use crate::systems::events::NpcWokenUp;
+use bevy::prelude::*;
+use bevy_shaman_world::resources::BossUnlockFlags;
 
 /// Updates NPC waking state based on boss defeats and brother cleansing
 pub fn update_npc_waking_state(

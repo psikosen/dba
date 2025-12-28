@@ -4,17 +4,17 @@ fn main() {
     let mut app = App::new();
 
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Shaman's Journey".to_string(),
-                resolution: (1280.0, 720.0).into(),
-                ..default()
-            }),
+        primary_window: Some(Window {
+            title: "Shaman's Journey".to_string(),
+            resolution: (1280.0, 720.0).into(),
             ..default()
-        }))
-        // Core systems - movement, camera, grid, animation
-        .add_plugins(bevy_shaman_core::CorePlugin)
-        // Combat - rhythm evaluation, hit resolution, status effects
-        .add_plugins(bevy_shaman_combat::CombatPlugin);
+        }),
+        ..default()
+    }))
+    // Core systems - movement, camera, grid, animation
+    .add_plugins(bevy_shaman_core::CorePlugin)
+    // Combat - rhythm evaluation, hit resolution, status effects
+    .add_plugins(bevy_shaman_combat::CombatPlugin);
 
     // Audio - beat clock, song manager, spatial SFX
     #[cfg(feature = "audio")]

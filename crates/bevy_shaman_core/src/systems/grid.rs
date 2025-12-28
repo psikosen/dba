@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::{BlocksMovement, GridPosition};
 use crate::resources::GridOccupancy;
+use bevy::prelude::*;
 
 /// Updates GridOccupancy resource based on entities with GridPosition + BlocksMovement
 pub fn update_grid_occupancy(

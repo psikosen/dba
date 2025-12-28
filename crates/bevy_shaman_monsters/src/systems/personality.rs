@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::{MonsterState, MusicAffinityProfile};
+use bevy::prelude::*;
 
 /// Placeholder music influence event (defined in audio crate)
 #[derive(Event)]

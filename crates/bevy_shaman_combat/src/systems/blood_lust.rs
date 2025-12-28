@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_core::components::Health;
 use bevy_shaman_monsters::components::MonsterState;
 
@@ -41,7 +41,8 @@ pub fn blood_lust_decay(
     // Only decay when not in combat
     if *combat_state.get() == bevy_shaman_core::states::CombatState::None {
         for mut blood_lust in query.iter_mut() {
-            blood_lust.current = (blood_lust.current - blood_lust.decay_rate * time.delta_secs()).max(0.0);
+            blood_lust.current =
+                (blood_lust.current - blood_lust.decay_rate * time.delta_secs()).max(0.0);
         }
     }
 }
@@ -57,7 +58,8 @@ pub fn blood_lust_corruption_spread(
             let corruption_rate = (blood_lust.current - blood_lust.threshold) * 0.01;
 
             for mut monster_state in monster_query.iter_mut() {
-                monster_state.corruption_meter = (monster_state.corruption_meter + corruption_rate * time.delta_secs()).min(1.0);
+                monster_state.corruption_meter =
+                    (monster_state.corruption_meter + corruption_rate * time.delta_secs()).min(1.0);
             }
         }
     }

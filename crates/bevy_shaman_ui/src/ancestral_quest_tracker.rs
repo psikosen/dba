@@ -1,9 +1,9 @@
+use crate::ancestral_hud::GriotScroll;
+use crate::ancestral_theme::*;
 /// Ancestral Quest Tracker Integration
 /// Updates the Griot's Scroll to display active quests from the QuestLog
 use bevy::prelude::*;
-use bevy_shaman_story::systems::quest_system::{QuestLog, QuestRegistry, Quest, QuestStatus};
-use crate::ancestral_hud::GriotScroll;
-use crate::ancestral_theme::*;
+use bevy_shaman_story::systems::quest_system::{Quest, QuestLog, QuestRegistry, QuestStatus};
 
 // ============================================================================
 // COMPONENTS
@@ -33,12 +33,15 @@ pub fn update_quest_tracker(
     quest_log: Res<QuestLog>,
     quest_registry: Res<QuestRegistry>,
     scroll_query: Query<Entity, With<GriotScroll>>,
-    existing_content: Query<Entity, Or<(
-        With<QuestTitleText>,
-        With<QuestObjectiveText>,
-        With<QuestProgressText>,
-        With<QuestRewardsText>,
-    )>>,
+    existing_content: Query<
+        Entity,
+        Or<(
+            With<QuestTitleText>,
+            With<QuestObjectiveText>,
+            With<QuestProgressText>,
+            With<QuestRewardsText>,
+        )>,
+    >,
 ) {
     // Only update when quest log changes
     if !quest_log.is_changed() {
@@ -363,7 +366,11 @@ fn spawn_quest_entry(parent: &mut ChildBuilder, quest: &Quest) {
         .with_children(|entry| {
             // Title with status
             entry.spawn((
-                Text::new(format!("{} [{}]", quest.title, format_quest_status(&quest.status))),
+                Text::new(format!(
+                    "{} [{}]",
+                    quest.title,
+                    format_quest_status(&quest.status)
+                )),
                 TextFont {
                     font_size: 16.0,
                     ..default()

@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::TutorialEvent;
+use bevy::prelude::*;
 
 /// Cutscene system for tutorial sequences
 /// Handles image flashes, transitions, and narrative moments
@@ -8,11 +8,7 @@ pub struct CutscenePlugin;
 
 impl Plugin for CutscenePlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Update, (
-                update_active_cutscenes,
-                handle_cutscene_input,
-            ))
+        app.add_systems(Update, (update_active_cutscenes, handle_cutscene_input))
             .add_event::<CutsceneStartEvent>()
             .add_event::<CutsceneEndEvent>();
     }
@@ -65,12 +61,12 @@ pub struct CutsceneFrame {
 
 #[derive(Clone)]
 pub enum CutsceneFrameType {
-    ImageFlash(String),      // Image path to flash on screen
-    BlackScreen,             // Fade to black
-    Text(String),            // Display text overlay
-    FadeIn,                  // Fade in from black
-    FadeOut,                 // Fade out to black
-    Wait,                    // Just wait (for player input or time)
+    ImageFlash(String), // Image path to flash on screen
+    BlackScreen,        // Fade to black
+    Text(String),       // Display text overlay
+    FadeIn,             // Fade in from black
+    FadeOut,            // Fade out to black
+    Wait,               // Just wait (for player input or time)
 }
 
 // ============================================================================
@@ -104,7 +100,9 @@ pub fn create_dream_grotesque_ball_cutscene() -> ActiveCutscene {
                 text: None,
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/grotesque_ball.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/grotesque_ball.png".to_string(),
+                ),
                 duration: 0.3,
                 text: Some("A grotesque ball with teeth...".to_string()),
             },
@@ -114,7 +112,9 @@ pub fn create_dream_grotesque_ball_cutscene() -> ActiveCutscene {
                 text: None,
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/grotesque_ball_chomping.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/grotesque_ball_chomping.png".to_string(),
+                ),
                 duration: 0.5,
                 text: Some("Gnawing at you, chomping pieces off...".to_string()),
             },
@@ -145,7 +145,9 @@ pub fn create_dream_claws_cutscene() -> ActiveCutscene {
                 text: None,
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/long_clawed_hands.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/long_clawed_hands.png".to_string(),
+                ),
                 duration: 0.4,
                 text: Some("Irregularly long hands with claws...".to_string()),
             },
@@ -155,7 +157,9 @@ pub fn create_dream_claws_cutscene() -> ActiveCutscene {
                 text: None,
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/hands_pulling.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/hands_pulling.png".to_string(),
+                ),
                 duration: 0.6,
                 text: Some("Pulling you into the forest...".to_string()),
             },
@@ -186,17 +190,23 @@ pub fn create_four_spirits_battle_cutscene() -> ActiveCutscene {
                 text: Some("Four powerful spirits clash before you...".to_string()),
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/angelic_spirit.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/angelic_spirit.png".to_string(),
+                ),
                 duration: 2.0,
                 text: Some("The Angelic Spirit radiates pure light...".to_string()),
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/neutral_spirit.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/neutral_spirit.png".to_string(),
+                ),
                 duration: 2.0,
                 text: Some("The Neutral Spirit's eyes see all futures...".to_string()),
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/chaotic_spirit.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/chaotic_spirit.png".to_string(),
+                ),
                 duration: 2.0,
                 text: Some("The Chaotic Spirit brings decay and rot...".to_string()),
             },
@@ -206,7 +216,9 @@ pub fn create_four_spirits_battle_cutscene() -> ActiveCutscene {
                 text: Some("The Dark Spirit feeds on evil deeds...".to_string()),
             },
             CutsceneFrame {
-                frame_type: CutsceneFrameType::ImageFlash("cutscenes/four_spirits_combined.png".to_string()),
+                frame_type: CutsceneFrameType::ImageFlash(
+                    "cutscenes/four_spirits_combined.png".to_string(),
+                ),
                 duration: 3.0,
                 text: Some("They all turn to you. Each wants your aid.".to_string()),
             },
@@ -286,7 +298,8 @@ fn update_active_cutscenes(
                         "fade_in"
                     } else {
                         "fade_out"
-                    }.to_string(),
+                    }
+                    .to_string(),
                     volume: 0.3,
                 });
             }
@@ -352,10 +365,7 @@ fn handle_cutscene_input(
 // HELPER FUNCTIONS
 // ============================================================================
 
-pub fn spawn_cutscene(
-    cutscene_id: &str,
-    commands: &mut Commands,
-) -> Option<ActiveCutscene> {
+pub fn spawn_cutscene(cutscene_id: &str, commands: &mut Commands) -> Option<ActiveCutscene> {
     // Spawn visual entities for cutscene effects (fade overlays, image flashes, text boxes, UI hints)
     let cutscene = match cutscene_id {
         "dream_grotesque_ball" => {
@@ -463,18 +473,20 @@ pub fn render_cutscene_frame(
     }
 
     // Create root node
-    let root = commands.spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            position_type: PositionType::Absolute,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            ..default()
-        },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-        CutsceneRoot,
-    )).id();
+    let root = commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                position_type: PositionType::Absolute,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            CutsceneRoot,
+        ))
+        .id();
 
     match &frame.frame_type {
         CutsceneFrameType::ImageFlash(image_path) => {

@@ -1,7 +1,7 @@
-use bevy::prelude::*;
 use crate::components::Inventory;
 use crate::resources::{ItemDB, RecipeDB};
 use crate::systems::events::CraftingRequested;
+use bevy::prelude::*;
 
 /// Processes crafting requests
 pub fn process_crafting_requests(
@@ -39,7 +39,10 @@ pub fn process_crafting_requests(
         // Add output item
         if let Some(output_item) = item_db.get(&recipe.output_item_id) {
             inventory.add_item(output_item.clone(), recipe.output_quantity);
-            info!("Crafted: {} x{}", output_item.display_name, recipe.output_quantity);
+            info!(
+                "Crafted: {} x{}",
+                output_item.display_name, recipe.output_quantity
+            );
         }
     }
 }

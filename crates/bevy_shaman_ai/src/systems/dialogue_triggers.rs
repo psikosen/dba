@@ -1,9 +1,9 @@
+use crate::components::{AiRole, ConversationHistory, LlmAi};
+use crate::systems::npc_dialogue::{NpcDialogueResponse, PlayerDialogueRequest};
 /// Dialogue Trigger Systems
 /// Manages when and how dialogue is triggered based on game events and proximity
 use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Player};
-use crate::components::{LlmAi, AiRole, ConversationHistory};
-use crate::systems::npc_dialogue::{PlayerDialogueRequest, NpcDialogueResponse};
 
 // ============================================================================
 // COMPONENTS
@@ -51,13 +51,16 @@ pub struct HasGreeted;
 
 /// Detect when player enters/exits NPC dialogue zones
 pub fn detect_dialogue_proximity(
-    mut npc_query: Query<(
-        Entity,
-        &GridPosition,
-        &DialogueZone,
-        &mut InDialogueZone,
-        Option<&HasGreeted>,
-    ), With<LlmAi>>,
+    mut npc_query: Query<
+        (
+            Entity,
+            &GridPosition,
+            &DialogueZone,
+            &mut InDialogueZone,
+            Option<&HasGreeted>,
+        ),
+        With<LlmAi>,
+    >,
     player_query: Query<(Entity, &GridPosition), With<Player>>,
     mut commands: Commands,
     time: Res<Time>,
@@ -173,7 +176,8 @@ pub fn handle_story_dialogue_triggers(
 
     for trigger in trigger_events.read() {
         // Find NPC by name
-        let npc = npc_query.iter_mut()
+        let npc = npc_query
+            .iter_mut()
             .find(|(_, ai, _)| ai.character_name == trigger.npc_name);
 
         if let Some((npc_entity, ai, mut history)) = npc {
@@ -195,7 +199,10 @@ pub fn handle_story_dialogue_triggers(
                 player_message: Some(trigger.context.clone()),
             });
         } else {
-            warn!("Story dialogue trigger for unknown NPC: {}", trigger.npc_name);
+            warn!(
+                "Story dialogue trigger for unknown NPC: {}",
+                trigger.npc_name
+            );
         }
     }
 }
@@ -208,7 +215,7 @@ pub fn handle_story_dialogue_triggers(
 pub fn boss_combat_start_dialogue(
     mut boss_query: Query<
         (Entity, &LlmAi, &mut ConversationHistory),
-        Added<bevy_shaman_monsters::components::AiState>
+        Added<bevy_shaman_monsters::components::AiState>,
     >,
     player_query: Query<Entity, With<Player>>,
     mut commands: Commands,
@@ -224,13 +231,13 @@ pub fn boss_combat_start_dialogue(
             continue;
         }
 
-        info!("Boss {} entered combat - triggering intro dialogue", ai.character_name);
+        info!(
+            "Boss {} entered combat - triggering intro dialogue",
+            ai.character_name
+        );
 
         // Add combat context
-        history.add_npc_message(
-            "[Combat Started]".to_string(),
-            time.elapsed_secs_f64(),
-        );
+        history.add_npc_message("[Combat Started]".to_string(), time.elapsed_secs_f64());
 
         // Trigger combat intro dialogue
         commands.trigger(PlayerDialogueRequest {
@@ -261,7 +268,8 @@ pub fn brother_quest_milestone_dialogue(
     };
 
     // Find a brother to comment on quest progress
-    let brother = brother_query.iter()
+    let brother = brother_query
+        .iter()
         .find(|(_, ai)| matches!(ai.role, AiRole::Brother));
 
     if let Some((brother_entity, ai)) = brother {
@@ -285,7 +293,10 @@ pub struct DialogueIndicator;
 /// Show visual indicator above NPCs with available dialogue
 pub fn show_dialogue_indicators(
     mut commands: Commands,
-    npc_query: Query<(Entity, &InDialogueZone, &GridPosition), (With<LlmAi>, Without<DialogueIndicator>)>,
+    npc_query: Query<
+        (Entity, &InDialogueZone, &GridPosition),
+        (With<LlmAi>, Without<DialogueIndicator>),
+    >,
     indicator_query: Query<(Entity, &Parent), With<DialogueIndicator>>,
 ) {
     // Spawn indicators for NPCs with player nearby

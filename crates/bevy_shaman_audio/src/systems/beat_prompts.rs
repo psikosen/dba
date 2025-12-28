@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::Player;
 use crate::components::{BeatPrompt, BeatPromptManager};
 use crate::resources::BeatClock;
 use crate::systems::events::RhythmInputEvaluated;
+use bevy::prelude::*;
+use bevy_shaman_core::components::Player;
 
 /// Resource to hold the beat prompt sprite handle
 #[derive(Resource)]
@@ -31,10 +31,14 @@ pub fn spawn_beat_prompts(
     };
 
     // Clean up old prompts that have passed
-    manager.active_prompts.retain(|&beat| beat > clock.current_beat);
+    manager
+        .active_prompts
+        .retain(|&beat| beat > clock.current_beat);
 
     // Calculate how many prompts we need to spawn
-    let prompts_needed = manager.max_prompts.saturating_sub(manager.active_prompts.len());
+    let prompts_needed = manager
+        .max_prompts
+        .saturating_sub(manager.active_prompts.len());
 
     if prompts_needed == 0 {
         return;
@@ -92,7 +96,10 @@ pub fn update_beat_prompts(
     time: Res<Time>,
     clock: Res<BeatClock>,
     player_query: Query<&Transform, With<Player>>,
-    mut prompt_query: Query<(Entity, &mut BeatPrompt, &mut Transform, &mut Sprite), Without<Player>>,
+    mut prompt_query: Query<
+        (Entity, &mut BeatPrompt, &mut Transform, &mut Sprite),
+        Without<Player>,
+    >,
 ) {
     let Ok(player_transform) = player_query.get_single() else {
         return;
@@ -115,7 +122,11 @@ pub fn update_beat_prompts(
         transform.translation.y = player_transform.translation.y + current_y_offset;
 
         // Keep x position relative to player (follow player horizontally)
-        let x_offset = if prompt.target_beat % 2 == 0 { -20.0 } else { 20.0 };
+        let x_offset = if prompt.target_beat % 2 == 0 {
+            -20.0
+        } else {
+            20.0
+        };
         transform.translation.x = player_transform.translation.x + x_offset;
 
         // Pulse effect based on proximity to beat
@@ -160,27 +171,25 @@ pub fn consume_beat_prompts(
         // Consume the closest prompt
         if let Some(entity) = closest_prompt_entity {
             if let Ok((_, mut prompt, mut sprite)) = prompt_query.get_mut(entity) {
-            prompt.consumed = true;
+                prompt.consumed = true;
 
-            // Visual feedback based on timing quality
-            sprite.color = match event.quality {
-                crate::resources::TimingQuality::Perfect => Color::srgb(0.0, 1.0, 0.0), // Green
-                crate::resources::TimingQuality::Great => Color::srgb(0.5, 1.0, 0.5),   // Light green
-                crate::resources::TimingQuality::Good => Color::srgb(1.0, 1.0, 0.0),    // Yellow
-                crate::resources::TimingQuality::Miss => Color::srgb(1.0, 0.0, 0.0),    // Red
-            };
+                // Visual feedback based on timing quality
+                sprite.color = match event.quality {
+                    crate::resources::TimingQuality::Perfect => Color::srgb(0.0, 1.0, 0.0), // Green
+                    crate::resources::TimingQuality::Great => Color::srgb(0.5, 1.0, 0.5), // Light green
+                    crate::resources::TimingQuality::Good => Color::srgb(1.0, 1.0, 0.0),  // Yellow
+                    crate::resources::TimingQuality::Miss => Color::srgb(1.0, 0.0, 0.0),  // Red
+                };
 
-            // Despawn after a short delay (show feedback then remove)
-            commands.entity(entity).despawn();
+                // Despawn after a short delay (show feedback then remove)
+                commands.entity(entity).despawn();
             }
         }
     }
 }
 
 /// Initialize the beat prompt manager with default settings
-pub fn init_beat_prompt_manager(
-    mut commands: Commands,
-) {
+pub fn init_beat_prompt_manager(mut commands: Commands) {
     commands.insert_resource(BeatPromptManager {
         active_prompts: Vec::new(),
         max_prompts: 2,
@@ -189,10 +198,7 @@ pub fn init_beat_prompt_manager(
 }
 
 /// Creates the beat prompt sprite (placeholder)
-pub fn create_beat_prompt_sprite(
-    mut commands: Commands,
-    mut images: ResMut<Assets<Image>>,
-) {
+pub fn create_beat_prompt_sprite(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     // Create a circular-ish sprite for the beat prompt
     let size = bevy::render::render_resource::Extent3d {
         width: 24,

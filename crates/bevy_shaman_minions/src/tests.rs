@@ -26,14 +26,9 @@ mod minion_tests {
             FormationPattern::Circle => {
                 let angle = (index as f32 / minion_count as f32) * std::f32::consts::TAU;
                 let radius = 3.0;
-                IVec2::new(
-                    (angle.cos() * radius) as i32,
-                    (angle.sin() * radius) as i32,
-                )
+                IVec2::new((angle.cos() * radius) as i32, (angle.sin() * radius) as i32)
             }
-            FormationPattern::Line => {
-                IVec2::new(0, -(index as i32 + 1) * spacing)
-            }
+            FormationPattern::Line => IVec2::new(0, -(index as i32 + 1) * spacing),
             FormationPattern::Box => {
                 let side = (minion_count as f32).sqrt().ceil() as i32;
                 let x = (index as i32 % side) - side / 2;
@@ -90,10 +85,12 @@ mod minion_tests {
         // Test that V-shape is symmetric
         for count in 2..=10 {
             if count % 2 == 0 {
-                let left = calculate_formation_offset(FormationPattern::VShape, count - 1, count, 2);
-                let right = calculate_formation_offset(FormationPattern::VShape, count - 2, count, 2);
+                let left =
+                    calculate_formation_offset(FormationPattern::VShape, count - 1, count, 2);
+                let right =
+                    calculate_formation_offset(FormationPattern::VShape, count - 2, count, 2);
                 assert_eq!(left.x, -right.x); // Symmetric X
-                assert_eq!(left.y, right.y);  // Same Y
+                assert_eq!(left.y, right.y); // Same Y
             }
         }
     }
@@ -129,10 +126,10 @@ mod minion_tests {
         let offset3 = calculate_formation_offset(FormationPattern::Circle, 3, 4, 2);
 
         // 90 degree intervals
-        assert_eq!(offset0, IVec2::new(3, 0));   // 0°
-        assert_eq!(offset1, IVec2::new(0, 3));   // 90°
-        assert_eq!(offset2, IVec2::new(-3, 0));  // 180°
-        assert_eq!(offset3, IVec2::new(0, -3));  // 270°
+        assert_eq!(offset0, IVec2::new(3, 0)); // 0°
+        assert_eq!(offset1, IVec2::new(0, 3)); // 90°
+        assert_eq!(offset2, IVec2::new(-3, 0)); // 180°
+        assert_eq!(offset3, IVec2::new(0, -3)); // 270°
     }
 
     #[test]
@@ -142,8 +139,11 @@ mod minion_tests {
             let offset = calculate_formation_offset(FormationPattern::Circle, i, 8, 2);
             let distance_squared = offset.x * offset.x + offset.y * offset.y;
             // Radius is 3.0, so distance^2 should be around 9
-            assert!(distance_squared >= 6 && distance_squared <= 12,
-                    "Distance squared {} is not close to 9", distance_squared);
+            assert!(
+                distance_squared >= 6 && distance_squared <= 12,
+                "Distance squared {} is not close to 9",
+                distance_squared
+            );
         }
     }
 
@@ -304,7 +304,12 @@ mod minion_tests {
             assert_eq!(side * side, count);
 
             for i in 0..count {
-                let _ = calculate_formation_offset(FormationPattern::Box, i as usize, count as usize, 2);
+                let _ = calculate_formation_offset(
+                    FormationPattern::Box,
+                    i as usize,
+                    count as usize,
+                    2,
+                );
             }
         }
     }
@@ -333,10 +338,19 @@ mod minion_tests {
     #[test]
     fn test_all_formations_move_backward() {
         // All formations should place minions behind (negative Y) the leader
-        for &pattern in &[FormationPattern::VShape, FormationPattern::Line, FormationPattern::Box] {
+        for &pattern in &[
+            FormationPattern::VShape,
+            FormationPattern::Line,
+            FormationPattern::Box,
+        ] {
             for i in 0..5 {
                 let offset = calculate_formation_offset(pattern, i, 5, 2);
-                assert!(offset.y < 0, "Pattern {:?} index {} should have negative Y", pattern, i);
+                assert!(
+                    offset.y < 0,
+                    "Pattern {:?} index {} should have negative Y",
+                    pattern,
+                    i
+                );
             }
         }
     }

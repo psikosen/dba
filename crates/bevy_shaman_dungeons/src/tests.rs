@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod dungeon_tests {
     use super::super::components::*;
-    use super::super::systems::generation::*;
     use super::super::systems::events::*;
+    use super::super::systems::generation::*;
 
     // ============================================================================
     // COMPONENT TESTS

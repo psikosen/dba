@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_core::components::Spirit;
 
 /// System to handle weapon attacks with their specific properties

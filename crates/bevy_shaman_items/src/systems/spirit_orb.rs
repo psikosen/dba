@@ -1,9 +1,9 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::{Spirit, Stamina};
 use crate::components::Inventory;
 use crate::systems::events::SpiritOrbConsumed;
+use bevy::prelude::*;
+use bevy_shaman_core::components::{Spirit, Stamina};
 
-const AUTO_USE_THRESHOLD_SPIRIT: f32 = 0.3;  // 30% of max
+const AUTO_USE_THRESHOLD_SPIRIT: f32 = 0.3; // 30% of max
 const AUTO_USE_THRESHOLD_STAMINA: f32 = 0.3;
 
 /// Auto-consumes Spirit Orbs when resources are low
@@ -25,7 +25,10 @@ pub fn consume_spirit_orbs(
         // Try to consume smallest orb first
         let orb_sizes = [
             ("spirit_orb_small", crate::components::SpiritOrbSize::Small),
-            ("spirit_orb_medium", crate::components::SpiritOrbSize::Medium),
+            (
+                "spirit_orb_medium",
+                crate::components::SpiritOrbSize::Medium,
+            ),
             ("spirit_orb_large", crate::components::SpiritOrbSize::Large),
         ];
 

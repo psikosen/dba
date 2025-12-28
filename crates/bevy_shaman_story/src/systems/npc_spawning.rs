@@ -1,8 +1,10 @@
+use crate::components::{
+    HeadShaman, NpcDialogue, NpcName, NpcSicknessState, PlayerBrother, VillageMarker,
+};
+use crate::resources::{AfricanNamesDB, CharacterType, PortraitEmotion};
 use bevy::prelude::*;
 use bevy_shaman_core::components::GridPosition;
 use bevy_shaman_world::components::{BiomeType, WorldTile};
-use crate::components::{NpcName, NpcDialogue, NpcSicknessState, HeadShaman, PlayerBrother, VillageMarker};
-use crate::resources::{AfricanNamesDB, CharacterType, PortraitEmotion};
 use rand::seq::SliceRandom;
 use rand::Rng;
 
@@ -30,8 +32,9 @@ pub fn spawn_village_npcs(
 
     // Spawn Head Shaman (always at a specific village location)
     if let Some(first_village) = village_tiles.iter().next() {
-        let head_shaman_name = get_name_by_type(&names_db, CharacterType::SpiritualLeader, &mut rng)
-            .unwrap_or("Nuru".to_string());
+        let head_shaman_name =
+            get_name_by_type(&names_db, CharacterType::SpiritualLeader, &mut rng)
+                .unwrap_or("Nuru".to_string());
 
         spawn_npc(
             &mut commands,
@@ -43,11 +46,16 @@ pub fn spawn_village_npcs(
             Some("I sense... the awakening begins. Your brothers stir.".to_string()),
         );
 
-        info!("Spawned Head Shaman at village ({}, {})", first_village.x, first_village.y);
+        info!(
+            "Spawned Head Shaman at village ({}, {})",
+            first_village.x, first_village.y
+        );
     }
 
     // Spawn Player's Brothers (4 of them)
-    let brother_names: Vec<String> = names_db.names.iter()
+    let brother_names: Vec<String> = names_db
+        .names
+        .iter()
         .filter(|(_, (char_type, _, _))| *char_type == CharacterType::Brother)
         .map(|(name, _)| name.clone())
         .collect();
@@ -61,7 +69,10 @@ pub fn spawn_village_npcs(
                 village_pos.x + (i as i32 - 2),
                 village_pos.y + (i as i32 - 2),
             );
-            info!("Spawned Brother {} at ({}, {})", brother_name, village_pos.x, village_pos.y);
+            info!(
+                "Spawned Brother {} at ({}, {})",
+                brother_name, village_pos.x, village_pos.y
+            );
         }
     }
 
@@ -147,7 +158,9 @@ fn get_name_by_type(
     char_type: CharacterType,
     rng: &mut impl Rng,
 ) -> Option<String> {
-    let names: Vec<String> = names_db.names.iter()
+    let names: Vec<String> = names_db
+        .names
+        .iter()
         .filter(|(_, (ct, _, _))| *ct == char_type)
         .map(|(name, _)| name.clone())
         .collect();
@@ -227,12 +240,7 @@ fn spawn_npc(
 }
 
 /// Helper function to spawn a brother NPC
-fn spawn_brother(
-    commands: &mut Commands,
-    name: String,
-    x: i32,
-    y: i32,
-) {
+fn spawn_brother(commands: &mut Commands, name: String, x: i32, y: i32) {
     commands.spawn((
         NpcName {
             name: name.clone(),
@@ -277,24 +285,27 @@ pub fn spawn_test_brother(
 ) {
     if let Ok(player_pos) = player_query.get_single() {
         // Get a random brother name
-        let brother_names: Vec<String> = names_db.names.iter()
+        let brother_names: Vec<String> = names_db
+            .names
+            .iter()
             .filter(|(_, (char_type, _, _))| *char_type == CharacterType::Brother)
             .map(|(name, _)| name.clone())
             .collect();
 
-        let name = brother_names.first()
+        let name = brother_names
+            .first()
             .cloned()
             .unwrap_or_else(|| "Test Brother".to_string());
 
         // Spawn near player (2 tiles away)
-        spawn_brother(
-            &mut commands,
-            name.clone(),
-            player_pos.x + 2,
-            player_pos.y,
-        );
+        spawn_brother(&mut commands, name.clone(), player_pos.x + 2, player_pos.y);
 
-        info!("DEV: Spawned test brother '{}' at ({}, {})", name, player_pos.x + 2, player_pos.y);
+        info!(
+            "DEV: Spawned test brother '{}' at ({}, {})",
+            name,
+            player_pos.x + 2,
+            player_pos.y
+        );
     } else {
         warn!("DEV: Cannot spawn test brother - player not found");
     }

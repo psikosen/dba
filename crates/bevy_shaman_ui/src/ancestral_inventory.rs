@@ -1,3 +1,4 @@
+use crate::ancestral_theme::*;
 /// Ancestral Inventory System
 /// Full-screen inventory with:
 /// - Navigation tabs as physical objects (pouch, mask, scroll, drum, weights)
@@ -5,11 +6,9 @@
 /// - Trading board item grid (Mancala-style compartments)
 /// - Tactile item icons (gourds, woven cloth, hammered metal)
 /// - Bark cloth/papyrus background with geometric Benin bronze patterns
-
 use bevy::prelude::*;
 use bevy_shaman_core::components::Player;
 use bevy_shaman_items::components::{Inventory, ItemStack};
-use crate::ancestral_theme::*;
 
 // ============================================================================
 // COMPONENTS
@@ -34,11 +33,11 @@ pub struct TabButton {
 
 #[derive(Component, Clone, Copy, PartialEq)]
 pub enum InventoryTab {
-    Inventory,  // Leather pouch
-    Character,  // Ceremonial mask
-    Map,        // Bamboo scroll case
-    Quests,     // Talking drum
-    Settings,   // Bronze trading weights
+    Inventory, // Leather pouch
+    Character, // Ceremonial mask
+    Map,       // Bamboo scroll case
+    Quests,    // Talking drum
+    Settings,  // Bronze trading weights
 }
 
 #[derive(Component)]
@@ -458,16 +457,10 @@ fn spawn_gear_slots(parent: &mut ChildBuilder) {
         })
         .with_children(|slots_parent| {
             // Top row: Head, Neck
-            spawn_gear_slot_row(
-                slots_parent,
-                vec![GearSlotType::Head, GearSlotType::Neck],
-            );
+            spawn_gear_slot_row(slots_parent, vec![GearSlotType::Head, GearSlotType::Neck]);
 
             // Middle row: Chest
-            spawn_gear_slot_row(
-                slots_parent,
-                vec![GearSlotType::Chest],
-            );
+            spawn_gear_slot_row(slots_parent, vec![GearSlotType::Chest]);
 
             // Weapons row: MainHand, OffHand
             spawn_gear_slot_row(
@@ -476,16 +469,10 @@ fn spawn_gear_slots(parent: &mut ChildBuilder) {
             );
 
             // Bottom row: Legs, Feet
-            spawn_gear_slot_row(
-                slots_parent,
-                vec![GearSlotType::Legs, GearSlotType::Feet],
-            );
+            spawn_gear_slot_row(slots_parent, vec![GearSlotType::Legs, GearSlotType::Feet]);
 
             // Accessories: Rings
-            spawn_gear_slot_row(
-                slots_parent,
-                vec![GearSlotType::Ring1, GearSlotType::Ring2],
-            );
+            spawn_gear_slot_row(slots_parent, vec![GearSlotType::Ring1, GearSlotType::Ring2]);
         });
 }
 
@@ -590,11 +577,7 @@ fn spawn_trading_board(parent: &mut ChildBuilder, inventory: &Inventory) {
         });
 }
 
-fn spawn_compartment_row(
-    parent: &mut ChildBuilder,
-    row: usize,
-    inventory: &Inventory,
-) {
+fn spawn_compartment_row(parent: &mut ChildBuilder, row: usize, inventory: &Inventory) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -610,11 +593,7 @@ fn spawn_compartment_row(
         });
 }
 
-fn spawn_item_compartment(
-    parent: &mut ChildBuilder,
-    index: usize,
-    item_stack: Option<&ItemStack>,
-) {
+fn spawn_item_compartment(parent: &mut ChildBuilder, index: usize, item_stack: Option<&ItemStack>) {
     parent
         .spawn((
             ItemCompartment { index },

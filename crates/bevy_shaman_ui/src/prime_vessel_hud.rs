@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use bevy_shaman_prime_vessel::components::{PrimeVessel, LesserSelf, ResurrectionRitual};
+use bevy_shaman_prime_vessel::components::{LesserSelf, PrimeVessel, ResurrectionRitual};
 use bevy_shaman_prime_vessel::events::{
-    VesselEvolved, VesselDefeated, LesserSelfEncountered, CorruptionIndexRevealed,
+    CorruptionIndexRevealed, LesserSelfEncountered, VesselDefeated, VesselEvolved,
 };
 use bevy_shaman_prime_vessel::resources::GlobalCorruptionIndex;
 
@@ -47,7 +47,7 @@ pub fn spawn_corruption_index_widget(mut commands: Commands) {
             },
             BackgroundColor(EBONY),
             BorderColor(BRONZE),
-            Visibility::Hidden,  // Hidden until quest complete
+            Visibility::Hidden, // Hidden until quest complete
             ZIndex(100),
         ))
         .with_children(|parent| {
@@ -125,9 +125,21 @@ pub fn spawn_corruption_index_widget(mut commands: Commands) {
 pub fn update_corruption_index_widget(
     corruption_index: Res<GlobalCorruptionIndex>,
     mut widget_query: Query<&mut Visibility, With<CorruptionIndexWidget>>,
-    mut percentage_query: Query<&mut Text, (With<CorruptionPercentageText>, Without<CorruptionSpiritCountText>)>,
+    mut percentage_query: Query<
+        &mut Text,
+        (
+            With<CorruptionPercentageText>,
+            Without<CorruptionSpiritCountText>,
+        ),
+    >,
     mut fill_query: Query<(&mut Node, &mut BackgroundColor), With<CorruptionBarFill>>,
-    mut spirit_count_query: Query<&mut Text, (With<CorruptionSpiritCountText>, Without<CorruptionPercentageText>)>,
+    mut spirit_count_query: Query<
+        &mut Text,
+        (
+            With<CorruptionSpiritCountText>,
+            Without<CorruptionPercentageText>,
+        ),
+    >,
 ) {
     // Show/hide widget based on UI reveal status
     if let Ok(mut visibility) = widget_query.get_single_mut() {
@@ -167,8 +179,7 @@ pub fn update_corruption_index_widget(
     if let Ok(mut text) = spirit_count_query.get_single_mut() {
         **text = format!(
             "Spirits: {} / {}",
-            corruption_index.free_spirit_count,
-            corruption_index.initial_spirit_count
+            corruption_index.free_spirit_count, corruption_index.initial_spirit_count
         );
     }
 }
@@ -225,14 +236,12 @@ pub fn spawn_danger_level_widget(mut commands: Commands) {
         .with_children(|parent| {
             // Danger icon + level
             parent
-                .spawn((
-                    Node {
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        margin: UiRect::bottom(Val::Px(6.0)),
-                        ..default()
-                    },
-                ))
+                .spawn((Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::bottom(Val::Px(6.0)),
+                    ..default()
+                },))
                 .with_children(|row| {
                     row.spawn((
                         DangerLevelIconText,
@@ -277,7 +286,10 @@ pub fn update_danger_level_widget(
     corruption_index: Res<GlobalCorruptionIndex>,
     vessel_query: Query<&PrimeVessel>,
     lesser_self_query: Query<&LesserSelf>,
-    mut danger_text_query: Query<(&mut Text, &mut TextColor), (With<DangerLevelText>, Without<VesselCountText>)>,
+    mut danger_text_query: Query<
+        (&mut Text, &mut TextColor),
+        (With<DangerLevelText>, Without<VesselCountText>),
+    >,
     mut vessel_count_query: Query<&mut Text, (With<VesselCountText>, Without<DangerLevelText>)>,
 ) {
     // Calculate danger level from corruption percentage
@@ -372,7 +384,10 @@ pub fn spawn_vessel_encounter_notification(
                 ));
 
                 parent.spawn((
-                    Text::new(format!("Lesser Self (Gen {}) - Power: {:.0}", event.generation, event.power_level)),
+                    Text::new(format!(
+                        "Lesser Self (Gen {}) - Power: {:.0}",
+                        event.generation, event.power_level
+                    )),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -384,7 +399,8 @@ pub fn spawn_vessel_encounter_notification(
 
     // Handle Prime Vessel encounters (when entering Combat state)
     for vessel in vessel_query.iter() {
-        if vessel.roaming_state == bevy_shaman_prime_vessel::components::VesselRoamingState::Combat {
+        if vessel.roaming_state == bevy_shaman_prime_vessel::components::VesselRoamingState::Combat
+        {
             // This would need additional event handling
             // For now, we'll hook into the state change event
         }
@@ -540,18 +556,21 @@ pub struct PrimeVesselHudPlugin;
 
 impl Plugin for PrimeVesselHudPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (
-            spawn_corruption_index_widget,
-            spawn_danger_level_widget,
-        ))
-        .add_systems(Update, (
-            update_corruption_index_widget,
-            update_danger_level_widget,
-            spawn_vessel_encounter_notification,
-            update_vessel_encounter_notifications,
-            spawn_resurrection_ritual_widget,
-            update_resurrection_ritual_widget,
-            handle_corruption_index_revealed,
-        ));
+        app.add_systems(
+            Startup,
+            (spawn_corruption_index_widget, spawn_danger_level_widget),
+        )
+        .add_systems(
+            Update,
+            (
+                update_corruption_index_widget,
+                update_danger_level_widget,
+                spawn_vessel_encounter_notification,
+                update_vessel_encounter_notifications,
+                spawn_resurrection_ritual_widget,
+                update_resurrection_ritual_widget,
+                handle_corruption_index_revealed,
+            ),
+        );
     }
 }

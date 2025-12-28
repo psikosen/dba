@@ -14,75 +14,114 @@ impl Plugin for CombatPlugin {
         let app = app;
 
         // Core combat systems
-        app.add_systems(Update, (
+        app.add_systems(
+            Update,
+            (
                 systems::hit_resolution::resolve_hits,
                 systems::death::handle_entity_deaths,
                 systems::death::cleanup_dead_entities,
                 systems::status_effects::apply_status_effects,
-            ).run_if(in_state(GameState::Playing)));
+            )
+                .run_if(in_state(GameState::Playing)),
+        );
 
         // Rhythm-based damage (requires audio feature)
         #[cfg(feature = "audio")]
-        app.add_systems(Update, systems::damage::apply_rhythm_based_damage.run_if(in_state(GameState::Playing)));
+        app.add_systems(
+            Update,
+            systems::damage::apply_rhythm_based_damage.run_if(in_state(GameState::Playing)),
+        );
 
         app
             // Weapon systems
-            .add_systems(Update, (
-                systems::weapon::weapon_attack_system,
-                systems::weapon::mambele_poison_system,
-                systems::weapon::weapon_durability_system,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::weapon::weapon_attack_system,
+                    systems::weapon::mambele_poison_system,
+                    systems::weapon::weapon_durability_system,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Blood lust systems
-            .add_systems(Update, (
-                systems::blood_lust::blood_lust_combat_gain,
-                systems::blood_lust::blood_lust_decay,
-                systems::blood_lust::blood_lust_corruption_spread,
-                systems::blood_lust::blood_lust_reduction_from_items,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::blood_lust::blood_lust_combat_gain,
+                    systems::blood_lust::blood_lust_decay,
+                    systems::blood_lust::blood_lust_corruption_spread,
+                    systems::blood_lust::blood_lust_reduction_from_items,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Combat wheel systems
-            .add_systems(Update, (
-                systems::wheel::combat_wheel_trigger,
-                systems::wheel::apply_wheel_outcome,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::wheel::combat_wheel_trigger,
+                    systems::wheel::apply_wheel_outcome,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Monster control systems
-            .add_systems(Update, (
-                systems::monster_control::monster_control_attempt,
-                systems::monster_control::monster_control_update,
-                systems::monster_control::monster_control_release,
-                systems::monster_control::controlled_monster_abilities,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::monster_control::monster_control_attempt,
+                    systems::monster_control::monster_control_update,
+                    systems::monster_control::monster_control_release,
+                    systems::monster_control::controlled_monster_abilities,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Rhythm combo systems
-            .add_systems(Update, (
-                systems::rhythm_combo::rhythm_combo_tracking,
-                systems::rhythm_combo::rhythm_combo_specials,
-                systems::rhythm_combo::apply_special_moves,
-                systems::rhythm_combo::rhythm_combo_reset,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::rhythm_combo::rhythm_combo_tracking,
+                    systems::rhythm_combo::rhythm_combo_specials,
+                    systems::rhythm_combo::apply_special_moves,
+                    systems::rhythm_combo::rhythm_combo_reset,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Weapon enhancement systems
-            .add_systems(Update, (
-                systems::enhancement::spirit_merging_system,
-                systems::enhancement::plant_enhancement_system,
-                systems::enhancement::enchantment_decay_system,
-                systems::enhancement::apply_enhancement_bonuses,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::enhancement::spirit_merging_system,
+                    systems::enhancement::plant_enhancement_system,
+                    systems::enhancement::enchantment_decay_system,
+                    systems::enhancement::apply_enhancement_bonuses,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Skill tree systems
-            .add_systems(Update, (
-                systems::skill_tree::skill_unlock_system,
-                systems::skill_tree::apply_skill_bonuses,
-                systems::skill_tree::award_skill_points_on_level_up,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::skill_tree::skill_unlock_system,
+                    systems::skill_tree::apply_skill_bonuses,
+                    systems::skill_tree::award_skill_points_on_level_up,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Focus ability systems
-            .add_systems(Update, (
-                systems::focus_abilities::regenerate_shaman_focus,
-                systems::focus_abilities::handle_focus_ability_input,
-                systems::focus_abilities::process_focus_ability_casting,
-                systems::focus_abilities::update_focus_ability_casting,
-                systems::focus_abilities::apply_focus_ability_effects,
-                systems::focus_abilities::update_ability_cooldowns,
-                systems::focus_abilities::update_spirit_infusion,
-                systems::focus_abilities::apply_object_manipulation,
-                systems::focus_abilities::check_object_breaking,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::focus_abilities::regenerate_shaman_focus,
+                    systems::focus_abilities::handle_focus_ability_input,
+                    systems::focus_abilities::process_focus_ability_casting,
+                    systems::focus_abilities::update_focus_ability_casting,
+                    systems::focus_abilities::apply_focus_ability_effects,
+                    systems::focus_abilities::update_ability_cooldowns,
+                    systems::focus_abilities::update_spirit_infusion,
+                    systems::focus_abilities::apply_object_manipulation,
+                    systems::focus_abilities::check_object_breaking,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Resources
             .init_resource::<systems::skill_tree::SkillDatabase>()
             // Events

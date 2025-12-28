@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::SpriteAnimation;
+use bevy::prelude::*;
 
 /// Updates sprite animations based on frame timers
 pub fn update_sprite_animations(

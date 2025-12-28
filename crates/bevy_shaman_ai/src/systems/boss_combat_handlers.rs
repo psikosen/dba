@@ -1,11 +1,11 @@
+use crate::components::{CombatStance, LlmAi};
+use crate::systems::boss_ai::*;
 /// Boss Combat Event Handlers
 /// Handles the actual execution of boss combat actions triggered by LLM AI decisions
 use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, Health};
 use bevy_shaman_combat::components::{StatusEffect, StatusEffectType, StatusEffects};
-use bevy_shaman_monsters::components::{MonsterState, AiState};
-use crate::systems::boss_ai::*;
-use crate::components::{CombatStance, LlmAi};
+use bevy_shaman_core::components::{GridPosition, Health};
+use bevy_shaman_monsters::components::{AiState, MonsterState};
 
 // ============================================================================
 // SPECIAL MOVE HANDLER
@@ -15,7 +15,10 @@ use crate::components::{CombatStance, LlmAi};
 pub fn handle_special_move(
     trigger: Trigger<SpecialMoveTriggered>,
     mut boss_query: Query<(&mut LlmAi, &GridPosition, &MonsterState)>,
-    mut player_query: Query<(&mut Health, &GridPosition, Entity), With<bevy_shaman_core::components::Player>>,
+    mut player_query: Query<
+        (&mut Health, &GridPosition, Entity),
+        With<bevy_shaman_core::components::Player>,
+    >,
     mut commands: Commands,
 ) {
     let event = trigger.event();
@@ -89,12 +92,7 @@ fn calculate_distance(pos1: &GridPosition, pos2: &GridPosition) -> f32 {
     (dx * dx + dy * dy).sqrt()
 }
 
-fn apply_move_status_effects(
-    move_name: &str,
-    phase: u32,
-    commands: &mut Commands,
-    target: Entity,
-) {
+fn apply_move_status_effects(move_name: &str, phase: u32, commands: &mut Commands, target: Entity) {
     let effect_duration = 3.0 + (phase as f32 * 0.5);
 
     match move_name {
@@ -181,7 +179,10 @@ pub fn handle_summon_minion(
                 .spawn((
                     Name::new(format!("{} Minion", event.minion_type)),
                     minion_pos,
-                    Health { current: 30.0, max: 30.0 },
+                    Health {
+                        current: 30.0,
+                        max: 30.0,
+                    },
                     MonsterState::default(),
                     AiState::Aggressive,
                     // Mark as summoned minion
@@ -192,7 +193,11 @@ pub fn handle_summon_minion(
                 ))
                 .id();
 
-            info!("Spawned minion {} at {:?}", minion_type_name(&event.minion_type), minion_pos);
+            info!(
+                "Spawned minion {} at {:?}",
+                minion_type_name(&event.minion_type),
+                minion_pos
+            );
 
             // Spawn visual effect
             commands.trigger_targets(
@@ -337,10 +342,7 @@ fn apply_fear_ability(commands: &mut Commands, target: Entity, _source_pos: &Gri
 }
 
 fn apply_heal_ability(commands: &mut Commands, boss: Entity) {
-    commands.trigger_targets(
-        HealEffect { amount: 50.0 },
-        boss,
-    );
+    commands.trigger_targets(HealEffect { amount: 50.0 }, boss);
     info!("Boss healed for 50 HP");
 }
 
@@ -351,7 +353,9 @@ fn apply_teleport_ability(commands: &mut Commands, boss: Entity, target_pos: &Gr
         y: target_pos.y,
     };
     commands.trigger_targets(
-        TeleportEffect { new_position: new_pos },
+        TeleportEffect {
+            new_position: new_pos,
+        },
         boss,
     );
     info!("Boss teleported to {:?}", new_pos);

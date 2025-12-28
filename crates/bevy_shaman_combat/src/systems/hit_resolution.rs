@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::Health;
 use crate::components::Attack;
 use crate::systems::events::HitLanded;
+use bevy::prelude::*;
+use bevy_shaman_core::components::Health;
 
 pub fn resolve_hits(
     mut commands: Commands,

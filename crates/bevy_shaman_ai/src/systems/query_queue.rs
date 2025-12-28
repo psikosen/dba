@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::*;
 use crate::resources::*;
+use bevy::prelude::*;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -176,9 +176,13 @@ fn generate_combat_decisions(
         let time_context = format!(
             "\n\nTemporal Context:\n- Battle Duration: {:.1}s\n- Urgency: {}\n",
             current_time,
-            if current_time > 300.0 { "HIGH - Battle dragging on" }
-            else if current_time < 30.0 { "LOW - Just started" }
-            else { "MEDIUM - Mid battle" }
+            if current_time > 300.0 {
+                "HIGH - Battle dragging on"
+            } else if current_time < 30.0 {
+                "LOW - Just started"
+            } else {
+                "MEDIUM - Mid battle"
+            }
         );
         prompt.push_str(&time_context);
 
@@ -208,7 +212,11 @@ fn generate_combat_decisions(
 }
 
 /// Build dialogue prompt from AI state and context
-fn build_dialogue_prompt(ai: &LlmAi, context: &DialogueContext, templates: &PromptTemplates) -> String {
+fn build_dialogue_prompt(
+    ai: &LlmAi,
+    context: &DialogueContext,
+    templates: &PromptTemplates,
+) -> String {
     let data = PromptData {
         name: ai.character_name.clone(),
         role: format!("{:?}", ai.role),

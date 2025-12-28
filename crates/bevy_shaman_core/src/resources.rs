@@ -218,7 +218,8 @@ impl GameCalendar {
 
     /// Check if today is a festival day
     pub fn get_active_festival(&self) -> Option<&Festival> {
-        self.festivals.iter()
+        self.festivals
+            .iter()
             .find(|f| f.season == self.season && f.day == self.day)
     }
 
