@@ -91,6 +91,7 @@ impl Plugin for PrimeVesselPlugin {
                     systems::process_player_absorption,
                     systems::process_spirit_purification,
                     systems::free_trapped_spirits,
+                    systems::manage_visible_spirits, // PERFORMANCE: Limit visible spirits
                     // Metabolic decay
                     systems::process_metabolic_decay,
                     systems::check_tier_downgrade,

@@ -3,6 +3,9 @@ pub mod llm_backend;
 pub mod resources;
 pub mod systems;
 
+#[cfg(feature = "async-llm")]
+pub mod async_llm;
+
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
 

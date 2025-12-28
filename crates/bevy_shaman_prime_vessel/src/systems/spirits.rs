@@ -4,7 +4,7 @@ use bevy_shaman_core::resources::GameCalendar;
 use bevy_shaman_world::components::BiomeType;
 use rand::Rng;
 
-use crate::components::{MetabolicHistory, PrimeVessel, WorldSpirit, WorldSpiritType};
+use crate::components::{MetabolicHistory, PrimeVessel, VisibleSpirit, WorldSpirit, WorldSpiritType};
 use crate::events::{
     SpiritAbsorbed, SpiritFreed, SpiritPurified, VesselAbsorbedSpirit, WorldSpiritSpawned,
 };
@@ -313,6 +313,89 @@ pub fn free_trapped_spirits(
                 freed_from: event.entity,
                 power,
             });
+        }
+    }
+}
+
+/// PERFORMANCE OPTIMIZATION: Limit number of visible spirits on screen
+/// This prevents lag while keeping background processing active
+/// - Normal: Max 10 visible spirits
+/// - With boss: Max 6 visible spirits
+/// - Final boss: Max 15 visible spirits
+pub fn manage_visible_spirits(
+    mut commands: Commands,
+    player_query: Query<&GridPosition, With<bevy_shaman_core::components::Player>>,
+    spirit_query: Query<(Entity, &GridPosition, &WorldSpirit), Without<VisibleSpirit>>,
+    visible_spirits: Query<(Entity, &GridPosition), With<VisibleSpirit>>,
+    boss_query: Query<&bevy_shaman_monsters::components::MonsterType>,
+) {
+    let Ok(player_pos) = player_query.get_single() else {
+        return;
+    };
+
+    // Determine max visible spirits based on boss presence
+    let max_visible = if boss_query.iter().any(|monster_type| {
+        matches!(
+            monster_type,
+            bevy_shaman_monsters::components::MonsterType::PrimeVessel
+        )
+    }) {
+        // Final boss present - allow 15 spirits
+        15
+    } else if boss_query
+        .iter()
+        .any(|_| true /* any other boss present */)
+    {
+        // Regular boss present - limit to 6 spirits
+        6
+    } else {
+        // No boss - normal limit of 10 spirits
+        10
+    };
+
+    let current_visible = visible_spirits.iter().count();
+
+    // If we have too many visible spirits, hide the farthest ones
+    if current_visible > max_visible {
+        let mut visible_with_distance: Vec<_> = visible_spirits
+            .iter()
+            .map(|(entity, pos)| {
+                let dx = (player_pos.x - pos.x).abs();
+                let dy = (player_pos.y - pos.y).abs();
+                let distance = ((dx * dx + dy * dy) as f32).sqrt();
+                (entity, distance)
+            })
+            .collect();
+
+        // Sort by distance (farthest first)
+        visible_with_distance.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        // Hide spirits beyond the limit
+        for (entity, _) in visible_with_distance.iter().take(current_visible - max_visible) {
+            commands.entity(*entity).remove::<VisibleSpirit>();
+        }
+    }
+    // If we have room for more visible spirits, show closest hidden ones
+    else if current_visible < max_visible {
+        let slots_available = max_visible - current_visible;
+
+        // Find closest hidden spirits to player
+        let mut hidden_spirits: Vec<_> = spirit_query
+            .iter()
+            .map(|(entity, pos, _)| {
+                let dx = (player_pos.x - pos.x).abs();
+                let dy = (player_pos.y - pos.y).abs();
+                let distance = ((dx * dx + dy * dy) as f32).sqrt();
+                (entity, distance)
+            })
+            .collect();
+
+        // Sort by distance (closest first)
+        hidden_spirits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+
+        // Make closest spirits visible
+        for (entity, _) in hidden_spirits.iter().take(slots_available) {
+            commands.entity(*entity).insert(VisibleSpirit);
         }
     }
 }

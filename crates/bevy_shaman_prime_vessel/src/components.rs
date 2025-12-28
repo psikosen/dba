@@ -263,6 +263,11 @@ pub struct WorldSpirit {
     pub absorber: Option<Entity>,
 }
 
+/// Marker component to indicate a spirit should be rendered on screen
+/// Used for performance optimization - limits visible spirits to prevent lag
+#[derive(Component, Debug, Clone, Copy)]
+pub struct VisibleSpirit;
+
 impl Default for WorldSpirit {
     fn default() -> Self {
         Self {

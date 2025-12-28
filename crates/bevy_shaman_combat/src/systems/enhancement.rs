@@ -4,6 +4,7 @@ use bevy_shaman_core::components::Spirit;
 use bevy_shaman_items::components::{Inventory, PlantType, SpiritOrbSize};
 
 /// System to handle spirit merging into weapons
+/// OPTIMIZED: Removed O(n³) triple nested loops - now O(1) using get_single
 pub fn spirit_merging_system(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut weapon_query: Query<&mut EquippedWeapon>,
@@ -16,31 +17,40 @@ pub fn spirit_merging_system(
         return;
     }
 
-    for mut weapon in weapon_query.iter_mut() {
-        for mut enhancement in enhancement_query.iter_mut() {
-            for mut inventory in inventory_query.iter_mut() {
-                // Check if we can enhance (not at max level)
-                if enhancement.level >= WeaponEnhancement::MAX_LEVEL {
-                    continue;
-                }
+    // OPTIMIZATION: Use get_single_mut instead of nested loops
+    // Assumes single player/weapon system (typical game scenario)
+    let Ok(mut weapon) = weapon_query.get_single_mut() else {
+        return;
+    };
 
-                let cost = enhancement.next_level_cost();
+    let Ok(mut enhancement) = enhancement_query.get_single_mut() else {
+        return;
+    };
 
-                // Try to consume spirit orbs first
-                if inventory.count_item("spirit_orb_large") > 0
-                    && cost.spirit_orbs <= SpiritOrbSize::Large.spirit_restore()
-                {
-                    if inventory.remove_item("spirit_orb_large", 1) {
-                        enhancement.apply_upgrade(&mut weapon);
-                        info!("Weapon enhanced to level {}!", enhancement.level);
-                    }
-                }
-            }
+    let Ok(mut inventory) = inventory_query.get_single_mut() else {
+        return;
+    };
+
+    // Check if we can enhance (not at max level)
+    if enhancement.level >= WeaponEnhancement::MAX_LEVEL {
+        return;
+    }
+
+    let cost = enhancement.next_level_cost();
+
+    // Try to consume spirit orbs first
+    if inventory.count_item("spirit_orb_large") > 0
+        && cost.spirit_orbs <= SpiritOrbSize::Large.spirit_restore()
+    {
+        if inventory.remove_item("spirit_orb_large", 1) {
+            enhancement.apply_upgrade(&mut weapon);
+            info!("Weapon enhanced to level {}!", enhancement.level);
         }
     }
 }
 
 /// System to apply plant-based weapon enhancements
+/// OPTIMIZED: Removed O(n³) triple nested loops - now O(1) using get_single
 pub fn plant_enhancement_system(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut weapon_query: Query<&mut EquippedWeapon>,
@@ -53,47 +63,54 @@ pub fn plant_enhancement_system(
         return;
     }
 
-    for mut weapon in weapon_query.iter_mut() {
-        for mut enhancement in enhancement_query.iter_mut() {
-            for mut inventory in inventory_query.iter_mut() {
-                // Try to apply blood plant enhancement (damage boost)
-                if let Some(plant_type) = find_usable_blood_plant(&inventory) {
-                    if inventory.remove_item(&plant_item_id(plant_type), 1) {
-                        let duration = plant_type.effect_duration();
-                        enhancement.apply_temporary_enchantment(
-                            EnchantmentType::BloodFury,
-                            duration,
-                            plant_type.human_stat_boost(),
-                        );
-                        info!(
-                            "Applied {} blood enhancement for {}s!",
-                            plant_name(plant_type),
-                            duration
-                        );
-                    }
-                }
+    // OPTIMIZATION: Use get_single_mut instead of nested loops
+    let Ok(mut weapon) = weapon_query.get_single_mut() else {
+        return;
+    };
 
-                // Try to apply spirit plant enhancement (spirit efficiency)
-                if let Some(plant_type) = find_usable_spirit_plant(&inventory) {
-                    if inventory.remove_item(&plant_item_id(plant_type), 1) {
-                        if let Ok(mut spirit) = spirit_query.get_single_mut() {
-                            let cost = plant_type.spirit_cost();
-                            if spirit.current >= cost {
-                                spirit.current -= cost;
-                                let duration = plant_type.effect_duration();
-                                enhancement.apply_temporary_enchantment(
-                                    EnchantmentType::SpiritInfusion,
-                                    duration,
-                                    plant_type.spirit_stat_boost(),
-                                );
-                                info!(
-                                    "Applied {} spirit enhancement for {}s!",
-                                    plant_name(plant_type),
-                                    duration
-                                );
-                            }
-                        }
-                    }
+    let Ok(mut enhancement) = enhancement_query.get_single_mut() else {
+        return;
+    };
+
+    let Ok(mut inventory) = inventory_query.get_single_mut() else {
+        return;
+    };
+
+    // Try to apply blood plant enhancement (damage boost)
+    if let Some(plant_type) = find_usable_blood_plant(&inventory) {
+        if inventory.remove_item(&plant_item_id(plant_type), 1) {
+            let duration = plant_type.effect_duration();
+            enhancement.apply_temporary_enchantment(
+                EnchantmentType::BloodFury,
+                duration,
+                plant_type.human_stat_boost(),
+            );
+            info!(
+                "Applied {} blood enhancement for {}s!",
+                plant_name(plant_type),
+                duration
+            );
+        }
+    }
+
+    // Try to apply spirit plant enhancement (spirit efficiency)
+    if let Some(plant_type) = find_usable_spirit_plant(&inventory) {
+        if inventory.remove_item(&plant_item_id(plant_type), 1) {
+            if let Ok(mut spirit) = spirit_query.get_single_mut() {
+                let cost = plant_type.spirit_cost();
+                if spirit.current >= cost {
+                    spirit.current -= cost;
+                    let duration = plant_type.effect_duration();
+                    enhancement.apply_temporary_enchantment(
+                        EnchantmentType::SpiritInfusion,
+                        duration,
+                        plant_type.spirit_stat_boost(),
+                    );
+                    info!(
+                        "Applied {} spirit enhancement for {}s!",
+                        plant_name(plant_type),
+                        duration
+                    );
                 }
             }
         }
