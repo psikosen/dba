@@ -161,7 +161,8 @@ impl LlmBackend for PlaceholderBackend {
                 "taunt": "Face my ancestral power!"
             });
 
-            Ok(serde_json::to_string_pretty(&json).unwrap())
+            serde_json::to_string_pretty(&json)
+                .map_err(|e| LlmError::GenerationFailed(format!("JSON serialization failed: {}", e)))
         } else {
             // Dialogue generation
             let personality = PersonalityTraits {
