@@ -1,20 +1,23 @@
 #[cfg(feature = "audio")]
+use super::super::components::{Attack, EquippedWeapon};
+#[cfg(feature = "audio")]
 use bevy::prelude::*;
 #[cfg(feature = "audio")]
 use bevy_shaman_audio::systems::events::RhythmInputEvaluated;
 #[cfg(feature = "audio")]
-use bevy_shaman_core::components::{GridPosition};
+use bevy_shaman_core::components::GridPosition;
 #[cfg(feature = "audio")]
 use bevy_shaman_monsters::components::MonsterStats;
-#[cfg(feature = "audio")]
-use super::super::components::{EquippedWeapon, Attack};
 
 #[cfg(feature = "audio")]
 pub fn apply_rhythm_based_damage(
     mut commands: Commands,
     mut rhythm_events: EventReader<RhythmInputEvaluated>,
     monsters: Query<(Entity, &GridPosition, &MonsterStats)>,
-    player: Query<(Entity, &GridPosition, Option<&EquippedWeapon>), With<bevy_shaman_core::components::Player>>,
+    player: Query<
+        (Entity, &GridPosition, Option<&EquippedWeapon>),
+        With<bevy_shaman_core::components::Player>,
+    >,
 ) {
     for event in rhythm_events.read() {
         let damage_multiplier = event.quality.damage_multiplier();
@@ -36,7 +39,9 @@ pub fn apply_rhythm_based_damage(
         let mut nearest_monster: Option<(Entity, f32)> = None;
 
         for (monster_entity, monster_pos, _stats) in monsters.iter() {
-            let distance = (((player_pos.x - monster_pos.x).pow(2) + (player_pos.y - monster_pos.y).pow(2)) as f32).sqrt();
+            let distance = (((player_pos.x - monster_pos.x).pow(2)
+                + (player_pos.y - monster_pos.y).pow(2)) as f32)
+                .sqrt();
 
             if distance <= attack_range {
                 if let Some((_, current_nearest_dist)) = nearest_monster {

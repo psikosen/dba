@@ -17,20 +17,24 @@ impl Plugin for ItemsPlugin {
             .init_resource::<resources::LootTableDB>()
             .init_resource::<resources::RecipeDB>()
             // Systems
-            .add_systems(Update, (
-                systems::pickup::process_item_pickups,
-                systems::spirit_orb::consume_spirit_orbs,
-                systems::inventory::pickup_items,
-                systems::inventory::use_items,
-                systems::inventory::update_active_effects,
-                systems::inventory::drop_items,
-                systems::crafting::process_crafting_requests,
-                // Plant and food systems
-                systems::plant_food::plant_usage,
-                systems::plant_food::food_usage,
-                systems::plant_food::active_effects_update,
-                systems::plant_food::apply_active_effects,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::pickup::process_item_pickups,
+                    systems::spirit_orb::consume_spirit_orbs,
+                    systems::inventory::pickup_items,
+                    systems::inventory::use_items,
+                    systems::inventory::update_active_effects,
+                    systems::inventory::drop_items,
+                    systems::crafting::process_crafting_requests,
+                    // Plant and food systems
+                    systems::plant_food::plant_usage,
+                    systems::plant_food::food_usage,
+                    systems::plant_food::active_effects_update,
+                    systems::plant_food::apply_active_effects,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Events
             .add_event::<systems::events::ItemPickedUp>()
             .add_event::<systems::events::SpiritOrbConsumed>()

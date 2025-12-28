@@ -1,7 +1,7 @@
-use bevy::prelude::*;
 use crate::components::PlayerBrother;
 use crate::resources::BrotherCleansingProgress;
 use crate::systems::events::BrotherFightCompleted;
+use bevy::prelude::*;
 
 /// Updates brother cleansing progress after fights
 pub fn update_brother_cleansing_progress(

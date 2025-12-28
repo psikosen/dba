@@ -1,6 +1,6 @@
-use bevy::prelude::*;
-use bevy_shaman_combat::systems::skill_tree::{SkillTree, SkillDatabase, SkillPath, SkillId};
 use crate::ancestral_theme::*;
+use bevy::prelude::*;
+use bevy_shaman_combat::systems::skill_tree::{SkillDatabase, SkillId, SkillPath, SkillTree};
 
 /// Resource tracking skill tree UI state
 #[derive(Resource, Default)]
@@ -36,7 +36,9 @@ pub fn display_skill_tree_ui(
         return;
     }
 
-    let Ok(skill_tree) = skill_tree_query.get_single() else { return };
+    let Ok(skill_tree) = skill_tree_query.get_single() else {
+        return;
+    };
 
     // Spawn UI panel - carved wooden panel with intricate bronze frame
     commands
@@ -88,21 +90,29 @@ pub fn display_skill_tree_ui(
 
             // Path tabs - horizontal container
             parent
-                .spawn((
-                    Node {
-                        width: Val::Percent(100.0),
-                        height: Val::Px(60.0),
-                        margin: UiRect::bottom(Val::Px(SPACING_MEDIUM)),
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::SpaceEvenly,
-                        ..default()
-                    },
-                ))
+                .spawn((Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Px(60.0),
+                    margin: UiRect::bottom(Val::Px(SPACING_MEDIUM)),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceEvenly,
+                    ..default()
+                },))
                 .with_children(|parent| {
                     spawn_path_tab(parent, SkillPath::Ngoma, "Ngoma\n(Rhythm)", metal::BRONZE);
-                    spawn_path_tab(parent, SkillPath::Ubuntu, "Ubuntu\n(Community)", dye::FOREST_GREEN);
+                    spawn_path_tab(
+                        parent,
+                        SkillPath::Ubuntu,
+                        "Ubuntu\n(Community)",
+                        dye::FOREST_GREEN,
+                    );
                     spawn_path_tab(parent, SkillPath::Ashe, "Ashe\n(Power)", dye::RED_OCHRE);
-                    spawn_path_tab(parent, SkillPath::Ubiqa, "Ubiqa\n(Nature)", earth::TERRACOTTA);
+                    spawn_path_tab(
+                        parent,
+                        SkillPath::Ubiqa,
+                        "Ubiqa\n(Nature)",
+                        earth::TERRACOTTA,
+                    );
                     spawn_path_tab(parent, SkillPath::Tempo, "Tempo\n(Speed)", dye::INDIGO);
                 });
 
@@ -140,8 +150,13 @@ pub fn display_skill_tree_ui(
                         ));
 
                         // Show stats for each path
-                        for path in [SkillPath::Ngoma, SkillPath::Ubuntu, SkillPath::Ashe,
-                                    SkillPath::Ubiqa, SkillPath::Tempo] {
+                        for path in [
+                            SkillPath::Ngoma,
+                            SkillPath::Ubuntu,
+                            SkillPath::Ashe,
+                            SkillPath::Ubiqa,
+                            SkillPath::Tempo,
+                        ] {
                             let count = skill_tree.skills_in_path(path);
                             let path_name = path_display_name(path);
                             let path_color = path_color(path);
@@ -217,7 +232,9 @@ fn display_skills_for_path(
     skill_db: &SkillDatabase,
 ) {
     // Get all skills for this path
-    let skills: Vec<_> = skill_db.skills.values()
+    let skills: Vec<_> = skill_db
+        .skills
+        .values()
         .filter(|s| s.path == path)
         .collect();
 
@@ -261,7 +278,11 @@ fn display_skills_for_path(
                         font_size: 18.0,
                         ..default()
                     },
-                    TextColor(if is_unlocked { wood::EBONY } else { bone::IVORY }),
+                    TextColor(if is_unlocked {
+                        wood::EBONY
+                    } else {
+                        bone::IVORY
+                    }),
                 ));
 
                 // Description
@@ -271,7 +292,11 @@ fn display_skills_for_path(
                         font_size: 14.0,
                         ..default()
                     },
-                    TextColor(if is_unlocked { wood::MAHOGANY } else { bone::AGED_BONE }),
+                    TextColor(if is_unlocked {
+                        wood::MAHOGANY
+                    } else {
+                        bone::AGED_BONE
+                    }),
                 ));
 
                 // Cost

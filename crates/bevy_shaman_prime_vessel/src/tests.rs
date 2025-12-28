@@ -166,15 +166,11 @@ mod prime_vessel_tests {
 
     #[test]
     fn test_lesser_self_from_prime_vessel() {
-        let mutations = vec![VesselMutation::VenomousStrike, VesselMutation::ChitinousArmor];
-        let lesser = LesserSelf::from_prime_vessel(
-            3,
-            250.0,
-            1,
-            100,
-            mutations.clone(),
-            (10, 20),
-        );
+        let mutations = vec![
+            VesselMutation::VenomousStrike,
+            VesselMutation::ChitinousArmor,
+        ];
+        let lesser = LesserSelf::from_prime_vessel(3, 250.0, 1, 100, mutations.clone(), (10, 20));
 
         assert_eq!(lesser.origin_tier, 3);
         assert_eq!(lesser.power_level, 250.0);
@@ -190,55 +186,27 @@ mod prime_vessel_tests {
         let mutations = vec![];
 
         // Power above cap should be clamped
-        let lesser = LesserSelf::from_prime_vessel(
-            5,
-            10000.0,
-            1,
-            100,
-            mutations.clone(),
-            (0, 0),
-        );
+        let lesser = LesserSelf::from_prime_vessel(5, 10000.0, 1, 100, mutations.clone(), (0, 0));
 
         assert_eq!(lesser.power_level, LesserSelf::MAX_POWER);
         assert_eq!(lesser.power_level, 500.0);
 
         // Power below cap should remain unchanged
-        let lesser2 = LesserSelf::from_prime_vessel(
-            2,
-            300.0,
-            2,
-            200,
-            mutations,
-            (0, 0),
-        );
+        let lesser2 = LesserSelf::from_prime_vessel(2, 300.0, 2, 200, mutations, (0, 0));
 
         assert_eq!(lesser2.power_level, 300.0);
     }
 
     #[test]
     fn test_lesser_self_title() {
-        let lesser = LesserSelf::from_prime_vessel(
-            3,
-            250.0,
-            5,
-            100,
-            vec![],
-            (0, 0),
-        );
+        let lesser = LesserSelf::from_prime_vessel(3, 250.0, 5, 100, vec![], (0, 0));
 
         assert_eq!(lesser.title(), "Lesser Self (Gen 5)");
     }
 
     #[test]
     fn test_lesser_self_patrol_route() {
-        let lesser = LesserSelf::from_prime_vessel(
-            1,
-            100.0,
-            1,
-            0,
-            vec![],
-            (10, 20),
-        );
+        let lesser = LesserSelf::from_prime_vessel(1, 100.0, 1, 0, vec![], (10, 20));
 
         // Should generate 4-point patrol route
         assert_eq!(lesser.patrol_route.len(), 4);
@@ -523,22 +491,40 @@ mod prime_vessel_tests {
         let mut index = GlobalCorruptionIndex::default();
 
         index.corruption_percentage = 0.0;
-        assert_eq!(index.world_state_description(), "The spirits rest peacefully. Order prevails.");
+        assert_eq!(
+            index.world_state_description(),
+            "The spirits rest peacefully. Order prevails."
+        );
 
         index.corruption_percentage = 0.3;
-        assert_eq!(index.world_state_description(), "An unease stirs in the spirit realm. Something hungers.");
+        assert_eq!(
+            index.world_state_description(),
+            "An unease stirs in the spirit realm. Something hungers."
+        );
 
         index.corruption_percentage = 0.5;
-        assert_eq!(index.world_state_description(), "The veil thins. Creatures grow restless and unpredictable.");
+        assert_eq!(
+            index.world_state_description(),
+            "The veil thins. Creatures grow restless and unpredictable."
+        );
 
         index.corruption_percentage = 0.7;
-        assert_eq!(index.world_state_description(), "Chaos seeps into the world. Violence begets violence.");
+        assert_eq!(
+            index.world_state_description(),
+            "Chaos seeps into the world. Violence begets violence."
+        );
 
         index.corruption_percentage = 0.9;
-        assert_eq!(index.world_state_description(), "The order crumbles. Only the strong survive.");
+        assert_eq!(
+            index.world_state_description(),
+            "The order crumbles. Only the strong survive."
+        );
 
         index.corruption_percentage = 1.0;
-        assert_eq!(index.world_state_description(), "TOTAL COLLAPSE: All souls have shifted to Chaos. There is no peace.");
+        assert_eq!(
+            index.world_state_description(),
+            "TOTAL COLLAPSE: All souls have shifted to Chaos. There is no peace."
+        );
     }
 
     #[test]
@@ -750,8 +736,14 @@ mod prime_vessel_tests {
 
     #[test]
     fn test_vessel_mutation_equality() {
-        assert_eq!(VesselMutation::VenomousStrike, VesselMutation::VenomousStrike);
-        assert_ne!(VesselMutation::VenomousStrike, VesselMutation::ChitinousArmor);
+        assert_eq!(
+            VesselMutation::VenomousStrike,
+            VesselMutation::VenomousStrike
+        );
+        assert_ne!(
+            VesselMutation::VenomousStrike,
+            VesselMutation::ChitinousArmor
+        );
     }
 
     #[test]

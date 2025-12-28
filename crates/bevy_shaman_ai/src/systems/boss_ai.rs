@@ -1,7 +1,7 @@
-use bevy::prelude::*;
 use crate::components::*;
-use bevy_shaman_core::components::{Health, Player, GridPosition};
-use bevy_shaman_monsters::components::{MonsterState, AiState};
+use bevy::prelude::*;
+use bevy_shaman_core::components::{GridPosition, Health, Player};
+use bevy_shaman_monsters::components::{AiState, MonsterState};
 
 /// System to apply LLM-driven combat decisions for bosses
 pub fn boss_combat_ai(
@@ -24,7 +24,9 @@ pub fn boss_combat_ai(
         .map(|(h, pos)| (h.current / h.max * 100.0, pos))
         .unwrap_or((100.0, &GridPosition { x: 0, y: 0 }));
 
-    for (entity, mut ai, mut queue, health, monster_state, mut ai_state, boss_pos) in boss_query.iter_mut() {
+    for (entity, mut ai, mut queue, health, monster_state, mut ai_state, boss_pos) in
+        boss_query.iter_mut()
+    {
         // Calculate distance to player
         let distance = calculate_distance(boss_pos, player_pos);
 
@@ -40,7 +42,8 @@ pub fn boss_combat_ai(
         phase_data.current_phase = calculate_phase_from_health(health_percent);
 
         // Update cooldowns
-        phase_data.special_move_cooldown = (phase_data.special_move_cooldown - time.delta_secs()).max(0.0);
+        phase_data.special_move_cooldown =
+            (phase_data.special_move_cooldown - time.delta_secs()).max(0.0);
 
         // Update emotional state based on health
         update_emotional_state(&mut ai, health, monster_state);
@@ -66,11 +69,17 @@ pub fn boss_combat_ai(
 
             info!(
                 "Boss {} (Phase {}, Distance: {:.1}) executes: {:?} - {}",
-                ai.character_name, phase_data.current_phase, distance, decision.action, decision.reasoning
+                ai.character_name,
+                phase_data.current_phase,
+                distance,
+                decision.action,
+                decision.reasoning
             );
 
             // Remove used decision from queue
-            queue.combat_decisions.retain(|d| !std::ptr::eq(d, &decision));
+            queue
+                .combat_decisions
+                .retain(|d| !std::ptr::eq(d, &decision));
         } else {
             // Fallback to basic behavior if no queued decision
             *ai_state = AiState::Aggressive;
@@ -137,28 +146,28 @@ fn find_suitable_decision(
 ) -> Option<QueuedCombatDecision> {
     let health_percent = health.current / health.max * 100.0;
 
-    queue.combat_decisions.iter().find(|decision| {
-        decision.conditions.iter().all(|condition| {
-            match condition {
+    queue
+        .combat_decisions
+        .iter()
+        .find(|decision| {
+            decision.conditions.iter().all(|condition| match condition {
                 CombatCondition::HealthBelow(threshold) => health_percent < *threshold,
                 CombatCondition::HealthAbove(threshold) => health_percent > *threshold,
                 CombatCondition::PlayerHealthBelow(threshold) => player_health < *threshold,
                 CombatCondition::CorruptionAbove(threshold) => {
                     monster_state.corruption_meter > *threshold
                 }
-                CombatCondition::DistanceToPlayer(distance_check) => {
-                    match distance_check {
-                        DistanceCheck::LessThan(d) => distance_to_player < *d,
-                        DistanceCheck::GreaterThan(d) => distance_to_player > *d,
-                        DistanceCheck::InRange(min, max) => {
-                            distance_to_player >= *min && distance_to_player <= *max
-                        }
+                CombatCondition::DistanceToPlayer(distance_check) => match distance_check {
+                    DistanceCheck::LessThan(d) => distance_to_player < *d,
+                    DistanceCheck::GreaterThan(d) => distance_to_player > *d,
+                    DistanceCheck::InRange(min, max) => {
+                        distance_to_player >= *min && distance_to_player <= *max
                     }
-                }
+                },
                 CombatCondition::PhaseNumber(phase) => current_phase == *phase,
-            }
+            })
         })
-    }).cloned()
+        .cloned()
 }
 
 /// Execute a combat decision
@@ -173,7 +182,11 @@ fn execute_combat_decision(
 ) {
     // Customize execution based on AI personality traits
     let aggression_multiplier = 0.5 + (ai.personality.aggression * 1.5);
-    let wisdom_delay = if ai.personality.wisdom > 0.7 { 0.5 } else { 0.0 };
+    let wisdom_delay = if ai.personality.wisdom > 0.7 {
+        0.5
+    } else {
+        0.0
+    };
 
     match &decision.action {
         CombatAction::BasicAttack => {
@@ -205,12 +218,16 @@ fn execute_combat_decision(
                 // Wise bosses add strategic delays (longer cooldowns)
                 // Aggressive bosses execute moves faster (shorter cooldowns)
                 let base_cooldown = 5.0 + (phase_data.current_phase as f32 * 2.0);
-                let personality_cooldown = base_cooldown + wisdom_delay - (ai.personality.aggression * 2.0);
+                let personality_cooldown =
+                    base_cooldown + wisdom_delay - (ai.personality.aggression * 2.0);
                 phase_data.special_move_cooldown = personality_cooldown.max(2.0);
 
                 info!(
                     "Boss uses special move: {} (Phase {}, Aggression: {:.1}x, Cooldown: {:.1}s)",
-                    move_name, phase_data.current_phase, aggression_multiplier, personality_cooldown
+                    move_name,
+                    phase_data.current_phase,
+                    aggression_multiplier,
+                    personality_cooldown
                 );
             }
         }
@@ -224,7 +241,11 @@ fn execute_combat_decision(
                 boss_entity,
             );
 
-            info!("Boss summons {} x{}", minion_type, phase_data.current_phase.min(3));
+            info!(
+                "Boss summons {} x{}",
+                minion_type,
+                phase_data.current_phase.min(3)
+            );
         }
         CombatAction::Retreat => {
             *ai_state = AiState::Fleeing;
@@ -262,7 +283,10 @@ fn execute_combat_decision(
                 boss_entity,
             );
 
-            info!("Boss spreads corruption! (radius: {:.1})", 3.0 + phase_data.current_phase as f32);
+            info!(
+                "Boss spreads corruption! (radius: {:.1})",
+                3.0 + phase_data.current_phase as f32
+            );
         }
     }
 }
@@ -321,24 +345,25 @@ pub fn boss_combat_dialogue(
         // Determine dialogue context based on situation
         let context = if player_health < 30.0 {
             DialogueContext::PlayerLowHealth
-        } else if matches!(ai.emotional_state, EmotionalState::Angry | EmotionalState::Desperate) {
+        } else if matches!(
+            ai.emotional_state,
+            EmotionalState::Angry | EmotionalState::Desperate
+        ) {
             DialogueContext::Taunt
         } else {
             DialogueContext::Combat
         };
 
         // Find matching dialogue from queue
-        if let Some(response_idx) = queue
-            .dialogue_responses
-            .iter()
-            .position(|r| matches!(&r.context, ctx if ctx == &context) || matches!(r.context, DialogueContext::Combat))
-        {
+        if let Some(response_idx) = queue.dialogue_responses.iter().position(|r| {
+            matches!(&r.context, ctx if ctx == &context)
+                || matches!(r.context, DialogueContext::Combat)
+        }) {
             let response = queue.dialogue_responses.remove(response_idx);
             // Add to conversation history
             history.add_npc_message(response.text.clone(), time.elapsed_secs_f64());
 
             info!("Boss {}: {}", ai.character_name, response.text);
-
         }
     }
 }
@@ -392,7 +417,6 @@ pub fn boss_phase_transitions(
                 } else {
                     EmotionalState::Confident
                 };
-
             }
         }
     }

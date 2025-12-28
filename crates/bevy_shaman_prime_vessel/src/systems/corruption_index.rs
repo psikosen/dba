@@ -90,6 +90,7 @@ pub fn check_total_collapse(
     mut collapse_events: EventWriter<TotalCollapseTriggered>,
     mut chaos_events: EventWriter<EntityChaosLocked>,
     mut commands: Commands,
+    mut collapse_processed: Local<bool>,
 ) {
     // Only trigger once
     if !corruption_index.total_collapse_triggered {
@@ -97,13 +98,10 @@ pub fn check_total_collapse(
     }
 
     // Check if we've already processed
-    static mut COLLAPSE_PROCESSED: bool = false;
-    unsafe {
-        if COLLAPSE_PROCESSED {
-            return;
-        }
-        COLLAPSE_PROCESSED = true;
+    if *collapse_processed {
+        return;
     }
+    *collapse_processed = true;
 
     // Fire the collapse event
     collapse_events.send(TotalCollapseTriggered {

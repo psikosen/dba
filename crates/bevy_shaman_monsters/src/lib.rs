@@ -20,14 +20,18 @@ impl Plugin for MonstersPlugin {
             // Sprite DB population (runs every frame until complete)
             .add_systems(Update, systems::sprite_swap::populate_monster_sprite_db)
             // Monster state machine systems
-            .add_systems(Update, (
-                systems::state_machine::update_monster_state_meters,
-                systems::state_machine::evaluate_state_transitions,
-                systems::sprite_swap::swap_sprites_on_state_change,
-                systems::personality::apply_music_influence,
-                systems::corruption::propagate_corruption_influence,
-                systems::ai::process_monster_ai,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::state_machine::update_monster_state_meters,
+                    systems::state_machine::evaluate_state_transitions,
+                    systems::sprite_swap::swap_sprites_on_state_change,
+                    systems::personality::apply_music_influence,
+                    systems::corruption::propagate_corruption_influence,
+                    systems::ai::process_monster_ai,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Events
             .add_event::<systems::events::MonsterStateChanged>()
             .add_event::<systems::events::MonsterCorrupted>();

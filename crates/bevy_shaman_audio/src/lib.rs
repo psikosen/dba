@@ -20,25 +20,32 @@ impl Plugin for AudioPlugin {
             .init_resource::<systems::audio_playback::AudioAssets>()
             .init_resource::<components::BeatPromptManager>()
             // Systems
-            .add_systems(Startup, (
-                systems::audio_playback::load_audio_assets,
-                systems::beat_prompts::init_beat_prompt_manager,
-                systems::beat_prompts::create_beat_prompt_sprite,
-            ))
-            .add_systems(Update, (
-                systems::beat_clock::update_beat_clock,
-                systems::rhythm::evaluate_rhythm_inputs,
-                systems::song_manager::manage_active_song,
-                systems::audio_playback::play_music,
-                systems::audio_playback::play_sound_effects,
-                systems::audio_playback::play_hit_sounds,
-                systems::audio_playback::play_level_up_sound,
-                systems::audio_playback::play_quest_complete_sound,
-                // Beat prompt systems
-                systems::beat_prompts::spawn_beat_prompts,
-                systems::beat_prompts::update_beat_prompts,
-                systems::beat_prompts::consume_beat_prompts,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Startup,
+                (
+                    systems::audio_playback::load_audio_assets,
+                    systems::beat_prompts::init_beat_prompt_manager,
+                    systems::beat_prompts::create_beat_prompt_sprite,
+                ),
+            )
+            .add_systems(
+                Update,
+                (
+                    systems::beat_clock::update_beat_clock,
+                    systems::rhythm::evaluate_rhythm_inputs,
+                    systems::song_manager::manage_active_song,
+                    systems::audio_playback::play_music,
+                    systems::audio_playback::play_sound_effects,
+                    systems::audio_playback::play_hit_sounds,
+                    systems::audio_playback::play_level_up_sound,
+                    systems::audio_playback::play_quest_complete_sound,
+                    // Beat prompt systems
+                    systems::beat_prompts::spawn_beat_prompts,
+                    systems::beat_prompts::update_beat_prompts,
+                    systems::beat_prompts::consume_beat_prompts,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Events
             .add_event::<systems::events::BeatHit>()
             .add_event::<systems::events::RhythmInputEvaluated>()

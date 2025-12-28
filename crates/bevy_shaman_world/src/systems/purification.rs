@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, Player, Spirit};
 use crate::components::TileCorruption;
 use crate::resources::PurificationAbility;
 use crate::systems::events::TilePurified;
+use bevy::prelude::*;
+use bevy_shaman_core::components::{GridPosition, Player, Spirit};
 
 /// Processes purification casts from player
 pub fn process_purification_casts(

@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::CameraTarget;
+use bevy::prelude::*;
 
 const CAMERA_FOLLOW_SPEED: f32 = 5.0;
 

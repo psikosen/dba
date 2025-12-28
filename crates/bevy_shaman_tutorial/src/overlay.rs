@@ -1,5 +1,5 @@
+use crate::{TutorialMissionRegistry, TutorialProgress, UiHighlightZone};
 use bevy::prelude::*;
-use crate::{TutorialProgress, TutorialMissionRegistry, UiHighlightZone};
 
 /// Tutorial overlay system
 /// Provides visual hints and highlights without text dumps
@@ -9,11 +9,7 @@ pub struct OverlayPlugin;
 
 impl Plugin for OverlayPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(Update, (
-                update_tutorial_overlay,
-                animate_highlight_pulse,
-            ));
+        app.add_systems(Update, (update_tutorial_overlay, animate_highlight_pulse));
     }
 }
 
@@ -109,8 +105,7 @@ fn animate_highlight_pulse(
 
 fn spawn_tutorial_hint(
     commands: &mut Commands,
-    #[allow(unused_variables)]
-    asset_server: &AssetServer,
+    #[allow(unused_variables)] asset_server: &AssetServer,
     hint_text: &str,
     highlight_zone: Option<UiHighlightZone>,
 ) {
@@ -126,40 +121,58 @@ fn spawn_tutorial_hint(
         _ => (Val::Px(50.0), Val::Percent(50.0)), // Default center-ish
     };
 
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            top,
-            left,
-            padding: UiRect::all(Val::Px(12.0)),
-            ..default()
-        },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-        TutorialOverlayRoot,
-    )).with_children(|parent| {
-        parent.spawn((
-            Text::new(hint_text),
-            TextFont {
-                font_size: 18.0,
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top,
+                left,
+                padding: UiRect::all(Val::Px(12.0)),
                 ..default()
             },
-            TextColor(Color::srgb(1.0, 1.0, 0.6)), // Slight yellow tint
-        ));
-    });
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            TutorialOverlayRoot,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new(hint_text),
+                TextFont {
+                    font_size: 18.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 1.0, 0.6)), // Slight yellow tint
+            ));
+        });
 }
 
-fn spawn_tutorial_highlight(
-    commands: &mut Commands,
-    zone: UiHighlightZone,
-) {
+fn spawn_tutorial_highlight(commands: &mut Commands, zone: UiHighlightZone) {
     let (width, height, top, left) = match zone {
         UiHighlightZone::HealthBar => (Val::Px(200.0), Val::Px(30.0), Val::Px(50.0), Val::Px(20.0)),
         UiHighlightZone::SpiritBar => (Val::Px(200.0), Val::Px(30.0), Val::Px(80.0), Val::Px(20.0)),
-        UiHighlightZone::StaminaBar => (Val::Px(200.0), Val::Px(30.0), Val::Px(110.0), Val::Px(20.0)),
-        UiHighlightZone::RhythmIndicator => (Val::Px(400.0), Val::Px(100.0), Val::Px(30.0), Val::Percent(45.0)),
-        UiHighlightZone::ComboDisplay => (Val::Px(150.0), Val::Px(80.0), Val::Px(180.0), Val::Px(20.0)),
-        UiHighlightZone::Minimap => (Val::Px(250.0), Val::Px(250.0), Val::Px(20.0), Val::Percent(75.0)),
-        UiHighlightZone::Inventory => (Val::Px(600.0), Val::Px(400.0), Val::Percent(30.0), Val::Percent(25.0)),
+        UiHighlightZone::StaminaBar => {
+            (Val::Px(200.0), Val::Px(30.0), Val::Px(110.0), Val::Px(20.0))
+        }
+        UiHighlightZone::RhythmIndicator => (
+            Val::Px(400.0),
+            Val::Px(100.0),
+            Val::Px(30.0),
+            Val::Percent(45.0),
+        ),
+        UiHighlightZone::ComboDisplay => {
+            (Val::Px(150.0), Val::Px(80.0), Val::Px(180.0), Val::Px(20.0))
+        }
+        UiHighlightZone::Minimap => (
+            Val::Px(250.0),
+            Val::Px(250.0),
+            Val::Px(20.0),
+            Val::Percent(75.0),
+        ),
+        UiHighlightZone::Inventory => (
+            Val::Px(600.0),
+            Val::Px(400.0),
+            Val::Percent(30.0),
+            Val::Percent(25.0),
+        ),
         UiHighlightZone::Custom(x, y, w, h) => (Val::Px(w), Val::Px(h), Val::Px(y), Val::Px(x)),
     };
 
@@ -186,8 +199,7 @@ fn spawn_tutorial_highlight(
 /// Spawn an animated arrow pointing to a specific screen position
 pub fn spawn_tutorial_arrow(
     commands: &mut Commands,
-    #[allow(unused_variables)]
-    asset_server: &AssetServer,
+    #[allow(unused_variables)] asset_server: &AssetServer,
     target_position: Vec2,
 ) {
     commands.spawn((

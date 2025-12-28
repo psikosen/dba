@@ -8,10 +8,12 @@ pub struct ShopPlugin;
 
 impl Plugin for ShopPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<resources::Currency>()
+        app.init_resource::<resources::Currency>()
             .init_resource::<resources::ShopInventory>()
-            .add_systems(Update, systems::populate_shop_inventory.run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                systems::populate_shop_inventory.run_if(in_state(GameState::Playing)),
+            )
             .add_event::<systems::events::PurchaseEvent>()
             .add_event::<systems::events::SellEvent>();
     }
@@ -87,7 +89,8 @@ pub mod resources {
         }
 
         pub fn get_price(&self, item_id: &str) -> Option<u32> {
-            self.items.iter()
+            self.items
+                .iter()
                 .find(|i| i.item.id == item_id)
                 .map(|i| i.price)
         }
@@ -211,9 +214,9 @@ pub mod resources {
 }
 
 pub mod systems {
+    use crate::resources::{Currency, ShopInventory};
     use bevy::prelude::*;
     use bevy_shaman_items::components::Inventory;
-    use crate::resources::{Currency, ShopInventory};
 
     pub mod events {
         use bevy::prelude::*;
@@ -233,9 +236,7 @@ pub mod systems {
         }
     }
 
-    pub fn populate_shop_inventory(
-        mut shop: ResMut<ShopInventory>,
-    ) {
+    pub fn populate_shop_inventory(mut shop: ResMut<ShopInventory>) {
         // Only populate once
         if shop.items.is_empty() {
             shop.populate_default_items();
@@ -261,7 +262,9 @@ pub mod systems {
 
                         // Add item to player inventory
                         if let Ok(mut inventory) = inventory_query.get_mut(event.buyer) {
-                            if let Some(shop_item) = shop.items.iter().find(|i| i.item.id == event.item_id) {
+                            if let Some(shop_item) =
+                                shop.items.iter().find(|i| i.item.id == event.item_id)
+                            {
                                 inventory.add_item(shop_item.item.clone(), event.quantity);
                             }
                         }

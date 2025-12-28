@@ -140,7 +140,14 @@ pub fn load_game_assets(
     // Note: Audio assets are loaded in the bevy_shaman_audio crate
 
     loading_state.loaded = true;
-    info!("Core asset loading complete! (Using {})", if use_placeholders { "placeholders" } else { "real assets" });
+    info!(
+        "Core asset loading complete! (Using {})",
+        if use_placeholders {
+            "placeholders"
+        } else {
+            "real assets"
+        }
+    );
 }
 
 /// Helper function to create a colored sprite

@@ -1,8 +1,8 @@
+use crate::components::*;
+use crate::resources::MonsterTemplateDB;
 /// Monster spawning systems for dev mode and gameplay
 use bevy::prelude::*;
 use bevy_shaman_core::components::GridPosition;
-use crate::components::*;
-use crate::resources::MonsterTemplateDB;
 
 // ============================================================================
 // DEV MODE TEST SPAWNING
@@ -16,7 +16,8 @@ pub fn spawn_test_boss(
 ) {
     if let Ok(player_pos) = player_query.get_single() {
         // Use the chaos_hound template as a boss (aggressive, high attack)
-        let boss_template = template_db.get("chaos_hound")
+        let boss_template = template_db
+            .get("chaos_hound")
             .or_else(|| template_db.get("corrupt_shade"))
             .or_else(|| {
                 // Fallback if templates aren't loaded yet
@@ -59,10 +60,10 @@ pub fn spawn_test_boss(
             MonsterId(monster_id.clone()),
             MonsterState {
                 state: default_state,
-                stability_meter: 0.2, // Low stability = aggressive
+                stability_meter: 0.2,  // Low stability = aggressive
                 corruption_meter: 0.8, // High corruption
-                obedience_meter: 0.0, // Cannot be tamed
-                chaos_output: 1.5, // High damage output
+                obedience_meter: 0.0,  // Cannot be tamed
+                chaos_output: 1.5,     // High damage output
             },
             stats,
             affinity,
@@ -86,7 +87,10 @@ pub fn spawn_test_boss(
             Name::new(format!("Test Boss: {}", monster_id)),
         ));
 
-        info!("DEV: Spawned test boss '{}' at ({}, {})", monster_id, spawn_x, spawn_y);
+        info!(
+            "DEV: Spawned test boss '{}' at ({}, {})",
+            monster_id, spawn_x, spawn_y
+        );
     } else {
         warn!("DEV: Cannot spawn test boss - player not found");
     }

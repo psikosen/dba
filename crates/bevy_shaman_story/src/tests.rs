@@ -51,7 +51,10 @@ mod story_tests {
             sick_dialogue: "...".to_string(),
         };
 
-        assert_eq!(dialogue.get_dialogue(NpcSicknessState::Waking), "H...hello...");
+        assert_eq!(
+            dialogue.get_dialogue(NpcSicknessState::Waking),
+            "H...hello..."
+        );
     }
 
     #[test]
@@ -62,7 +65,10 @@ mod story_tests {
             sick_dialogue: "...".to_string(),
         };
 
-        assert_eq!(dialogue.get_dialogue(NpcSicknessState::Awake), "Hello traveler!");
+        assert_eq!(
+            dialogue.get_dialogue(NpcSicknessState::Awake),
+            "Hello traveler!"
+        );
     }
 
     #[test]
@@ -411,7 +417,10 @@ mod story_tests {
 
         // Awake NPCs should have full dialogue
         let awake_text = dialogue.get_dialogue(NpcSicknessState::Awake);
-        assert_eq!(awake_text, "Welcome, young shaman! The village needs your help!");
+        assert_eq!(
+            awake_text,
+            "Welcome, young shaman! The village needs your help!"
+        );
     }
 
     #[test]
@@ -420,17 +429,13 @@ mod story_tests {
 
         let db = AfricanNamesDB::default();
 
-        let cultures = vec![
-            "Akan",
-            "Igbo",
-            "Swahili",
-            "Yoruba",
-            "Zulu",
-            "Kikuyu",
-        ];
+        let cultures = vec!["Akan", "Igbo", "Swahili", "Yoruba", "Zulu", "Kikuyu"];
 
         for culture in cultures {
-            let has_culture = db.names.values().any(|(_, origin, _)| origin.contains(culture));
+            let has_culture = db
+                .names
+                .values()
+                .any(|(_, origin, _)| origin.contains(culture));
             assert!(has_culture, "Database should include {} names", culture);
         }
     }
@@ -451,14 +456,15 @@ mod story_tests {
 
                 // Boss meanings should reference their mythological significance
                 assert!(
-                    meaning.to_lowercase().contains("spirit") ||
-                    meaning.to_lowercase().contains("god") ||
-                    meaning.to_lowercase().contains("trickster") ||
-                    meaning.to_lowercase().contains("water") ||
-                    meaning.to_lowercase().contains("thunder") ||
-                    meaning.to_lowercase().contains("storm"),
+                    meaning.to_lowercase().contains("spirit")
+                        || meaning.to_lowercase().contains("god")
+                        || meaning.to_lowercase().contains("trickster")
+                        || meaning.to_lowercase().contains("water")
+                        || meaning.to_lowercase().contains("thunder")
+                        || meaning.to_lowercase().contains("storm"),
                     "Boss {} should have mythological significance in meaning: {}",
-                    boss, meaning
+                    boss,
+                    meaning
                 );
             }
         }

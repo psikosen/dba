@@ -1,13 +1,12 @@
+use crate::components::*;
+use crate::resources::*;
 /// LLM Backend Abstraction Layer
 /// Provides a unified interface for different LLM backends:
 /// - Placeholder (rule-based responses for development/fallback)
 /// - GGUF Local (via llama.cpp when model is available)
 /// - HTTP API (for remote LLM services)
-
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::components::*;
-use crate::resources::*;
 
 // ============================================================================
 // BACKEND TRAIT
@@ -68,7 +67,12 @@ impl PlaceholderBackend {
     }
 
     /// Generate dialogue based on personality traits and context
-    fn generate_dialogue_response(&self, personality: &PersonalityTraits, context: &str, role: &str) -> String {
+    fn generate_dialogue_response(
+        &self,
+        personality: &PersonalityTraits,
+        context: &str,
+        role: &str,
+    ) -> String {
         let templates = match role.to_lowercase().as_str() {
             "boss" => &self.response_templates.boss_dialogue,
             "brother" => &self.response_templates.brother_dialogue,
@@ -88,7 +92,8 @@ impl PlaceholderBackend {
         };
 
         let default_template = "...".to_string();
-        let template = templates.get(template_index % templates.len())
+        let template = templates
+            .get(template_index % templates.len())
             .unwrap_or(&default_template);
 
         // Simple context-aware modifications
@@ -106,7 +111,11 @@ impl PlaceholderBackend {
     }
 
     /// Generate combat decision based on personality and situation
-    fn generate_combat_decision(&self, personality: &PersonalityTraits, health_pct: f32) -> CombatDecision {
+    fn generate_combat_decision(
+        &self,
+        personality: &PersonalityTraits,
+        health_pct: f32,
+    ) -> CombatDecision {
         // Aggressive personalities attack more
         if personality.aggression > 0.7 && health_pct > 30.0 {
             if rand::random::<f32>() > 0.5 {
@@ -161,8 +170,9 @@ impl LlmBackend for PlaceholderBackend {
                 "taunt": "Face my ancestral power!"
             });
 
-            serde_json::to_string_pretty(&json)
-                .map_err(|e| LlmError::GenerationFailed(format!("JSON serialization failed: {}", e)))
+            serde_json::to_string_pretty(&json).map_err(|e| {
+                LlmError::GenerationFailed(format!("JSON serialization failed: {}", e))
+            })
         } else {
             // Dialogue generation
             let personality = PersonalityTraits {

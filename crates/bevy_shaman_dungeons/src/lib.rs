@@ -8,15 +8,18 @@ pub struct DungeonsPlugin;
 
 impl Plugin for DungeonsPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<systems::generation::DungeonGenerator>()
-            .add_systems(Update, (
-                systems::generation::trigger_dungeon_entry,
-                systems::generation::enter_dungeon_from_world,
-                systems::generation::generate_dungeon_rooms,
-                systems::encounters::spawn_encounters,
-                systems::bosses::manage_boss_fights,
-            ).run_if(in_state(GameState::Playing)))
+        app.init_resource::<systems::generation::DungeonGenerator>()
+            .add_systems(
+                Update,
+                (
+                    systems::generation::trigger_dungeon_entry,
+                    systems::generation::enter_dungeon_from_world,
+                    systems::generation::generate_dungeon_rooms,
+                    systems::encounters::spawn_encounters,
+                    systems::bosses::manage_boss_fights,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             .add_event::<systems::events::DungeonEntered>()
             .add_event::<systems::events::BossDefeated>();
     }
@@ -62,9 +65,9 @@ pub mod systems {
     }
 
     pub mod generation {
+        use crate::components::{DungeonRoom, RoomType};
         use bevy::prelude::*;
         use bevy_shaman_core::components::GridPosition;
-        use crate::components::{DungeonRoom, RoomType};
         use rand::Rng;
 
         #[derive(Resource)]
@@ -104,7 +107,10 @@ pub mod systems {
         pub fn enter_dungeon_from_world(
             keyboard: Res<ButtonInput<KeyCode>>,
             player_query: Query<&GridPosition, With<bevy_shaman_core::components::Player>>,
-            dungeon_entrances: Query<(&GridPosition, &bevy_shaman_world::components::DungeonEntrance)>,
+            dungeon_entrances: Query<(
+                &GridPosition,
+                &bevy_shaman_world::components::DungeonEntrance,
+            )>,
             mut events: EventWriter<super::events::DungeonEntered>,
             mut dungeon_gen: ResMut<DungeonGenerator>,
         ) {
@@ -148,63 +154,65 @@ pub mod systems {
             for event in dungeon_entered.read() {
                 dungeon_gen.current_dungeon_id = event.dungeon_id.clone();
 
-            let mut rng = rand::thread_rng();
-            let room_count = rng.gen_range(5..=12);
+                let mut rng = rand::thread_rng();
+                let room_count = rng.gen_range(5..=12);
 
-            info!("Generating dungeon with {} rooms", room_count);
+                info!("Generating dungeon with {} rooms", room_count);
 
-            // Generate room graph using simple linear progression with branches
-            let mut room_positions = Vec::new();
-            let mut current_pos = IVec2::ZERO;
+                // Generate room graph using simple linear progression with branches
+                let mut room_positions = Vec::new();
+                let mut current_pos = IVec2::ZERO;
 
-            for i in 0..room_count {
-                let room_type = match i {
-                    0 => RoomType::Empty, // Starting room
-                    i if i == room_count - 1 => RoomType::Boss, // Final room
-                    _ => {
-                        let roll: f32 = rng.gen();
-                        if roll < 0.6 {
-                            RoomType::Encounter
-                        } else if roll < 0.85 {
-                            RoomType::Empty
-                        } else {
-                            RoomType::Treasure
+                for i in 0..room_count {
+                    let room_type = match i {
+                        0 => RoomType::Empty,                       // Starting room
+                        i if i == room_count - 1 => RoomType::Boss, // Final room
+                        _ => {
+                            let roll: f32 = rng.gen();
+                            if roll < 0.6 {
+                                RoomType::Encounter
+                            } else if roll < 0.85 {
+                                RoomType::Empty
+                            } else {
+                                RoomType::Treasure
+                            }
                         }
-                    }
-                };
+                    };
 
-                // Spawn room entity
-                commands.spawn((
-                    DungeonRoom { room_type },
-                    GridPosition::new(current_pos.x, current_pos.y),
-                    SpatialBundle::default(),
-                ));
+                    // Spawn room entity
+                    commands.spawn((
+                        DungeonRoom { room_type },
+                        GridPosition::new(current_pos.x, current_pos.y),
+                        SpatialBundle::default(),
+                    ));
 
-                room_positions.push(current_pos);
+                    room_positions.push(current_pos);
 
-                // Move to next room position (simple corridor system)
-                let direction = if rng.gen_bool(0.7) {
-                    IVec2::new(3, 0) // Prefer horizontal progression
-                } else {
-                    IVec2::new(0, 3) // Occasional vertical branch
-                };
-                current_pos += direction;
-            }
+                    // Move to next room position (simple corridor system)
+                    let direction = if rng.gen_bool(0.7) {
+                        IVec2::new(3, 0) // Prefer horizontal progression
+                    } else {
+                        IVec2::new(0, 3) // Occasional vertical branch
+                    };
+                    current_pos += direction;
+                }
 
                 dungeon_gen.rooms_generated = room_count;
-                info!("Dungeon '{}' generation complete: {} rooms", event.dungeon_id, room_count);
+                info!(
+                    "Dungeon '{}' generation complete: {} rooms",
+                    event.dungeon_id, room_count
+                );
             }
         }
     }
 
     pub mod encounters {
+        use crate::components::{DungeonRoom, RoomType};
         use bevy::prelude::*;
         use bevy_shaman_core::components::{GridPosition, Health};
         use bevy_shaman_monsters::components::{
-            MonsterId, MonsterStats, MonsterState, AiBehavior, AiState,
-            MusicAffinityProfile,
+            AiBehavior, AiState, MonsterId, MonsterState, MonsterStats, MusicAffinityProfile,
         };
-        use crate::components::{DungeonRoom, RoomType};
         use rand::Rng;
 
         #[derive(Component)]
@@ -230,10 +238,8 @@ pub mod systems {
 
                 for i in 0..monster_count {
                     let offset = IVec2::new(i % 2, i / 2);
-                    let monster_pos = GridPosition::new(
-                        room_pos.x + offset.x,
-                        room_pos.y + offset.y,
-                    );
+                    let monster_pos =
+                        GridPosition::new(room_pos.x + offset.x, room_pos.y + offset.y);
 
                     // Randomize monster type
                     let monster_id = match rng.gen_range(0..3) {
@@ -266,20 +272,22 @@ pub mod systems {
                     ));
                 }
 
-                info!("Spawned {} monsters in encounter room at {:?}", monster_count, room_pos);
+                info!(
+                    "Spawned {} monsters in encounter room at {:?}",
+                    monster_count, room_pos
+                );
             }
         }
     }
 
     pub mod bosses {
+        use crate::components::{BossArena, DungeonRoom, RoomType};
         use bevy::prelude::*;
         use bevy_shaman_core::components::{GridPosition, Health, Player};
         use bevy_shaman_monsters::components::{
-            MonsterId, MonsterStats, MonsterState, StateType, AiBehavior, AiState,
-            MusicAffinityProfile,
+            AiBehavior, AiState, MonsterId, MonsterState, MonsterStats, MusicAffinityProfile,
+            StateType,
         };
-        use crate::components::{BossArena, DungeonRoom, RoomType};
-        
 
         #[derive(Component)]
         pub struct BossSpawned;
@@ -311,36 +319,38 @@ pub mod systems {
 
                     // Spawn boss
                     let boss_id = "corrupted_guardian";
-                    let _boss_entity = commands.spawn((
-                        MonsterId(boss_id.to_string()),
-                        GridPosition::new(room_pos.x + 1, room_pos.y + 1),
-                        Health::new(200.0),
-                        MonsterState {
-                            state: StateType::Corrupt,
-                            stability_meter: 0.2,
-                            corruption_meter: 0.9,
-                            obedience_meter: 0.0,
-                            chaos_output: 1.5,
-                        },
-                        MonsterStats {
-                            attack: 25.0,
-                            defense: 15.0,
-                            speed: 6.0,
-                            spirit_affinity: 0.1,
-                        },
-                        AiBehavior {
-                            behavior_tree_id: "boss_aggressive".to_string(),
-                            aggression: 1.0,
-                            flee_threshold: 0.0,
-                        },
-                        AiState::Aggressive,
-                        MusicAffinityProfile::default(),
-                        BossArena {
-                            boss_id: boss_id.to_string(),
-                            phase: 1,
-                        },
-                        SpatialBundle::default(),
-                    )).id();
+                    let _boss_entity = commands
+                        .spawn((
+                            MonsterId(boss_id.to_string()),
+                            GridPosition::new(room_pos.x + 1, room_pos.y + 1),
+                            Health::new(200.0),
+                            MonsterState {
+                                state: StateType::Corrupt,
+                                stability_meter: 0.2,
+                                corruption_meter: 0.9,
+                                obedience_meter: 0.0,
+                                chaos_output: 1.5,
+                            },
+                            MonsterStats {
+                                attack: 25.0,
+                                defense: 15.0,
+                                speed: 6.0,
+                                spirit_affinity: 0.1,
+                            },
+                            AiBehavior {
+                                behavior_tree_id: "boss_aggressive".to_string(),
+                                aggression: 1.0,
+                                flee_threshold: 0.0,
+                            },
+                            AiState::Aggressive,
+                            MusicAffinityProfile::default(),
+                            BossArena {
+                                boss_id: boss_id.to_string(),
+                                phase: 1,
+                            },
+                            SpatialBundle::default(),
+                        ))
+                        .id();
 
                     info!("Spawned boss {} in arena", boss_id);
                 }

@@ -16,13 +16,8 @@ impl Plugin for TutorialPlugin {
             .init_resource::<TutorialProgress>()
             .init_resource::<TutorialSettings>()
             .init_resource::<TutorialMissionRegistry>()
-
             // Plugins
-            .add_plugins((
-                cutscene::CutscenePlugin,
-                overlay::OverlayPlugin,
-            ))
-
+            .add_plugins((cutscene::CutscenePlugin, overlay::OverlayPlugin))
             // Systems
             .add_systems(OnEnter(GameState::Playing), setup_tutorial)
             .add_systems(
@@ -35,9 +30,9 @@ impl Plugin for TutorialPlugin {
                     track_purification_events,
                     save_tutorial_progress,
                     load_tutorial_progress,
-                ).run_if(in_state(GameState::Playing))
+                )
+                    .run_if(in_state(GameState::Playing)),
             )
-
             // Events
             .add_event::<TutorialEvent>()
             .add_event::<TutorialStepCompleted>()
@@ -117,7 +112,10 @@ impl TutorialProgress {
     }
 
     pub fn has_viewed_cutscene(&self, cutscene_id: &str) -> bool {
-        self.cutscene_viewed.get(cutscene_id).copied().unwrap_or(false)
+        self.cutscene_viewed
+            .get(cutscene_id)
+            .copied()
+            .unwrap_or(false)
     }
 }
 
@@ -164,16 +162,16 @@ pub struct TutorialStep {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TutorialCondition {
-    DefeatMonster(usize),           // Number of monsters to defeat
-    LandCombo(usize),               // Combo length to achieve
-    ReachPosition(i32, i32),        // Grid position to reach
-    TriggerRhythmAttack(usize),     // Number of rhythm attacks
-    PurifyTiles(usize),             // Number of corrupted tiles to purify
-    InteractWithNpc(String),        // NPC name/id
-    CollectItems(String, u32),      // Item name and count
-    WaitForDialogue,                // Wait for dialogue to complete
-    WaitForCutscene(String),        // Wait for cutscene to finish
-    Custom(String),                 // Custom flag-based condition
+    DefeatMonster(usize),       // Number of monsters to defeat
+    LandCombo(usize),           // Combo length to achieve
+    ReachPosition(i32, i32),    // Grid position to reach
+    TriggerRhythmAttack(usize), // Number of rhythm attacks
+    PurifyTiles(usize),         // Number of corrupted tiles to purify
+    InteractWithNpc(String),    // NPC name/id
+    CollectItems(String, u32),  // Item name and count
+    WaitForDialogue,            // Wait for dialogue to complete
+    WaitForCutscene(String),    // Wait for cutscene to finish
+    Custom(String),             // Custom flag-based condition
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -218,10 +216,7 @@ pub struct TutorialMissionCompleted {
 // SYSTEMS
 // ============================================================================
 
-fn setup_tutorial(
-    mut progress: ResMut<TutorialProgress>,
-    settings: Res<TutorialSettings>,
-) {
+fn setup_tutorial(mut progress: ResMut<TutorialProgress>, settings: Res<TutorialSettings>) {
     if settings.skip_tutorial {
         progress.tutorial_completed = true;
         info!("Tutorial skipped by user settings");
@@ -271,7 +266,10 @@ fn check_tutorial_conditions(
     // Check if step condition is met
     for event in tutorial_events.read() {
         if is_condition_met(&step.condition, event, &progress) {
-            info!("Tutorial step completed: {}.{}", current_mission_id, step.step_id);
+            info!(
+                "Tutorial step completed: {}.{}",
+                current_mission_id, step.step_id
+            );
             step_completed.send(TutorialStepCompleted {
                 mission_id: current_mission_id.clone(),
                 step_id: step.step_id,
@@ -307,7 +305,10 @@ fn is_condition_met(
             }
             // Only complete if player has achieved the required combo length
             if actual >= required {
-                info!("Tutorial: Combo requirement met ({} >= {})", actual, required);
+                info!(
+                    "Tutorial: Combo requirement met ({} >= {})",
+                    actual, required
+                );
                 true
             } else {
                 false
@@ -329,10 +330,14 @@ fn is_condition_met(
             }
             true
         }
-        (TutorialCondition::InteractWithNpc(npc), TutorialEvent::DialogueCompleted(completed_npc)) => {
-            npc == completed_npc
-        }
-        (TutorialCondition::WaitForCutscene(cutscene_id), TutorialEvent::CutsceneCompleted(completed_id)) => {
+        (
+            TutorialCondition::InteractWithNpc(npc),
+            TutorialEvent::DialogueCompleted(completed_npc),
+        ) => npc == completed_npc,
+        (
+            TutorialCondition::WaitForCutscene(cutscene_id),
+            TutorialEvent::CutsceneCompleted(completed_id),
+        ) => {
             // Ensure cutscene hasn't been viewed before (skip on replay)
             if progress.has_viewed_cutscene(completed_id) {
                 info!("Tutorial: Cutscene already viewed - skipping requirement");
@@ -501,7 +506,10 @@ fn track_combat_events(
 /// Track purification events
 fn track_purification_events(
     mut tutorial_events: EventWriter<TutorialEvent>,
-    corruption_query: Query<&bevy_shaman_world::components::TileCorruption, Changed<bevy_shaman_world::components::TileCorruption>>,
+    corruption_query: Query<
+        &bevy_shaman_world::components::TileCorruption,
+        Changed<bevy_shaman_world::components::TileCorruption>,
+    >,
 ) {
     // Track when tiles are purified (corruption reduced)
     for corruption in corruption_query.iter() {
@@ -521,15 +529,21 @@ fn save_tutorial_progress(
     for _event in save_events.read() {
         // Read the existing save file
         if let Ok(json_str) = fs::read_to_string("saves/autosave.json") {
-            if let Ok(mut save_data) = serde_json::from_str::<bevy_shaman_save::systems::save_load::SaveData>(&json_str) {
+            if let Ok(mut save_data) =
+                serde_json::from_str::<bevy_shaman_save::systems::save_load::SaveData>(&json_str)
+            {
                 // Update tutorial progress in save data
                 save_data.tutorial_progress.tutorial_started = tutorial_progress.tutorial_started;
-                save_data.tutorial_progress.tutorial_completed = tutorial_progress.tutorial_completed;
-                save_data.tutorial_progress.current_mission = tutorial_progress.current_mission.clone();
+                save_data.tutorial_progress.tutorial_completed =
+                    tutorial_progress.tutorial_completed;
+                save_data.tutorial_progress.current_mission =
+                    tutorial_progress.current_mission.clone();
                 save_data.tutorial_progress.current_step = tutorial_progress.current_step;
-                save_data.tutorial_progress.completed_missions = tutorial_progress.completed_missions.clone();
+                save_data.tutorial_progress.completed_missions =
+                    tutorial_progress.completed_missions.clone();
                 save_data.tutorial_progress.mission_flags = tutorial_progress.mission_flags.clone();
-                save_data.tutorial_progress.cutscene_viewed = tutorial_progress.cutscene_viewed.clone();
+                save_data.tutorial_progress.cutscene_viewed =
+                    tutorial_progress.cutscene_viewed.clone();
 
                 // Write back to file
                 if let Ok(updated_json) = serde_json::to_string_pretty(&save_data) {
@@ -562,18 +576,25 @@ fn load_tutorial_progress(
 
     // Read the save file
     if let Ok(json_str) = fs::read_to_string("saves/autosave.json") {
-        if let Ok(save_data) = serde_json::from_str::<bevy_shaman_save::systems::save_load::SaveData>(&json_str) {
+        if let Ok(save_data) =
+            serde_json::from_str::<bevy_shaman_save::systems::save_load::SaveData>(&json_str)
+        {
             // Restore tutorial progress
             tutorial_progress.tutorial_started = save_data.tutorial_progress.tutorial_started;
             tutorial_progress.tutorial_completed = save_data.tutorial_progress.tutorial_completed;
             tutorial_progress.current_mission = save_data.tutorial_progress.current_mission.clone();
             tutorial_progress.current_step = save_data.tutorial_progress.current_step;
-            tutorial_progress.completed_missions = save_data.tutorial_progress.completed_missions.clone();
+            tutorial_progress.completed_missions =
+                save_data.tutorial_progress.completed_missions.clone();
             tutorial_progress.mission_flags = save_data.tutorial_progress.mission_flags.clone();
             tutorial_progress.cutscene_viewed = save_data.tutorial_progress.cutscene_viewed.clone();
 
-            info!("Tutorial progress loaded successfully (started: {}, completed: {}, missions: {})",
-                tutorial_progress.tutorial_started, tutorial_progress.tutorial_completed, tutorial_progress.completed_missions.len());
+            info!(
+                "Tutorial progress loaded successfully (started: {}, completed: {}, missions: {})",
+                tutorial_progress.tutorial_started,
+                tutorial_progress.tutorial_completed,
+                tutorial_progress.completed_missions.len()
+            );
         }
     }
 }

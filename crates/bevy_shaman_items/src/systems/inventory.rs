@@ -1,9 +1,9 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::{GridPosition, Player, Health, Spirit, Stamina, BloodLust};
 use crate::components::{
-    Inventory, Pickupable, Item, ItemType, PlantType, FoodType,
-    ActiveEffects, ActiveEffect, EffectType
+    ActiveEffect, ActiveEffects, EffectType, FoodType, Inventory, Item, ItemType, Pickupable,
+    PlantType,
 };
+use bevy::prelude::*;
+use bevy_shaman_core::components::{BloodLust, GridPosition, Health, Player, Spirit, Stamina};
 
 /// Event fired when player picks up an item
 #[derive(Event)]
@@ -44,7 +44,8 @@ pub fn pickup_items(
     let pickup_pressed = keyboard.just_pressed(KeyCode::KeyE);
 
     for (item_entity, item_pos, pickupable) in pickupables.iter() {
-        let distance = ((player_pos.x - item_pos.x).abs() + (player_pos.y - item_pos.y).abs()) as f32;
+        let distance =
+            ((player_pos.x - item_pos.x).abs() + (player_pos.y - item_pos.y).abs()) as f32;
 
         if distance <= pickup_range && (pickup_pressed || pickupable.auto_pickup) {
             if inventory.add_item(pickupable.item.clone(), pickupable.quantity) {
@@ -62,16 +63,38 @@ pub fn pickup_items(
 /// Use items from inventory (consume consumables)
 pub fn use_items(
     mut use_events: EventReader<ItemUsed>,
-    mut player: Query<(&mut Inventory, &mut Health, Option<&mut Spirit>, Option<&mut Stamina>, Option<&mut BloodLust>, Option<&mut ActiveEffects>), With<Player>>,
+    mut player: Query<
+        (
+            &mut Inventory,
+            &mut Health,
+            Option<&mut Spirit>,
+            Option<&mut Stamina>,
+            Option<&mut BloodLust>,
+            Option<&mut ActiveEffects>,
+        ),
+        With<Player>,
+    >,
     _time: Res<Time>,
 ) {
     for event in use_events.read() {
-        let Ok((mut inventory, mut health, mut spirit_opt, mut stamina_opt, mut blood_lust_opt, effects_opt)) = player.get_single_mut() else {
+        let Ok((
+            mut inventory,
+            mut health,
+            mut spirit_opt,
+            mut stamina_opt,
+            mut blood_lust_opt,
+            effects_opt,
+        )) = player.get_single_mut()
+        else {
             continue;
         };
 
         // Find the item in inventory
-        let item_stack = inventory.items.iter().find(|s| s.item.id == event.item_id).cloned();
+        let item_stack = inventory
+            .items
+            .iter()
+            .find(|s| s.item.id == event.item_id)
+            .cloned();
 
         let Some(stack) = item_stack else {
             continue;
@@ -136,7 +159,8 @@ pub fn use_items(
                         FoodType::SwiftFish => Some((EffectType::SpeedBoost, 1.3)),
                         FoodType::WisdomStew => Some((EffectType::SpiritRegen, 1.5)),
                         _ => None,
-                    }.unwrap_or((EffectType::HealthRegen, 1.0));
+                    }
+                    .unwrap_or((EffectType::HealthRegen, 1.0));
 
                     if food_type.effect_duration() > 0.0 {
                         effects.add_effect(ActiveEffect {
@@ -186,7 +210,8 @@ pub fn update_active_effects(
                 }
                 EffectType::SpiritRegen => {
                     if let Some(spirit) = spirit_opt.as_mut() {
-                        spirit.current = (spirit.current + effect.strength * 3.0 * delta).min(spirit.max);
+                        spirit.current =
+                            (spirit.current + effect.strength * 3.0 * delta).min(spirit.max);
                     }
                 }
                 EffectType::SpiritCapacityBoost => {
@@ -216,7 +241,11 @@ pub fn drop_items(
         };
 
         // Find the item in inventory
-        let item_stack = inventory.items.iter().find(|s| s.item.id == event.item_id).cloned();
+        let item_stack = inventory
+            .items
+            .iter()
+            .find(|s| s.item.id == event.item_id)
+            .cloned();
 
         let Some(stack) = item_stack else {
             continue;

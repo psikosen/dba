@@ -1,12 +1,12 @@
+use crate::components::{
+    AiRole, ConversationHistory, DialogueContext, EmotionalState, LlmAi, LlmQueryQueue,
+    PersonalityTraits, QueuedResponse,
+};
+use crate::systems::npc_dialogue::{NpcDialogueResponse, PlayerDialogueRequest};
 /// Spirit Guide System
 /// Handles mystical encounters with spirit guides who provide wisdom and guidance
 use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Player, Spirit};
-use crate::components::{
-    LlmAi, AiRole, PersonalityTraits, EmotionalState, ConversationHistory,
-    LlmQueryQueue, DialogueContext, QueuedResponse,
-};
-use crate::systems::npc_dialogue::{PlayerDialogueRequest, NpcDialogueResponse};
 
 // ============================================================================
 // COMPONENTS
@@ -22,18 +22,18 @@ pub struct SpiritGuide {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SpiritGuideType {
-    Ancestor,       // Ancestral spirit offering guidance
-    Nature,         // Nature spirit connected to the land
-    Cosmic,         // Cosmic/celestial entity
-    Trickster,      // Trickster spirit with cryptic wisdom
+    Ancestor,  // Ancestral spirit offering guidance
+    Nature,    // Nature spirit connected to the land
+    Cosmic,    // Cosmic/celestial entity
+    Trickster, // Trickster spirit with cryptic wisdom
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ManifestationState {
-    Hidden,         // Not visible
-    Appearing,      // Fading in
-    Manifested,     // Fully present
-    Fading,         // Fading out
+    Hidden,     // Not visible
+    Appearing,  // Fading in
+    Manifested, // Fully present
+    Fading,     // Fading out
 }
 
 /// Component for spirit guide encounter zones (mystical locations)
@@ -96,26 +96,28 @@ pub fn spawn_spirit_guide(
         },
     };
 
-    commands.spawn((
-        Name::new(name.clone()),
-        position,
-        SpiritGuide {
-            guide_type,
-            manifestation_state: ManifestationState::Hidden,
-            wisdom_level: personality.wisdom,
-        },
-        LlmAi {
-            character_name: name,
-            role: AiRole::SpiritGuide,
-            personality,
-            emotional_state: EmotionalState::Calm,
-            combat_stance: crate::components::CombatStance::Defensive,
-        },
-        LlmQueryQueue::new(5),
-        ConversationHistory::new(15),
-        SpiritEncounterZone::default(),
-        // Visual components would go here (sprite, glow effect, etc.)
-    )).id()
+    commands
+        .spawn((
+            Name::new(name.clone()),
+            position,
+            SpiritGuide {
+                guide_type,
+                manifestation_state: ManifestationState::Hidden,
+                wisdom_level: personality.wisdom,
+            },
+            LlmAi {
+                character_name: name,
+                role: AiRole::SpiritGuide,
+                personality,
+                emotional_state: EmotionalState::Calm,
+                combat_stance: crate::components::CombatStance::Defensive,
+            },
+            LlmQueryQueue::new(5),
+            ConversationHistory::new(15),
+            SpiritEncounterZone::default(),
+            // Visual components would go here (sprite, glow effect, etc.)
+        ))
+        .id()
 }
 
 // ============================================================================
@@ -158,9 +160,7 @@ pub fn handle_spirit_manifestation(
 
                     // Trigger visual effects
                     commands.trigger_targets(
-                        SpiritManifestationEffect {
-                            appearing: true,
-                        },
+                        SpiritManifestationEffect { appearing: true },
                         guide_entity,
                     );
                 }
@@ -172,10 +172,7 @@ pub fn handle_spirit_manifestation(
                 info!("Spirit guide fully manifested!");
 
                 // Trigger greeting
-                commands.trigger_targets(
-                    SpiritGreetingEvent,
-                    guide_entity,
-                );
+                commands.trigger_targets(SpiritGreetingEvent, guide_entity);
             }
             ManifestationState::Manifested => {
                 if !in_range || !has_spirit {
@@ -184,9 +181,7 @@ pub fn handle_spirit_manifestation(
                     info!("Spirit guide beginning to fade...");
 
                     commands.trigger_targets(
-                        SpiritManifestationEffect {
-                            appearing: false,
-                        },
+                        SpiritManifestationEffect { appearing: false },
                         guide_entity,
                     );
                 }
@@ -239,11 +234,8 @@ pub fn provide_spirit_guidance(
         }
 
         // Determine guidance context
-        let guidance_context = determine_guidance_context(
-            health_percent,
-            spirit_percent,
-            &spirit_guide.guide_type,
-        );
+        let guidance_context =
+            determine_guidance_context(health_percent, spirit_percent, &spirit_guide.guide_type);
 
         if let Some(context) = guidance_context {
             info!(
@@ -295,12 +287,8 @@ fn determine_guidance_context(
                 Some("nature_harmony".to_string())
             }
         }
-        SpiritGuideType::Cosmic => {
-            Some("cosmic_perspective".to_string())
-        }
-        SpiritGuideType::Trickster => {
-            Some("cryptic_riddle".to_string())
-        }
+        SpiritGuideType::Cosmic => Some("cosmic_perspective".to_string()),
+        SpiritGuideType::Trickster => Some("cryptic_riddle".to_string()),
     }
 }
 
@@ -353,13 +341,18 @@ pub fn offer_spirit_quests(
     for (guide_entity, spirit_guide, ai) in guide_query.iter_mut() {
         // Only offer quests when first manifested
         if spirit_guide.manifestation_state == ManifestationState::Manifested {
-            let quest_id = format!("spirit_quest_{}", ai.character_name.to_lowercase().replace(" ", "_"));
+            let quest_id = format!(
+                "spirit_quest_{}",
+                ai.character_name.to_lowercase().replace(" ", "_")
+            );
             let quest_description = match spirit_guide.guide_type {
                 SpiritGuideType::Ancestor => {
-                    "Retrieve the sacred drum of your ancestors from the corrupted temple.".to_string()
+                    "Retrieve the sacred drum of your ancestors from the corrupted temple."
+                        .to_string()
                 }
                 SpiritGuideType::Nature => {
-                    "Purify the three sacred groves that have been tainted by corruption.".to_string()
+                    "Purify the three sacred groves that have been tainted by corruption."
+                        .to_string()
                 }
                 SpiritGuideType::Cosmic => {
                     "Align the celestial stones under the light of the full moon.".to_string()
@@ -369,7 +362,10 @@ pub fn offer_spirit_quests(
                 }
             };
 
-            info!("Spirit guide {} offering quest: {}", ai.character_name, quest_id);
+            info!(
+                "Spirit guide {} offering quest: {}",
+                ai.character_name, quest_id
+            );
 
             quest_events.send(SpiritQuestOffered {
                 guide_entity,
@@ -421,10 +417,10 @@ pub struct SpiritBlessing {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BlessingType {
-    Protection,     // Damage reduction
-    Wisdom,         // XP gain boost
-    Clarity,        // Spirit regen boost
-    Strength,       // Damage boost
+    Protection, // Damage reduction
+    Wisdom,     // XP gain boost
+    Clarity,    // Spirit regen boost
+    Strength,   // Damage boost
 }
 
 /// Apply spirit blessings to player

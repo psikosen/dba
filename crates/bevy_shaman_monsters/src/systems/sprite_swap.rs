@@ -1,7 +1,7 @@
-use bevy::prelude::*;
 use crate::components::{MonsterId, StateType};
 use crate::resources::MonsterSpriteDB;
 use crate::systems::events::MonsterStateChanged;
+use bevy::prelude::*;
 use bevy_shaman_core::systems::assets::MonsterSpriteHandles;
 
 /// Marker resource to track if sprites have been registered
@@ -39,46 +39,81 @@ pub fn populate_monster_sprite_db(
 
     // Register forest_spirit
     for state in &states {
-        sprite_db.register("forest_spirit".to_string(), *state, sprite_handles.forest_spirit.clone());
+        sprite_db.register(
+            "forest_spirit".to_string(),
+            *state,
+            sprite_handles.forest_spirit.clone(),
+        );
     }
 
     // Register chaos_hound
     for state in &states {
-        sprite_db.register("chaos_hound".to_string(), *state, sprite_handles.chaos_hound.clone());
+        sprite_db.register(
+            "chaos_hound".to_string(),
+            *state,
+            sprite_handles.chaos_hound.clone(),
+        );
     }
 
     // Register corrupt_shade
     for state in &states {
-        sprite_db.register("corrupt_shade".to_string(), *state, sprite_handles.corrupt_shade.clone());
+        sprite_db.register(
+            "corrupt_shade".to_string(),
+            *state,
+            sprite_handles.corrupt_shade.clone(),
+        );
     }
 
     // Register shadow_beast
     for state in &states {
-        sprite_db.register("shadow_beast".to_string(), *state, sprite_handles.shadow_beast.clone());
+        sprite_db.register(
+            "shadow_beast".to_string(),
+            *state,
+            sprite_handles.shadow_beast.clone(),
+        );
     }
 
     // Register spirit_wisp
     for state in &states {
-        sprite_db.register("spirit_wisp".to_string(), *state, sprite_handles.spirit_wisp.clone());
+        sprite_db.register(
+            "spirit_wisp".to_string(),
+            *state,
+            sprite_handles.spirit_wisp.clone(),
+        );
     }
 
     // Register rock_golem
     for state in &states {
-        sprite_db.register("rock_golem".to_string(), *state, sprite_handles.rock_golem.clone());
+        sprite_db.register(
+            "rock_golem".to_string(),
+            *state,
+            sprite_handles.rock_golem.clone(),
+        );
     }
 
     // Register flame_wraith
     for state in &states {
-        sprite_db.register("flame_wraith".to_string(), *state, sprite_handles.flame_wraith.clone());
+        sprite_db.register(
+            "flame_wraith".to_string(),
+            *state,
+            sprite_handles.flame_wraith.clone(),
+        );
     }
 
     // Register void_stalker
     for state in &states {
-        sprite_db.register("void_stalker".to_string(), *state, sprite_handles.void_stalker.clone());
+        sprite_db.register(
+            "void_stalker".to_string(),
+            *state,
+            sprite_handles.void_stalker.clone(),
+        );
     }
 
     registered.0 = true;
-    info!("MonsterSpriteDB populated with {} entries", sprite_db.sprites.len());
+    info!(
+        "MonsterSpriteDB populated with {} entries",
+        sprite_db.sprites.len()
+    );
 }
 
 /// Get color tint for a given state (provides visual feedback even without sprite assets)
@@ -89,8 +124,8 @@ fn get_state_color_tint(state: StateType) -> Color {
         StateType::Corrupt => Color::srgb(0.6, 0.2, 0.6), // Purple
         StateType::Harmony => Color::srgb(0.4, 1.0, 0.8), // Cyan
         StateType::Decay => Color::srgb(0.5, 0.5, 0.3), // Brown
-        StateType::Rage => Color::srgb(1.0, 0.2, 0.2), // Red
-        StateType::Void => Color::srgb(0.2, 0.2, 0.4), // Dark blue
+        StateType::Rage => Color::srgb(1.0, 0.2, 0.2),  // Red
+        StateType::Void => Color::srgb(0.2, 0.2, 0.4),  // Dark blue
         StateType::Ancestral => Color::srgb(1.0, 1.0, 0.6), // Golden
     }
 }

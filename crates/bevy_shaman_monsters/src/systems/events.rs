@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::StateType;
+use bevy::prelude::*;
 
 #[derive(Event)]
 pub struct MonsterStateChanged {

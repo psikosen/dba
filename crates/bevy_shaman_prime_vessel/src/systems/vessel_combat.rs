@@ -1,10 +1,10 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{Health, Player, GridPosition};
 use bevy_shaman_combat::components::StatusEffectType;
+use bevy_shaman_core::components::{GridPosition, Health, Player};
 use rand::Rng;
 
-use crate::components::{PrimeVessel, LesserSelf, VesselMutation, VesselRoamingState};
-use crate::events::{VesselDefeated, LesserSelfDefeated};
+use crate::components::{LesserSelf, PrimeVessel, VesselMutation, VesselRoamingState};
+use crate::events::{LesserSelfDefeated, VesselDefeated};
 use crate::resources::PrimeVesselState;
 
 // ============================================================================
@@ -264,10 +264,10 @@ pub fn calculate_mutation_damage_reduction(mutations: &[VesselMutation]) -> f32 
 
     for mutation in mutations {
         match mutation {
-            VesselMutation::ChitinousArmor => reduction += 0.15,  // 15% reduction
-            VesselMutation::SpiritBarrier => reduction += 0.20,   // 20% reduction
-            VesselMutation::ChaosShield => reduction += 0.10,     // 10% reduction
-            VesselMutation::VoidSkin => reduction += 0.25,        // 25% reduction
+            VesselMutation::ChitinousArmor => reduction += 0.15, // 15% reduction
+            VesselMutation::SpiritBarrier => reduction += 0.20,  // 20% reduction
+            VesselMutation::ChaosShield => reduction += 0.10,    // 10% reduction
+            VesselMutation::VoidSkin => reduction += 0.25,       // 25% reduction
             _ => {}
         }
     }
@@ -282,10 +282,10 @@ pub fn calculate_mutation_damage_bonus(mutations: &[VesselMutation]) -> f32 {
 
     for mutation in mutations {
         match mutation {
-            VesselMutation::VenomousStrike => bonus += 0.15,      // +15% damage
-            VesselMutation::CorrosiveTouch => bonus += 0.20,      // +20% damage
-            VesselMutation::SoulRend => bonus += 0.30,            // +30% damage
-            VesselMutation::ChaosBurst => bonus += 0.25,          // +25% damage
+            VesselMutation::VenomousStrike => bonus += 0.15, // +15% damage
+            VesselMutation::CorrosiveTouch => bonus += 0.20, // +20% damage
+            VesselMutation::SoulRend => bonus += 0.30,       // +30% damage
+            VesselMutation::ChaosBurst => bonus += 0.25,     // +25% damage
             _ => {}
         }
     }

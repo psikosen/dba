@@ -1,7 +1,7 @@
+use crate::components::{BiomeType, CorruptionType, DungeonEntrance, TileCorruption, WorldTile};
 use bevy::prelude::*;
 use bevy_shaman_core::components::GridPosition;
 use bevy_shaman_core::systems::assets::TileSpriteHandles;
-use crate::components::{WorldTile, BiomeType, TileCorruption, CorruptionType, DungeonEntrance};
 use rand::Rng;
 use std::f32::consts::PI;
 
@@ -21,9 +21,9 @@ pub struct WorldGenConfig {
 impl Default for WorldGenConfig {
     fn default() -> Self {
         Self {
-            world_radius: 150,        // Total world radius (150 tiles from center)
-            village_radius: 20,       // Central village safe zone
-            ecosystem_count: 5,       // 5 ecosystems
+            world_radius: 150,         // Total world radius (150 tiles from center)
+            village_radius: 20,        // Central village safe zone
+            ecosystem_count: 5,        // 5 ecosystems
             dungeons_per_ecosystem: 3, // 3 dungeons per ecosystem
         }
     }
@@ -32,11 +32,11 @@ impl Default for WorldGenConfig {
 /// Ecosystem region definition
 struct EcosystemRegion {
     biome: BiomeType,
-    center_angle: f32,     // Angle from world center (radians)
-    angular_width: f32,    // Width of region in radians
-    min_radius: i32,       // Distance from center
+    center_angle: f32,  // Angle from world center (radians)
+    angular_width: f32, // Width of region in radians
+    min_radius: i32,    // Distance from center
     max_radius: i32,
-    corruption_base: f32,  // Base corruption level for this ecosystem
+    corruption_base: f32, // Base corruption level for this ecosystem
 }
 
 /// Generate the overworld when entering the game
@@ -151,7 +151,10 @@ pub fn generate_overworld(
                     purified: false,
                     purified_timestamp: None,
                 },
-                GridPosition { x: world_x, y: world_y },
+                GridPosition {
+                    x: world_x,
+                    y: world_y,
+                },
                 Transform::from_xyz(world_x as f32 * 32.0, world_y as f32 * 32.0, 0.0),
                 Sprite {
                     image: sprite_handle,
@@ -177,8 +180,13 @@ pub fn generate_overworld(
                 );
 
                 if should_spawn_dungeon {
-                    let difficulty_level = calculate_difficulty(distance, config.world_radius as f32);
-                    let dungeon_id = format!("{}_{}", biome.display_name().to_lowercase(), dungeon_counter);
+                    let difficulty_level =
+                        calculate_difficulty(distance, config.world_radius as f32);
+                    let dungeon_id = format!(
+                        "{}_{}",
+                        biome.display_name().to_lowercase(),
+                        dungeon_counter
+                    );
 
                     entity.insert(DungeonEntrance {
                         dungeon_id: dungeon_id.clone(),
@@ -189,7 +197,11 @@ pub fn generate_overworld(
 
                     info!(
                         "Spawned dungeon entrance '{}' at ({}, {}) in {} (Level {})",
-                        dungeon_id, world_x, world_y, biome.display_name(), difficulty_level
+                        dungeon_id,
+                        world_x,
+                        world_y,
+                        biome.display_name(),
+                        difficulty_level
                     );
                 }
             }
@@ -209,7 +221,7 @@ fn create_ecosystem_layout(config: &WorldGenConfig) -> Vec<EcosystemRegion> {
         // Jungle (North)
         EcosystemRegion {
             biome: BiomeType::Jungle,
-            center_angle: PI / 2.0,  // 90 degrees (North)
+            center_angle: PI / 2.0, // 90 degrees (North)
             angular_width: angle_per_ecosystem,
             min_radius: config.village_radius,
             max_radius: config.world_radius,
@@ -218,7 +230,7 @@ fn create_ecosystem_layout(config: &WorldGenConfig) -> Vec<EcosystemRegion> {
         // Desert (East)
         EcosystemRegion {
             biome: BiomeType::Desert,
-            center_angle: 0.0,  // 0 degrees (East)
+            center_angle: 0.0, // 0 degrees (East)
             angular_width: angle_per_ecosystem,
             min_radius: config.village_radius,
             max_radius: config.world_radius,
@@ -227,7 +239,7 @@ fn create_ecosystem_layout(config: &WorldGenConfig) -> Vec<EcosystemRegion> {
         // Forest (South)
         EcosystemRegion {
             biome: BiomeType::Forest,
-            center_angle: -PI / 2.0,  // -90 degrees (South)
+            center_angle: -PI / 2.0, // -90 degrees (South)
             angular_width: angle_per_ecosystem,
             min_radius: config.village_radius,
             max_radius: config.world_radius,
@@ -236,7 +248,7 @@ fn create_ecosystem_layout(config: &WorldGenConfig) -> Vec<EcosystemRegion> {
         // Safari (West)
         EcosystemRegion {
             biome: BiomeType::Safari,
-            center_angle: PI,  // 180 degrees (West)
+            center_angle: PI, // 180 degrees (West)
             angular_width: angle_per_ecosystem,
             min_radius: config.village_radius,
             max_radius: config.world_radius,
@@ -245,7 +257,7 @@ fn create_ecosystem_layout(config: &WorldGenConfig) -> Vec<EcosystemRegion> {
         // Dead Realm (Northwest)
         EcosystemRegion {
             biome: BiomeType::DeadRealm,
-            center_angle: 3.0 * PI / 4.0,  // 135 degrees (Northwest)
+            center_angle: 3.0 * PI / 4.0, // 135 degrees (Northwest)
             angular_width: angle_per_ecosystem,
             min_radius: config.village_radius,
             max_radius: config.world_radius,
@@ -306,9 +318,9 @@ fn is_dungeon_location(
 
         // Place dungeons at specific radial distances (near, mid, far)
         let dungeon_radii = [
-            ecosystem.min_radius as f32 + 20.0,  // Near dungeon
-            (ecosystem.min_radius + ecosystem.max_radius) as f32 / 2.0,  // Mid dungeon
-            ecosystem.max_radius as f32 - 30.0,  // Far dungeon
+            ecosystem.min_radius as f32 + 20.0, // Near dungeon
+            (ecosystem.min_radius + ecosystem.max_radius) as f32 / 2.0, // Mid dungeon
+            ecosystem.max_radius as f32 - 30.0, // Far dungeon
         ];
 
         for (idx, &target_radius) in dungeon_radii.iter().enumerate() {
@@ -324,7 +336,8 @@ fn is_dungeon_location(
             if is_at_center_angle && is_at_radius {
                 // Use grid position as unique seed for deterministic placement
                 let seed = ((x + 1000) * 1000 + (y + 1000)) as u32;
-                if seed % 100 == 0 {  // 1% chance per valid tile (ensures we place some)
+                if seed % 100 == 0 {
+                    // 1% chance per valid tile (ensures we place some)
                     *dungeon_counter += 1;
                     return true;
                 }
@@ -340,15 +353,15 @@ fn calculate_difficulty(distance: f32, world_radius: f32) -> u8 {
     let normalized_distance = distance / world_radius;
 
     if normalized_distance < 0.3 {
-        1  // Easy
+        1 // Easy
     } else if normalized_distance < 0.5 {
-        2  // Medium
+        2 // Medium
     } else if normalized_distance < 0.7 {
-        3  // Hard
+        3 // Hard
     } else if normalized_distance < 0.85 {
-        4  // Very Hard
+        4 // Very Hard
     } else {
-        5  // Extreme
+        5 // Extreme
     }
 }
 
@@ -364,7 +377,10 @@ impl Default for WorldSeed {
             .map(|d| d.as_secs())
             .unwrap_or_else(|e| {
                 // If system time is before UNIX_EPOCH or unavailable, use a fixed seed
-                bevy::log::warn!("Failed to get system time for seed: {}. Using fallback seed.", e);
+                bevy::log::warn!(
+                    "Failed to get system time for seed: {}. Using fallback seed.",
+                    e
+                );
                 12345678901234567890_u64
             });
         Self(seed)

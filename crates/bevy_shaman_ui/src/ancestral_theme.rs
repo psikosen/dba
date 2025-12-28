@@ -1,7 +1,6 @@
 /// Ancestral African aesthetic theme constants and helper functions
 /// Implements the "Ancestral Legacy" design philosophy with earth tones,
 /// handcrafted materials, and organic textures.
-
 use bevy::prelude::*;
 
 // ============================================================================
@@ -90,22 +89,22 @@ pub mod dye {
 // ============================================================================
 
 // Wood tones
-pub use wood::{EBONY, MAHOGANY, CARVED_LIGHT, GRAIN_HIGHLIGHT};
+pub use wood::{CARVED_LIGHT, EBONY, GRAIN_HIGHLIGHT, MAHOGANY};
 
 // Metal tones
 pub use metal::{BRONZE, BRONZE_PATINA, COPPER, GOLD, GOLD_SHINE};
 
 // Earth tones
-pub use earth::{OCHRE_RED, BURNT_ORANGE, SOIL_BROWN, CHARCOAL, TERRACOTTA};
+pub use earth::{BURNT_ORANGE, CHARCOAL, OCHRE_RED, SOIL_BROWN, TERRACOTTA};
 
 // Natural dyes
-pub use dye::{INDIGO, FOREST_GREEN, TURMERIC, RED_OCHRE, BLOOD_RED};
+pub use dye::{BLOOD_RED, FOREST_GREEN, INDIGO, RED_OCHRE, TURMERIC};
 
 // Bone tones
-pub use bone::{IVORY, AGED_BONE, BONE_SHADOW};
+pub use bone::{AGED_BONE, BONE_SHADOW, IVORY};
 
 // Fabric tones
-pub use fabric::{LEATHER, LEATHER_TOOLED, WOVEN_DARK, MUD_CLOTH};
+pub use fabric::{LEATHER, LEATHER_TOOLED, MUD_CLOTH, WOVEN_DARK};
 
 /// Ivory and bone tones
 pub mod bone {
@@ -143,7 +142,7 @@ pub mod fabric {
 // ============================================================================
 
 /// Standard spacing units (avoiding perfectly digital spacing)
-pub const SPACING_SMALL: f32 = 7.0;   // Slightly irregular
+pub const SPACING_SMALL: f32 = 7.0; // Slightly irregular
 pub const SPACING_MEDIUM: f32 = 13.0;
 pub const SPACING_LARGE: f32 = 21.0;
 pub const SPACING_XLARGE: f32 = 34.0;

@@ -106,7 +106,9 @@ impl DialogueChoice {
 
     /// Check if all requirements are met
     pub fn is_available(&self, flags: &DialogueFlags, reputation: &DialogueReputation) -> bool {
-        self.requirements.iter().all(|req| req.is_met(flags, reputation))
+        self.requirements
+            .iter()
+            .all(|req| req.is_met(flags, reputation))
     }
 }
 
@@ -277,7 +279,10 @@ pub fn apply_dialogue_consequences(
     mut flags: ResMut<DialogueFlags>,
     mut reputation: ResMut<DialogueReputation>,
     registry: Res<DialogueTreeRegistry>,
-    mut player_inventory: Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
+    mut player_inventory: Query<
+        &mut bevy_shaman_items::components::Inventory,
+        With<bevy_shaman_core::components::Player>,
+    >,
     mut player_level: ResMut<bevy_shaman_core::resources::PlayerLevel>,
     mut quest_started: EventWriter<super::quest_system::QuestStarted>,
     mut quest_completed: EventWriter<super::quest_system::QuestCompleted>,
@@ -313,7 +318,10 @@ fn apply_consequence(
     consequence: &DialogueConsequence,
     flags: &mut DialogueFlags,
     reputation: &mut DialogueReputation,
-    player_inventory: &mut Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
+    player_inventory: &mut Query<
+        &mut bevy_shaman_items::components::Inventory,
+        With<bevy_shaman_core::components::Player>,
+    >,
     player_level: &mut bevy_shaman_core::resources::PlayerLevel,
     quest_started: &mut EventWriter<super::quest_system::QuestStarted>,
     quest_completed: &mut EventWriter<super::quest_system::QuestCompleted>,
@@ -388,10 +396,7 @@ fn apply_consequence(
 
 /// Create the spirit choice dialogue tree for the tutorial
 pub fn create_spirit_choice_tree() -> DialogueTree {
-    let mut tree = DialogueTree::new(
-        "spirit_choice".to_string(),
-        "introduction".to_string(),
-    );
+    let mut tree = DialogueTree::new("spirit_choice".to_string(), "introduction".to_string());
 
     // Introduction node
     let intro_node = DialogueNode::new(

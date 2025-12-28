@@ -21,9 +21,12 @@ impl Plugin for MonitoringPlugin {
         metrics::init_metrics();
 
         // Add monitoring systems
-        app.add_systems(Update, (
-            metrics::update_performance_metrics,
-            metrics::update_game_metrics,
-        ));
+        app.add_systems(
+            Update,
+            (
+                metrics::update_performance_metrics,
+                metrics::update_game_metrics,
+            ),
+        );
     }
 }

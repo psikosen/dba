@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::*;
 use crate::systems::assets::PlayerSpriteHandle;
+use bevy::prelude::*;
 
 /// Marker to ensure player spawns only once
 #[derive(Resource, Default)]
@@ -30,33 +30,27 @@ pub fn spawn_player(
     commands.spawn((
         // Player marker
         Player,
-
         // Position components
         GridPosition { x: 10, y: 10 },
         Transform::from_xyz(320.0, 320.0, 10.0), // 10 * 32 pixel tile size
-
         // Visual components
         Sprite {
             image: sprite_handle.0.clone(),
             custom_size: Some(Vec2::new(32.0, 32.0)),
             ..default()
         },
-
         // Stats
         Health::new(100.0),
         Spirit::new(100.0),
         Stamina::new(100.0),
-
         // Gameplay components
         MovementQueue::default(),
         BlocksMovement,
         CameraTarget,
-
         // Progression components
         bevy_shaman_combat::components::WeaponEnhancement::new(),
         bevy_shaman_combat::components::EquippedWeapon::default(),
         bevy_shaman_combat::systems::skill_tree::SkillTree::new(),
-
         // Collider for grid occupancy
         GlobalTransform::default(),
         Visibility::default(),
@@ -67,10 +61,7 @@ pub fn spawn_player(
 }
 
 /// Spawn the main camera
-pub fn spawn_camera(
-    mut commands: Commands,
-    cameras: Query<Entity, With<Camera>>,
-) {
+pub fn spawn_camera(mut commands: Commands, cameras: Query<Entity, With<Camera>>) {
     if !cameras.is_empty() {
         return;
     }

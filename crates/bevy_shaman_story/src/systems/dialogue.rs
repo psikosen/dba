@@ -1,9 +1,7 @@
+use crate::components::{NpcDialogue, NpcName, NpcSicknessState};
+use crate::systems::dialogue_tree::{ActiveDialogueState, DialogueTreeStarted};
 use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Player};
-use crate::components::{NpcDialogue, NpcSicknessState, NpcName};
-use crate::systems::dialogue_tree::{
-    ActiveDialogueState, DialogueTreeStarted
-};
 
 /// Event for starting a dialogue with an NPC
 #[derive(Event)]
@@ -21,7 +19,13 @@ pub struct HasDialogueTree {
 /// Initiate dialogue when player interacts with NPC
 pub fn initiate_npc_dialogue(
     player: Query<&GridPosition, With<Player>>,
-    npcs: Query<(Entity, &GridPosition, Option<&HasDialogueTree>, Option<&NpcDialogue>, Option<&NpcSicknessState>)>,
+    npcs: Query<(
+        Entity,
+        &GridPosition,
+        Option<&HasDialogueTree>,
+        Option<&NpcDialogue>,
+        Option<&NpcSicknessState>,
+    )>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut dialogue_state: ResMut<ActiveDialogueState>,
     mut start_events: EventWriter<DialogueTreeStarted>,

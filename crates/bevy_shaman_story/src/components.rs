@@ -1,6 +1,6 @@
+use crate::resources::PortraitEmotion;
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::resources::PortraitEmotion;
 
 // ============================================================================
 // NPC SICKNESS
@@ -8,9 +8,9 @@ use crate::resources::PortraitEmotion;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NpcSicknessState {
-    AsleepSick,  // Cannot talk, outputs dots ("... ...")
-    Waking,      // Partial dialogue
-    Awake,       // Full dialogue
+    AsleepSick, // Cannot talk, outputs dots ("... ...")
+    Waking,     // Partial dialogue
+    Awake,      // Full dialogue
 }
 
 impl Default for NpcSicknessState {
@@ -40,9 +40,10 @@ impl NpcDialogue {
     pub fn get_dialogue(&self, state: NpcSicknessState) -> &str {
         match state {
             NpcSicknessState::AsleepSick => &self.sick_dialogue,
-            NpcSicknessState::Waking => {
-                self.partial_dialogue.as_deref().unwrap_or(&self.full_dialogue)
-            }
+            NpcSicknessState::Waking => self
+                .partial_dialogue
+                .as_deref()
+                .unwrap_or(&self.full_dialogue),
             NpcSicknessState::Awake => &self.full_dialogue,
         }
     }

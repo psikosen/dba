@@ -1,6 +1,6 @@
+use crate::llm_backend::{create_backend, LlmBackend};
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::llm_backend::{LlmBackend, create_backend};
 
 // ============================================================================
 // LLM MODEL RESOURCE
@@ -91,8 +91,8 @@ pub struct ModelConfig {
 impl Default for ModelConfig {
     fn default() -> Self {
         Self {
-            max_tokens: 150,      // Short responses for real-time gameplay
-            temperature: 0.8,     // Balanced creativity
+            max_tokens: 150,  // Short responses for real-time gameplay
+            temperature: 0.8, // Balanced creativity
             top_p: 0.9,
             top_k: 40,
             repeat_penalty: 1.1,
@@ -170,7 +170,8 @@ Provide your decision in JSON format:
   "details": "specific details",
   "reasoning": "why you chose this",
   "taunt": "optional battle cry or taunt (max 20 words)"
-}"#.to_string()
+}"#
+        .to_string()
     }
 
     fn boss_dialogue_template() -> String {
@@ -223,7 +224,8 @@ Generate dialogue that:
 4. Is natural and conversational (max 40 words)
 5. May include advice about spirits, combat, or the journey
 
-Dialogue:"#.to_string()
+Dialogue:"#
+            .to_string()
     }
 
     fn spirit_guide_template() -> String {
@@ -245,7 +247,8 @@ Generate mystical guidance that:
 3. Is brief but profound (max 25 words)
 4. Provides hints without direct answers
 
-Guidance:"#.to_string()
+Guidance:"#
+            .to_string()
     }
 
     pub fn fill_boss_combat_prompt(&self, data: &PromptData) -> String {

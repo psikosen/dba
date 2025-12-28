@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy_shaman_core::components::GridPosition;
 use crate::components::TileCorruption;
 use crate::systems::events::CorruptionSpread;
+use bevy::prelude::*;
+use bevy_shaman_core::components::GridPosition;
 
 const CORRUPTION_SPREAD_RATE: f32 = 0.01;
 const CORRUPTION_SPREAD_INTERVAL: f32 = 2.0;

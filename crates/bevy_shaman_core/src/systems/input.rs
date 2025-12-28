@@ -1,7 +1,7 @@
-use bevy::prelude::*;
-use bevy::input::gamepad::{GamepadConnection, GamepadEvent, GamepadButton, GamepadAxis};
 use crate::components::*;
 use crate::settings::GameSettings;
+use bevy::input::gamepad::{GamepadAxis, GamepadButton, GamepadConnection, GamepadEvent};
+use bevy::prelude::*;
 
 /// Resource to track connected gamepads
 #[derive(Resource, Default)]
@@ -16,20 +16,26 @@ pub fn gamepad_connections(
 ) {
     for event in connection_events.read() {
         match &event {
-            GamepadEvent::Connection(connection_event) => {
-                match &connection_event.connection {
-                    GamepadConnection::Connected { name, .. } => {
-                        info!("Gamepad connected: {:?} (ID: {:?})", name, connection_event.gamepad);
-                        if !connected_gamepads.gamepads.contains(&connection_event.gamepad) {
-                            connected_gamepads.gamepads.push(connection_event.gamepad);
-                        }
-                    }
-                    GamepadConnection::Disconnected => {
-                        info!("Gamepad disconnected: {:?}", connection_event.gamepad);
-                        connected_gamepads.gamepads.retain(|g| *g != connection_event.gamepad);
+            GamepadEvent::Connection(connection_event) => match &connection_event.connection {
+                GamepadConnection::Connected { name, .. } => {
+                    info!(
+                        "Gamepad connected: {:?} (ID: {:?})",
+                        name, connection_event.gamepad
+                    );
+                    if !connected_gamepads
+                        .gamepads
+                        .contains(&connection_event.gamepad)
+                    {
+                        connected_gamepads.gamepads.push(connection_event.gamepad);
                     }
                 }
-            }
+                GamepadConnection::Disconnected => {
+                    info!("Gamepad disconnected: {:?}", connection_event.gamepad);
+                    connected_gamepads
+                        .gamepads
+                        .retain(|g| *g != connection_event.gamepad);
+                }
+            },
             _ => {}
         }
     }
@@ -112,8 +118,9 @@ pub fn handle_player_input(
         }
 
         // R1/RB or R2/RT for dash
-        if gamepad_button.pressed(GamepadButton::RightTrigger) ||
-           gamepad_button.pressed(GamepadButton::RightTrigger2) {
+        if gamepad_button.pressed(GamepadButton::RightTrigger)
+            || gamepad_button.pressed(GamepadButton::RightTrigger2)
+        {
             is_dashing = true;
         }
     }
@@ -132,9 +139,13 @@ pub fn handle_player_input(
         }
 
         if is_dashing && stamina.current >= 10.0 {
-            movement_queue.commands.push(MovementCommand::Dash(direction));
+            movement_queue
+                .commands
+                .push(MovementCommand::Dash(direction));
         } else {
-            movement_queue.commands.push(MovementCommand::Move(direction));
+            movement_queue
+                .commands
+                .push(MovementCommand::Move(direction));
         }
     }
 }

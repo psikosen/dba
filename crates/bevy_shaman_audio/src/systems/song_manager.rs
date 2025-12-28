@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::resources::{ActiveSong, BeatClock, SongDB};
+use bevy::prelude::*;
 
 /// Manages active song state and beat clock synchronization
 pub fn manage_active_song(

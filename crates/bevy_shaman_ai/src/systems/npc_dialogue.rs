@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 
 /// Event for player initiating dialogue with an NPC
 #[derive(Event)]
@@ -21,11 +21,7 @@ pub struct NpcDialogueResponse {
 pub fn brother_dialogue_system(
     mut dialogue_events: EventReader<PlayerDialogueRequest>,
     mut response_events: EventWriter<NpcDialogueResponse>,
-    mut brother_query: Query<(
-        &LlmAi,
-        &mut LlmQueryQueue,
-        &mut ConversationHistory,
-    )>,
+    mut brother_query: Query<(&LlmAi, &mut LlmQueryQueue, &mut ConversationHistory)>,
     time: Res<Time>,
 ) {
     for event in dialogue_events.read() {
@@ -38,11 +34,10 @@ pub fn brother_dialogue_system(
             // Get appropriate response from queue
             let context = determine_dialogue_context(&ai, &history);
 
-            if let Some(response_idx) = queue
-                .dialogue_responses
-                .iter()
-                .position(|r| matches!(&r.context, ctx if ctx == &context) || matches!(r.context, DialogueContext::Greeting))
-            {
+            if let Some(response_idx) = queue.dialogue_responses.iter().position(|r| {
+                matches!(&r.context, ctx if ctx == &context)
+                    || matches!(r.context, DialogueContext::Greeting)
+            }) {
                 let response = queue.dialogue_responses.remove(response_idx);
 
                 // Add NPC response to history
@@ -117,7 +112,10 @@ fn generate_fallback_brother_response(ai: &LlmAi) -> String {
 pub fn brother_advice_system(
     mut advice_events: EventWriter<NpcDialogueResponse>,
     brother_query: Query<(Entity, &LlmAi, &LlmQueryQueue)>,
-    player_query: Query<&bevy_shaman_core::components::Spirit, With<bevy_shaman_core::components::Player>>,
+    player_query: Query<
+        &bevy_shaman_core::components::Spirit,
+        With<bevy_shaman_core::components::Player>,
+    >,
     combat_query: Query<&bevy_shaman_combat::components::BloodLust>,
     time: Res<Time>,
     mut last_advice: Local<f64>,
@@ -181,7 +179,10 @@ pub fn dynamic_greeting_system(
             // Spawn visual/audio effects for greetings
             if ai.personality.spirituality > 0.7 {
                 // Spiritual brothers get mystical particle effects
-                info!("Spawning mystical particle effects for {}", ai.character_name);
+                info!(
+                    "Spawning mystical particle effects for {}",
+                    ai.character_name
+                );
                 commands.trigger_targets(
                     GreetingAnimationEvent {
                         animation_type: GreetingAnimation::MysticalParticles,
@@ -191,7 +192,10 @@ pub fn dynamic_greeting_system(
                 );
             } else if ai.personality.chattiness > 0.7 {
                 // Chatty brothers get expressive gestures
-                info!("Spawning expressive gesture animation for {}", ai.character_name);
+                info!(
+                    "Spawning expressive gesture animation for {}",
+                    ai.character_name
+                );
                 commands.trigger_targets(
                     GreetingAnimationEvent {
                         animation_type: GreetingAnimation::ExpressiveGesture,
@@ -220,7 +224,10 @@ pub fn dynamic_greeting_system(
                 entity,
             );
 
-            info!("Generated initial greeting with animations for brother {}", ai.character_name);
+            info!(
+                "Generated initial greeting with animations for brother {}",
+                ai.character_name
+            );
         }
     }
 }
@@ -248,8 +255,14 @@ pub struct VoiceSynthesisEvent {
 
 fn generate_initial_greeting(ai: &LlmAi) -> String {
     match ai.personality.honor {
-        h if h > 0.8 => format!("{}: May the ancestors guide your steps, brother.", ai.character_name),
-        h if h > 0.5 => format!("{}: Good to see you! The spirits are strong today.", ai.character_name),
+        h if h > 0.8 => format!(
+            "{}: May the ancestors guide your steps, brother.",
+            ai.character_name
+        ),
+        h if h > 0.5 => format!(
+            "{}: Good to see you! The spirits are strong today.",
+            ai.character_name
+        ),
         _ => format!("{}: Hey! What brings you here?", ai.character_name),
     }
 }
@@ -270,11 +283,20 @@ pub fn update_conversation_context(
         for (ai, mut history) in brother_query.iter_mut() {
             // Add context about combat based on personality
             let combat_message = if ai.personality.spirituality > 0.7 {
-                format!("The spirits are unsettled... I sense {} clashes of energy nearby.", combat_count)
+                format!(
+                    "The spirits are unsettled... I sense {} clashes of energy nearby.",
+                    combat_count
+                )
             } else if ai.personality.wisdom > 0.7 {
-                format!("Brother, I've been observing {} combat exchanges. Your technique improves.", combat_count)
+                format!(
+                    "Brother, I've been observing {} combat exchanges. Your technique improves.",
+                    combat_count
+                )
             } else {
-                format!("Sounds like you've been busy! {} hits landed!", combat_count)
+                format!(
+                    "Sounds like you've been busy! {} hits landed!",
+                    combat_count
+                )
             };
 
             // Update conversation history with context

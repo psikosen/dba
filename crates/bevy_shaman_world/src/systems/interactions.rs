@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_shaman_core::components::{GridPosition, Player};
-use bevy_shaman_items::components::{Inventory, Item, ItemType, SpiritOrbSize, PlantType};
+use bevy_shaman_items::components::{Inventory, Item, ItemType, PlantType, SpiritOrbSize};
 use rand::Rng;
 
 #[derive(Component)]
@@ -24,7 +24,8 @@ pub fn process_foraging(
         if let Ok((player_pos, mut inventory)) = player_query.get_single_mut() {
             // Check for forageable spots within range (adjacent tiles)
             for (spot_pos, mut forageable) in forageable_query.iter_mut() {
-                let distance = ((player_pos.x - spot_pos.x).abs() + (player_pos.y - spot_pos.y).abs()) as u32;
+                let distance =
+                    ((player_pos.x - spot_pos.x).abs() + (player_pos.y - spot_pos.y).abs()) as u32;
 
                 if distance <= 1 && !forageable.foraged {
                     // Forage the spot
@@ -84,7 +85,10 @@ pub fn spawn_forageable_spots(
             GridPosition { x, y },
         ));
 
-        info!("Spawned forageable spot at ({}, {}) with {:?} seeds", x, y, seed_type);
+        info!(
+            "Spawned forageable spot at ({}, {}) with {:?} seeds",
+            x, y, seed_type
+        );
     }
 }
 
@@ -109,7 +113,8 @@ pub fn process_digging(
             let mut found_spot = false;
 
             for (spot_pos, mut dig_spot) in dig_spots.iter_mut() {
-                let distance = ((player_pos.x - spot_pos.x).abs() + (player_pos.y - spot_pos.y).abs()) as u32;
+                let distance =
+                    ((player_pos.x - spot_pos.x).abs() + (player_pos.y - spot_pos.y).abs()) as u32;
 
                 if distance == 0 && !dig_spot.dug {
                     found_spot = true;
@@ -155,11 +160,10 @@ pub fn process_digging(
                         info!("Found {} {}!", quantity, material);
                     } else if loot_roll < 80 {
                         // 20% chance: Herbs or remedies
-                        let healing_items = [
-                            ("herb", ItemType::Herb),
-                            ("remedy", ItemType::Remedy),
-                        ];
-                        let (item_id, item_type) = healing_items[rng.gen_range(0..healing_items.len())];
+                        let healing_items =
+                            [("herb", ItemType::Herb), ("remedy", ItemType::Remedy)];
+                        let (item_id, item_type) =
+                            healing_items[rng.gen_range(0..healing_items.len())];
 
                         let item = Item {
                             id: item_id.to_string(),
@@ -201,10 +205,13 @@ pub fn process_digging(
                     DigSpot { dug: false },
                     GridPosition {
                         x: player_pos.x,
-                        y: player_pos.y
+                        y: player_pos.y,
                     },
                 ));
-                info!("Started digging at position ({}, {}). Press G again to dig!", player_pos.x, player_pos.y);
+                info!(
+                    "Started digging at position ({}, {}). Press G again to dig!",
+                    player_pos.x, player_pos.y
+                );
             }
         }
     }
@@ -227,9 +234,6 @@ pub fn spawn_dungeon_dig_spots(
         let x = rng.gen_range(-30..30);
         let y = rng.gen_range(-30..30);
 
-        commands.spawn((
-            DigSpot { dug: false },
-            GridPosition { x, y },
-        ));
+        commands.spawn((DigSpot { dug: false }, GridPosition { x, y }));
     }
 }

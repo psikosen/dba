@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_core::components::Spirit;
 use bevy_shaman_items::components::{Inventory, PlantType, SpiritOrbSize};
 
@@ -28,7 +28,8 @@ pub fn spirit_merging_system(
 
                 // Try to consume spirit orbs first
                 if inventory.count_item("spirit_orb_large") > 0
-                    && cost.spirit_orbs <= SpiritOrbSize::Large.spirit_restore() {
+                    && cost.spirit_orbs <= SpiritOrbSize::Large.spirit_restore()
+                {
                     if inventory.remove_item("spirit_orb_large", 1) {
                         enhancement.apply_upgrade(&mut weapon);
                         info!("Weapon enhanced to level {}!", enhancement.level);
@@ -62,10 +63,13 @@ pub fn plant_enhancement_system(
                         enhancement.apply_temporary_enchantment(
                             EnchantmentType::BloodFury,
                             duration,
-                            plant_type.human_stat_boost()
+                            plant_type.human_stat_boost(),
                         );
-                        info!("Applied {} blood enhancement for {}s!",
-                              plant_name(plant_type), duration);
+                        info!(
+                            "Applied {} blood enhancement for {}s!",
+                            plant_name(plant_type),
+                            duration
+                        );
                     }
                 }
 
@@ -80,10 +84,13 @@ pub fn plant_enhancement_system(
                                 enhancement.apply_temporary_enchantment(
                                     EnchantmentType::SpiritInfusion,
                                     duration,
-                                    plant_type.spirit_stat_boost()
+                                    plant_type.spirit_stat_boost(),
                                 );
-                                info!("Applied {} spirit enhancement for {}s!",
-                                      plant_name(plant_type), duration);
+                                info!(
+                                    "Applied {} spirit enhancement for {}s!",
+                                    plant_name(plant_type),
+                                    duration
+                                );
                             }
                         }
                     }
@@ -146,10 +153,10 @@ pub fn apply_enhancement_bonuses(
 
 fn find_usable_blood_plant(inventory: &Inventory) -> Option<PlantType> {
     let blood_plants = [
-        PlantType::Ropa,      // Blood fury
-        PlantType::Ingazi,    // Strength
-        PlantType::Samaki,    // Dual boost
-        PlantType::Umthombo,  // Legendary
+        PlantType::Ropa,     // Blood fury
+        PlantType::Ingazi,   // Strength
+        PlantType::Samaki,   // Dual boost
+        PlantType::Umthombo, // Legendary
     ];
 
     for plant in blood_plants {
@@ -162,10 +169,10 @@ fn find_usable_blood_plant(inventory: &Inventory) -> Option<PlantType> {
 
 fn find_usable_spirit_plant(inventory: &Inventory) -> Option<PlantType> {
     let spirit_plants = [
-        PlantType::Elima,     // Spiritual power
-        PlantType::Sankofa,   // Wisdom
-        PlantType::Nommo,     // Legendary
-        PlantType::Roho,      // Max spirit
+        PlantType::Elima,   // Spiritual power
+        PlantType::Sankofa, // Wisdom
+        PlantType::Nommo,   // Legendary
+        PlantType::Roho,    // Max spirit
     ];
 
     for plant in spirit_plants {

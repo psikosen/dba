@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_monsters::components::MonsterState;
 use rand::Rng;
 
@@ -65,7 +65,8 @@ pub fn apply_wheel_outcome(
 
             WheelOutcome::DoubleSpellDamage => {
                 // Double spell damage for staff attacks
-                for (mut attack, weapon) in attack_query.iter_mut()
+                for (mut attack, weapon) in attack_query
+                    .iter_mut()
                     .filter_map(|a| weapon_query.get(event.attacker).ok().map(|w| (a, w)))
                 {
                     if weapon.weapon_type.can_cast_spells() {
@@ -86,7 +87,8 @@ pub fn apply_wheel_outcome(
             WheelOutcome::SpiritCorruption => {
                 // Corrupt all tamed monsters/spirits
                 for mut monster_state in monster_query.iter_mut() {
-                    monster_state.corruption_meter = (monster_state.corruption_meter + 0.3).min(1.0);
+                    monster_state.corruption_meter =
+                        (monster_state.corruption_meter + 0.3).min(1.0);
                     monster_state.stability_meter = (monster_state.stability_meter - 0.2).max(0.0);
                 }
                 warn!("Wheel triggered: Spirit Corruption! Your companions are tainted!");

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_shaman_core::components::{Health, GridPosition, Spirit, Player};
+use bevy_shaman_core::components::{GridPosition, Health, Player, Spirit};
 use rand::Rng;
 
 use crate::components::focus_abilities::*;
@@ -10,10 +10,7 @@ use crate::components::StatusEffects;
 // ============================================================================
 
 /// Regenerate shaman focus over time
-pub fn regenerate_shaman_focus(
-    mut focus_query: Query<&mut ShamanFocus>,
-    time: Res<Time>,
-) {
+pub fn regenerate_shaman_focus(mut focus_query: Query<&mut ShamanFocus>, time: Res<Time>) {
     for mut focus in focus_query.iter_mut() {
         if focus.current < focus.max {
             focus.current = (focus.current + focus.regen_rate * time.delta_secs()).min(focus.max);
@@ -60,7 +57,11 @@ pub fn handle_focus_ability_input(
     if let Some(ability_type) = ability {
         // Check cooldown
         if cooldowns.is_on_cooldown(ability_type) {
-            info!("Ability {:?} on cooldown: {:.1}s", ability_type, cooldowns.get_remaining(ability_type));
+            info!(
+                "Ability {:?} on cooldown: {:.1}s",
+                ability_type,
+                cooldowns.get_remaining(ability_type)
+            );
             return;
         }
 
@@ -74,7 +75,7 @@ pub fn handle_focus_ability_input(
         cast_events.send(FocusAbilityCast {
             caster: player_entity,
             ability: ability_type,
-            target: None,  // Target selection would be handled separately
+            target: None, // Target selection would be handled separately
         });
     }
 }
@@ -95,7 +96,10 @@ pub fn process_focus_ability_casting(
                 ability_type: event.ability,
                 target: event.target,
                 cast_timer: Timer::from_seconds(event.ability.cast_time(), TimerMode::Once),
-                duration_timer: event.ability.duration().map(|d| Timer::from_seconds(d, TimerMode::Once)),
+                duration_timer: event
+                    .ability
+                    .duration()
+                    .map(|d| Timer::from_seconds(d, TimerMode::Once)),
             });
 
             info!("Casting {:?}...", event.ability);
@@ -164,11 +168,23 @@ pub fn apply_focus_ability_effects(
             }
 
             FocusAbilityType::PushBack => {
-                apply_push_effect(caster_pos, event.target, &position_query, 5.0, &mut commands);
+                apply_push_effect(
+                    caster_pos,
+                    event.target,
+                    &position_query,
+                    5.0,
+                    &mut commands,
+                );
             }
 
             FocusAbilityType::PullIn => {
-                apply_pull_effect(caster_pos, event.target, &position_query, 3.0, &mut commands);
+                apply_pull_effect(
+                    caster_pos,
+                    event.target,
+                    &position_query,
+                    3.0,
+                    &mut commands,
+                );
             }
 
             FocusAbilityType::Lift => {
@@ -187,7 +203,7 @@ pub fn apply_focus_ability_effects(
         // Add cooldown
         let cooldown_duration = if event.ability == FocusAbilityType::SpiritInfusion {
             // Spirit infusion uses random cooldown from the infusion component
-            0.0  // Will be set by infusion system
+            0.0 // Will be set by infusion system
         } else {
             event.ability.cooldown()
         };
@@ -243,7 +259,7 @@ fn apply_disable_effect(
             effects.effects.push(crate::components::StatusEffect {
                 effect_type: crate::components::StatusEffectType::Slow,
                 duration,
-                strength: 0.7,  // 70% speed reduction
+                strength: 0.7, // 70% speed reduction
             });
         }
     }
@@ -338,8 +354,13 @@ fn apply_spirit_infusion(
     // Apply infusion to caster
     commands.entity(caster).insert(infusion);
 
-    info!("Spirit infusion active! Duration: {:.1}s, Next cooldown: {:.1}s",
-        commands.entity(caster).get::<SpiritInfused>().map(|si| si.duration_remaining).unwrap_or(0.0),
+    info!(
+        "Spirit infusion active! Duration: {:.1}s, Next cooldown: {:.1}s",
+        commands
+            .entity(caster)
+            .get::<SpiritInfused>()
+            .map(|si| si.duration_remaining)
+            .unwrap_or(0.0),
         cooldowns.get_remaining(FocusAbilityType::SpiritInfusion)
     );
 }
@@ -396,7 +417,8 @@ pub fn apply_object_manipulation(
     for (entity, manipulation, mut position) in manipulated_query.iter_mut() {
         if manipulation.force_strength > 0.0 {
             // Apply force as grid movement
-            let movement = manipulation.force_direction * manipulation.force_strength * time.delta_secs();
+            let movement =
+                manipulation.force_direction * manipulation.force_strength * time.delta_secs();
             position.x += movement.x as i32;
             position.y += movement.y as i32;
         }

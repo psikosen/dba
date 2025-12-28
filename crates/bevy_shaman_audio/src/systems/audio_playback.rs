@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::resources::{ActiveSong, BeatClock, SongDB};
+use bevy::prelude::*;
 
 /// Resource holding audio assets
 #[derive(Resource, Default)]
@@ -29,10 +29,7 @@ pub enum PlaySoundEffect {
 }
 
 /// Load audio assets at startup
-pub fn load_audio_assets(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
+pub fn load_audio_assets(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Check if assets exist, otherwise log warnings
     info!("Loading audio assets...");
 

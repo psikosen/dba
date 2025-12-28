@@ -1,6 +1,6 @@
 use bevy::prelude::*;
-use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 // ============================================================================
 // SKILL TREE COMPONENTS
@@ -30,20 +30,27 @@ impl SkillTree {
     }
 
     /// Try to unlock a skill
-    pub fn try_unlock(&mut self, skill_id: SkillId, skill_db: &SkillDatabase) -> Result<(), String> {
+    pub fn try_unlock(
+        &mut self,
+        skill_id: SkillId,
+        skill_db: &SkillDatabase,
+    ) -> Result<(), String> {
         // Check if already unlocked
         if self.unlocked_skills.contains(&skill_id) {
             return Err("Skill already unlocked".to_string());
         }
 
         // Get skill data
-        let skill = skill_db.get_skill(skill_id)
+        let skill = skill_db
+            .get_skill(skill_id)
             .ok_or_else(|| "Skill not found".to_string())?;
 
         // Check cost
         if self.skill_points < skill.cost {
-            return Err(format!("Not enough skill points (need {}, have {})",
-                skill.cost, self.skill_points));
+            return Err(format!(
+                "Not enough skill points (need {}, have {})",
+                skill.cost, self.skill_points
+            ));
         }
 
         // Check prerequisites
@@ -66,7 +73,8 @@ impl SkillTree {
 
     /// Get total number of unlocked skills in a path
     pub fn skills_in_path(&self, path: SkillPath) -> usize {
-        self.unlocked_skills.iter()
+        self.unlocked_skills
+            .iter()
             .filter(|id| id.path() == path)
             .count()
     }
@@ -438,24 +446,34 @@ pub enum SkillId {
 impl SkillId {
     pub fn path(&self) -> SkillPath {
         match self {
-            SkillId::NgomaRhythmSense | SkillId::NgomaComboMaster
-            | SkillId::NgomaPerfectHarmony | SkillId::NgomaDrumOfWar
+            SkillId::NgomaRhythmSense
+            | SkillId::NgomaComboMaster
+            | SkillId::NgomaPerfectHarmony
+            | SkillId::NgomaDrumOfWar
             | SkillId::NgomaAncestralRhythm => SkillPath::Ngoma,
 
-            SkillId::UbuntuSharedStrength | SkillId::UbuntuHealingCircle
-            | SkillId::UbuntuSpiritLink | SkillId::UbuntuWarChant
+            SkillId::UbuntuSharedStrength
+            | SkillId::UbuntuHealingCircle
+            | SkillId::UbuntuSpiritLink
+            | SkillId::UbuntuWarChant
             | SkillId::UbuntuAncestralBond => SkillPath::Ubuntu,
 
-            SkillId::AsheInnerPower | SkillId::AsheSpiritReservoir
-            | SkillId::AshePowerStrike | SkillId::AsheSpiritFortitude
+            SkillId::AsheInnerPower
+            | SkillId::AsheSpiritReservoir
+            | SkillId::AshePowerStrike
+            | SkillId::AsheSpiritFortitude
             | SkillId::AsheAncestralMight => SkillPath::Ashe,
 
-            SkillId::UbiqaGreenThumb | SkillId::UbiqaBloodKnowledge
-            | SkillId::UbiqaSpiritGardener | SkillId::UbiqaHarvestBoon
+            SkillId::UbiqaGreenThumb
+            | SkillId::UbiqaBloodKnowledge
+            | SkillId::UbiqaSpiritGardener
+            | SkillId::UbiqaHarvestBoon
             | SkillId::UbiqaNaturesBoon => SkillPath::Ubiqa,
 
-            SkillId::TempoSwiftness | SkillId::TempoQuickRecovery
-            | SkillId::TempoHaste | SkillId::TempoRapidFire
+            SkillId::TempoSwiftness
+            | SkillId::TempoQuickRecovery
+            | SkillId::TempoHaste
+            | SkillId::TempoRapidFire
             | SkillId::TempoTimeless => SkillPath::Tempo,
         }
     }
@@ -463,11 +481,11 @@ impl SkillId {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SkillPath {
-    Ngoma,   // Rhythm & Combos (Swahili: drum)
-    Ubuntu,  // Community & Party (Nguni Bantu: humanity/community)
-    Ashe,    // Power & Stats (Yoruba: power/authority)
-    Ubiqa,   // Plants & Nature (Xhosa: to bloom/flourish)
-    Tempo,   // Speed & Cooldowns
+    Ngoma,  // Rhythm & Combos (Swahili: drum)
+    Ubuntu, // Community & Party (Nguni Bantu: humanity/community)
+    Ashe,   // Power & Stats (Yoruba: power/authority)
+    Ubiqa,  // Plants & Nature (Xhosa: to bloom/flourish)
+    Tempo,  // Speed & Cooldowns
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -503,7 +521,7 @@ pub enum SkillEffect {
     MaxSpiritIncrease(f32),
     BaseDamageIncrease(f32),
     DamageResistance(f32),
-    AncestralMight,  // Combined bonus
+    AncestralMight, // Combined bonus
 
     // Ubiqa effects
     PlantEffectDuration(f32),
@@ -516,7 +534,7 @@ pub enum SkillEffect {
     MovementSpeed(f32),
     CooldownReduction(f32),
     AttackSpeed(f32),
-    Timeless,  // Combined bonus
+    Timeless, // Combined bonus
 }
 
 // ============================================================================
@@ -601,8 +619,10 @@ pub fn award_skill_points_on_level_up(
             }
 
             skill_tree.award_points(points_to_award);
-            info!("Player leveled up to level {}! Awarded {} skill points (Total: {})",
-                current_level, points_to_award, skill_tree.skill_points);
+            info!(
+                "Player leveled up to level {}! Awarded {} skill points (Total: {})",
+                current_level, points_to_award, skill_tree.skill_points
+            );
         }
     }
 

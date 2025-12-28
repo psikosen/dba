@@ -28,7 +28,7 @@ pub struct BeatPrompt {
 /// Resource to track active beat prompts
 #[derive(Resource, Default)]
 pub struct BeatPromptManager {
-    pub active_prompts: Vec<u32>,  // Track which beats have prompts
-    pub max_prompts: usize,        // Max simultaneous prompts (2)
-    pub lookahead_beats: u32,      // How many beats ahead to spawn prompts
+    pub active_prompts: Vec<u32>, // Track which beats have prompts
+    pub max_prompts: usize,       // Max simultaneous prompts (2)
+    pub lookahead_beats: u32,     // How many beats ahead to spawn prompts
 }

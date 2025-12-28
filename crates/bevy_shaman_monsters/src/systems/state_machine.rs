@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::{CorruptionExposure, MonsterState};
 use crate::systems::events::{MonsterCorrupted, MonsterStateChanged};
+use bevy::prelude::*;
 
 const STABILITY_DECAY_RATE: f32 = 0.01;
 const CORRUPTION_GROWTH_RATE: f32 = 0.005;

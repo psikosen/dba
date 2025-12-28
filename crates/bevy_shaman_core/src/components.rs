@@ -180,9 +180,9 @@ pub enum CombatDifficulty {
 /// Blood lust mechanic - rises from violence, reduced by music/plants
 #[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct BloodLust {
-    pub current: f32,      // 0.0 to 100.0
-    pub threshold: f32,    // When it triggers corruption
-    pub decay_rate: f32,   // How fast it decays out of combat
+    pub current: f32,    // 0.0 to 100.0
+    pub threshold: f32,  // When it triggers corruption
+    pub decay_rate: f32, // How fast it decays out of combat
 }
 
 impl Default for BloodLust {
@@ -190,7 +190,7 @@ impl Default for BloodLust {
         Self {
             current: 0.0,
             threshold: 70.0,
-            decay_rate: 5.0,  // Per second
+            decay_rate: 5.0, // Per second
         }
     }
 }
@@ -200,7 +200,12 @@ impl BloodLust {
         self.current >= self.threshold
     }
 
-    pub fn add_from_combat(&mut self, _enemy_health: f32, was_overkill: bool, difficulty: CombatDifficulty) {
+    pub fn add_from_combat(
+        &mut self,
+        _enemy_health: f32,
+        was_overkill: bool,
+        difficulty: CombatDifficulty,
+    ) {
         let base_gain = match difficulty {
             CombatDifficulty::Easy => 2.0,
             CombatDifficulty::Normal => 5.0,

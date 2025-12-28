@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::{CorruptionExposure, CorruptionInfluence, MonsterState};
+use bevy::prelude::*;
 
 const CORRUPTION_PROPAGATION_INTERVAL: f32 = 1.0; // seconds
 

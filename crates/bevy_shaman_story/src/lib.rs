@@ -26,21 +26,30 @@ impl Plugin for StoryPlugin {
             .init_resource::<systems::quest_system::QuestRegistry>()
             .init_resource::<systems::npc_spawning::NpcsSpawned>()
             // Systems - NPC Spawning (runs after world generation)
-            .add_systems(Update, (
-                systems::npc_spawning::mark_village_tiles,
-                systems::npc_spawning::spawn_village_npcs.after(systems::npc_spawning::mark_village_tiles),
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::npc_spawning::mark_village_tiles,
+                    systems::npc_spawning::spawn_village_npcs
+                        .after(systems::npc_spawning::mark_village_tiles),
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             // Systems
-            .add_systems(Update, (
-                systems::npc_sickness::update_npc_waking_state,
-                systems::dialogue::filter_sick_npc_dialogue,
-                systems::instrument_choice::apply_instrument_modifiers,
-                systems::quests::update_brother_cleansing_progress,
-                systems::dialogue_tree::apply_dialogue_consequences,
-                systems::quest_system::handle_quest_started,
-                systems::quest_system::handle_quest_completed,
-                systems::quest_system::handle_quest_objective_updated,
-            ).run_if(in_state(GameState::Playing)))
+            .add_systems(
+                Update,
+                (
+                    systems::npc_sickness::update_npc_waking_state,
+                    systems::dialogue::filter_sick_npc_dialogue,
+                    systems::instrument_choice::apply_instrument_modifiers,
+                    systems::quests::update_brother_cleansing_progress,
+                    systems::dialogue_tree::apply_dialogue_consequences,
+                    systems::quest_system::handle_quest_started,
+                    systems::quest_system::handle_quest_completed,
+                    systems::quest_system::handle_quest_objective_updated,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
             .add_systems(Startup, (setup_dialogue_trees, setup_quests))
             // Events
             .add_event::<systems::events::NpcWokenUp>()
@@ -57,9 +66,7 @@ impl Plugin for StoryPlugin {
 }
 
 /// Setup dialogue trees on startup
-fn setup_dialogue_trees(
-    mut registry: ResMut<systems::dialogue_tree::DialogueTreeRegistry>,
-) {
+fn setup_dialogue_trees(mut registry: ResMut<systems::dialogue_tree::DialogueTreeRegistry>) {
     // Register spirit choice dialogue tree
     registry.register(systems::dialogue_tree::create_spirit_choice_tree());
 
@@ -67,9 +74,7 @@ fn setup_dialogue_trees(
 }
 
 /// Setup quests on startup
-fn setup_quests(
-    mut registry: ResMut<systems::quest_system::QuestRegistry>,
-) {
+fn setup_quests(mut registry: ResMut<systems::quest_system::QuestRegistry>) {
     // Register quests
     registry.register(systems::quest_system::create_brother_cleansing_quest());
     registry.register(systems::quest_system::create_tutorial_quest());

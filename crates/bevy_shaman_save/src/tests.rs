@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod save_tests {
-    use super::super::systems::save_load::*;
     use super::super::systems::autosave::*;
+    use super::super::systems::save_load::*;
     use std::collections::HashMap;
 
     // ============================================================================
@@ -38,14 +38,16 @@ mod save_tests {
         data.tutorial_started = true;
         data.current_mission = Some("dream_cutscene".to_string());
         data.current_step = 2;
-        data.mission_flags.insert("basic_combat_unlocked".to_string(), true);
+        data.mission_flags
+            .insert("basic_combat_unlocked".to_string(), true);
 
         // Test serialization
         let serialized = serde_json::to_string(&data);
         assert!(serialized.is_ok());
 
         // Test deserialization
-        let deserialized: Result<TutorialProgressData, _> = serde_json::from_str(&serialized.unwrap());
+        let deserialized: Result<TutorialProgressData, _> =
+            serde_json::from_str(&serialized.unwrap());
         assert!(deserialized.is_ok());
 
         let restored = deserialized.unwrap();
@@ -215,10 +217,7 @@ mod save_tests {
             player_spirit: (50.0, 100.0),
             player_stamina: (80.0, 100.0),
             player_gold: 1234,
-            corrupted_tiles: vec![
-                ((10, 10), 0.5),
-                ((11, 11), 0.7),
-            ],
+            corrupted_tiles: vec![((10, 10), 0.5), ((11, 11), 0.7)],
             inventory_items: vec![
                 ("wood".to_string(), "Wood".to_string(), 50),
                 ("stone".to_string(), "Stone".to_string(), 30),
@@ -254,8 +253,14 @@ mod save_tests {
         assert_eq!(restored.player_position, original.player_position);
         assert_eq!(restored.player_health, original.player_health);
         assert_eq!(restored.player_gold, original.player_gold);
-        assert_eq!(restored.corrupted_tiles.len(), original.corrupted_tiles.len());
-        assert_eq!(restored.inventory_items.len(), original.inventory_items.len());
+        assert_eq!(
+            restored.corrupted_tiles.len(),
+            original.corrupted_tiles.len()
+        );
+        assert_eq!(
+            restored.inventory_items.len(),
+            original.inventory_items.len()
+        );
         assert_eq!(restored.timestamp, original.timestamp);
         assert_eq!(restored.save_version, original.save_version);
     }

@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::resources::TimingQuality;
+use bevy::prelude::*;
 
 #[derive(Event)]
 pub struct BeatHit {

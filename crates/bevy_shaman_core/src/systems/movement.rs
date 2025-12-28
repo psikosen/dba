@@ -1,6 +1,6 @@
-use bevy::prelude::*;
 use crate::components::{GridPosition, MovementCommand, MovementQueue};
 use crate::resources::GridOccupancy;
+use bevy::prelude::*;
 
 const TILE_SIZE: f32 = 32.0;
 

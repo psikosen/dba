@@ -12,7 +12,7 @@ pub struct BeatClock {
     pub bpm: f32,
     pub beat_duration: f32, // seconds per beat
     pub current_beat: u32,
-    pub time_in_beat: f32,  // 0.0 to beat_duration
+    pub time_in_beat: f32, // 0.0 to beat_duration
     pub is_playing: bool,
 }
 

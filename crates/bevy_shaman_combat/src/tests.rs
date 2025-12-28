@@ -250,10 +250,10 @@ mod combat_tests {
         for _ in 0..100 {
             let outcome = WheelOutcome::random();
             match outcome {
-                WheelOutcome::CriticalHit |
-                WheelOutcome::DoubleSpellDamage |
-                WheelOutcome::SelfCorruption |
-                WheelOutcome::SpiritCorruption => {},
+                WheelOutcome::CriticalHit
+                | WheelOutcome::DoubleSpellDamage
+                | WheelOutcome::SelfCorruption
+                | WheelOutcome::SpiritCorruption => {}
             }
         }
     }

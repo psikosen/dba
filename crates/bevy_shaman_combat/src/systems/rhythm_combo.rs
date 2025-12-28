@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use crate::components::*;
+use bevy::prelude::*;
 use bevy_shaman_core::components::Spirit;
 use bevy_shaman_core::resources::TimingQuality;
 
@@ -107,10 +107,7 @@ pub fn apply_special_moves(
 }
 
 /// System to reset combos when timing window expires
-pub fn rhythm_combo_reset(
-    mut combo_query: Query<&mut RhythmCombo>,
-    time: Res<Time>,
-) {
+pub fn rhythm_combo_reset(mut combo_query: Query<&mut RhythmCombo>, time: Res<Time>) {
     let current_time = time.elapsed_secs_f64();
 
     for mut combo in combo_query.iter_mut() {

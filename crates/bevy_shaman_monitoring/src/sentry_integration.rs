@@ -22,10 +22,7 @@ pub fn init_sentry(dsn: &str) {
 
     // Set up panic hook
     std::panic::set_hook(Box::new(|panic_info| {
-        sentry::capture_message(
-            &format!("Panic: {:?}", panic_info),
-            sentry::Level::Error,
-        );
+        sentry::capture_message(&format!("Panic: {:?}", panic_info), sentry::Level::Error);
         eprintln!("{}", panic_info);
     }));
 }

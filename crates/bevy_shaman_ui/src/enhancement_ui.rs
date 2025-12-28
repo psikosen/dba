@@ -1,8 +1,8 @@
+use crate::ancestral_theme::*;
 use bevy::prelude::*;
-use bevy_shaman_combat::components::{WeaponEnhancement, EquippedWeapon, EnchantmentType};
+use bevy_shaman_combat::components::{EnchantmentType, EquippedWeapon, WeaponEnhancement};
 use bevy_shaman_core::components::Spirit;
 use bevy_shaman_items::components::Inventory;
-use crate::ancestral_theme::*;
 
 /// Resource tracking enhancement UI state
 #[derive(Resource, Default)]
@@ -34,10 +34,18 @@ pub fn display_enhancement_ui(
     }
 
     // Get weapon and enhancement data
-    let Ok(weapon) = weapon_query.get_single() else { return };
-    let Ok(enhancement) = enhancement_query.get_single() else { return };
-    let Ok(spirit) = spirit_query.get_single() else { return };
-    let Ok(inventory) = inventory_query.get_single() else { return };
+    let Ok(weapon) = weapon_query.get_single() else {
+        return;
+    };
+    let Ok(enhancement) = enhancement_query.get_single() else {
+        return;
+    };
+    let Ok(spirit) = spirit_query.get_single() else {
+        return;
+    };
+    let Ok(inventory) = inventory_query.get_single() else {
+        return;
+    };
 
     // Spawn UI panel - carved wooden panel with bronze frame
     commands
