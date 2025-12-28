@@ -3255,6 +3255,12 @@ pub mod systems {
         pub struct ResumeButton;
 
         #[derive(Component)]
+        pub struct EnhancementMenuButton;
+
+        #[derive(Component)]
+        pub struct SkillTreeMenuButton;
+
+        #[derive(Component)]
         pub struct QuitButton;
 
         #[derive(Component)]
@@ -3300,7 +3306,9 @@ pub mod systems {
             mut pause_state: ResMut<PauseMenuState>,
             death_state: Res<DeathScreenState>,
             pause_ui_query: Query<Entity, With<PauseMenuUI>>,
-            button_query: Query<(&Interaction, Option<&ResumeButton>, Option<&QuitButton>), (Changed<Interaction>, With<Button>)>,
+            button_query: Query<(&Interaction, Option<&ResumeButton>, Option<&EnhancementMenuButton>, Option<&SkillTreeMenuButton>, Option<&QuitButton>), (Changed<Interaction>, With<Button>)>,
+            mut enhancement_ui_state: ResMut<crate::enhancement_ui::EnhancementUIState>,
+            mut skill_tree_ui_state: ResMut<crate::skill_tree_ui::SkillTreeUIState>,
             mut next_state: ResMut<NextState<GameState>>,
         ) {
             // Don't show pause menu if player is dead
@@ -3328,9 +3336,23 @@ pub mod systems {
             // Only spawn UI once
             if !pause_ui_query.is_empty() {
                 // Handle button clicks
-                for (interaction, resume_button, quit_button) in button_query.iter() {
+                for (interaction, resume_button, enhancement_button, skill_tree_button, quit_button) in button_query.iter() {
                     if *interaction == Interaction::Pressed {
                         if resume_button.is_some() {
+                            pause_state.paused = false;
+                            for entity in pause_ui_query.iter() {
+                                commands.entity(entity).despawn_recursive();
+                            }
+                        } else if enhancement_button.is_some() {
+                            // Open Enhancement UI and close pause menu
+                            enhancement_ui_state.visible = true;
+                            pause_state.paused = false;
+                            for entity in pause_ui_query.iter() {
+                                commands.entity(entity).despawn_recursive();
+                            }
+                        } else if skill_tree_button.is_some() {
+                            // Open Skill Tree UI and close pause menu
+                            skill_tree_ui_state.visible = true;
                             pause_state.paused = false;
                             for entity in pause_ui_query.iter() {
                                 commands.entity(entity).despawn_recursive();
@@ -3406,6 +3428,54 @@ pub mod systems {
                             Text::new("RESUME"),
                             TextFont {
                                 font_size: 24.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+
+                    // Enhancement button
+                    menu.spawn((
+                        EnhancementMenuButton,
+                        Button,
+                        Node {
+                            width: Val::Px(300.0),
+                            height: Val::Px(60.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.4, 0.25, 0.15)),
+                        BorderColor(Color::srgb(0.8, 0.5, 0.2)),
+                    )).with_children(|button| {
+                        button.spawn((
+                            Text::new("SPIRIT FORGE (H)"),
+                            TextFont {
+                                font_size: 20.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+
+                    // Skill Tree button
+                    menu.spawn((
+                        SkillTreeMenuButton,
+                        Button,
+                        Node {
+                            width: Val::Px(300.0),
+                            height: Val::Px(60.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.25, 0.35, 0.25)),
+                        BorderColor(Color::srgb(0.4, 0.6, 0.3)),
+                    )).with_children(|button| {
+                        button.spawn((
+                            Text::new("SKILL TREE (K)"),
+                            TextFont {
+                                font_size: 20.0,
                                 ..default()
                             },
                             TextColor(Color::WHITE),
