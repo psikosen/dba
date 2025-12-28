@@ -85,7 +85,11 @@ fn find_nearest_spirit(
 
         if dx <= detection_range && dy <= detection_range {
             let dist = ((dx * dx + dy * dy) as f32).sqrt();
-            if nearest.is_none() || dist < nearest.unwrap().1 {
+            let should_update = match nearest {
+                None => true,
+                Some((_, nearest_dist, _)) => dist < nearest_dist,
+            };
+            if should_update {
                 nearest = Some((entity, dist, spirit.power));
             }
         }

@@ -55,12 +55,20 @@ impl PathfindingGrid {
 }
 
 /// Update the pathfinding grid when obstacles change
+/// Optimized to only rebuild when obstacles have moved using change detection
 pub fn update_pathfinding_grid(
-    obstacles: Query<&GridPosition, With<BlocksMovement>>,
+    all_obstacles: Query<&GridPosition, With<BlocksMovement>>,
+    changed_obstacles: Query<&GridPosition, (With<BlocksMovement>, Changed<GridPosition>)>,
     mut grid: ResMut<PathfindingGrid>,
 ) {
-    // Rebuild every frame for simplicity (can be optimized to only rebuild when obstacles change)
-    grid.rebuild(&obstacles);
+    // Only rebuild if any obstacle position changed
+    // This prevents rebuilding the entire pathfinding grid every frame
+    if changed_obstacles.is_empty() {
+        return;
+    }
+
+    // Rebuild complete grid state when obstacles move
+    grid.rebuild(&all_obstacles);
 }
 
 /// Find a path from start to goal using A* algorithm
