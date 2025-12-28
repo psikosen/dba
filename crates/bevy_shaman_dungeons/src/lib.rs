@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
 
+#[cfg(test)]
+mod tests;
+
 pub struct DungeonsPlugin;
 
 impl Plugin for DungeonsPlugin {

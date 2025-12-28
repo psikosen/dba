@@ -1,0 +1,29 @@
+[config]
+# Generate lcov output for code coverage
+output-dir = "coverage"
+out = ["Html", "Lcov"]
+exclude-files = [
+    "*/tests.rs",
+    "*/benches/*",
+    "*/.cargo/*",
+]
+
+# Exclude audio crate (requires ALSA)
+exclude = [
+    "bevy_shaman_audio",
+]
+
+# Set coverage target to 90%
+fail-under = 90.0
+
+# Run all tests
+run-types = ["Tests"]
+timeout = "300s"
+
+# Include all workspace members
+workspace = true
+
+# Additional flags
+follow-exec = true
+release = false
+all-features = false
