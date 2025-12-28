@@ -10,3 +10,10 @@ bevy_shaman_core = { path = "../bevy_shaman_core" }
 bevy_shaman_items = { path = "../bevy_shaman_items" }
 serde.workspace = true
 rand.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "world_generation"
+harness = false
