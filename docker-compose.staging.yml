@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  shaman-journey-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/psikosen/dba:staging
+    container_name: shaman-journey-staging
+    environment:
+      - RUST_LOG=info,bevy_shaman=debug
+      - RUST_BACKTRACE=1
+      - ENVIRONMENT=staging
+      - SENTRY_DSN=${SENTRY_DSN}
+      - PROMETHEUS_PORT=9091
+    ports:
+      - "8080:8080"
+      - "9091:9091"
+    volumes:
+      - staging-saves:/app/saves
+      - ./assets:/app/assets:ro
+    networks:
+      - staging
+      - monitoring
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "bevy_shaman"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Staging-specific monitoring
+  prometheus-staging:
+    image: prom/prometheus:latest
+    container_name: prometheus-staging
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus-staging.yml:/etc/prometheus/prometheus.yml
+      - prometheus-staging-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  grafana-staging:
+    image: grafana/grafana:latest
+    container_name: grafana-staging
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      - grafana-staging-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - prometheus-staging
+
+networks:
+  staging:
+    driver: bridge
+  monitoring:
+    driver: bridge
+
+volumes:
+  staging-saves:
+  prometheus-staging-data:
+  grafana-staging-data:

@@ -16,6 +16,7 @@ members = [
     "crates/bevy_shaman_ai",
     "crates/bevy_shaman_shop",
     "crates/bevy_shaman_tutorial",
+    "crates/bevy_shaman_monitoring",
 ]
 # Exclude audio crate from default builds (requires ALSA on Linux)
 # To build with audio: cargo build -p bevy_shaman_audio
@@ -34,6 +35,7 @@ default-members = [
     "crates/bevy_shaman_ai",
     "crates/bevy_shaman_shop",
     "crates/bevy_shaman_tutorial",
+    "crates/bevy_shaman_monitoring",
 ]
 
 [workspace.package]
@@ -59,6 +61,12 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rand = "0.8"
 criterion = { version = "0.5", features = ["html_reports"] }
+
+# Monitoring and Observability
+prometheus = "0.13"
+sentry = { version = "0.34", default-features = false, features = ["backtrace", "contexts", "panic", "rustls"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Optimized release profile for production builds
 [profile.release]
