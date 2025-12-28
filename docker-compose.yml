@@ -1,6 +1,62 @@
 version: '3.8'
 
 services:
+  # DragonflyDB - High-performance Redis alternative
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    container_name: shaman-dragonfly
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - dragonfly-data:/data
+    command: >
+      dragonfly
+      --requirepass ${DRAGONFLY_PASSWORD:-changeme}
+      --maxmemory 512mb
+      --save_schedule "*:*"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${DRAGONFLY_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shaman-network
+
+  # RabbitMQ - Message queue for async jobs
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: shaman-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_DEFAULT_VHOST=/
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - shaman-network
+
   shaman-journey:
     build:
       context: .
@@ -35,6 +91,8 @@ services:
     environment:
       - RUST_LOG=info
       - RUST_BACKTRACE=1
+      - DRAGONFLY_URL=redis://:${DRAGONFLY_PASSWORD:-changeme}@dragonfly:6379
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672/%2f
 
     # Security options
     security_opt:
@@ -62,12 +120,26 @@ services:
         max-size: "10m"
         max-file: "3"
 
+    # Depends on services
+    depends_on:
+      dragonfly:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+    networks:
+      - shaman-network
+
 # Named volumes for better management
 volumes:
   saves:
     driver: local
+  dragonfly-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
 
-# Networks (optional - for future multiplayer or services)
+# Networks for service communication
 networks:
-  default:
+  shaman-network:
     driver: bridge
