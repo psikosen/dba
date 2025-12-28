@@ -181,3 +181,58 @@ impl Default for AiState {
 pub struct Tamed {
     pub tamed_at: f64, // timestamp
 }
+
+// ============================================================================
+// PATHFINDING CACHE
+// ============================================================================
+
+/// Caches pathfinding results to avoid recalculating paths every frame
+/// Invalidated when target moves or obstacles change
+#[derive(Component, Default)]
+pub struct PathCache {
+    pub target: Option<Entity>,
+    pub target_last_position: Option<bevy_shaman_core::components::GridPosition>,
+    pub cached_path: Option<Vec<bevy_shaman_core::components::GridPosition>>,
+    pub path_index: usize, // Current position in the cached path
+}
+
+impl PathCache {
+    pub fn invalidate(&mut self) {
+        self.cached_path = None;
+        self.path_index = 0;
+    }
+
+    pub fn is_valid_for(&self, target: Entity, target_pos: &bevy_shaman_core::components::GridPosition) -> bool {
+        if let (Some(cached_target), Some(cached_pos)) = (self.target, self.target_last_position) {
+            cached_target == target && cached_pos == *target_pos && self.cached_path.is_some()
+        } else {
+            false
+        }
+    }
+
+    pub fn cache_path(
+        &mut self,
+        target: Entity,
+        target_pos: bevy_shaman_core::components::GridPosition,
+        path: Vec<bevy_shaman_core::components::GridPosition>,
+    ) {
+        self.target = Some(target);
+        self.target_last_position = Some(target_pos);
+        self.cached_path = Some(path);
+        self.path_index = 0;
+    }
+
+    pub fn get_next_step(&mut self) -> Option<bevy_shaman_core::components::GridPosition> {
+        if let Some(path) = &self.cached_path {
+            if self.path_index < path.len() {
+                let step = path[self.path_index];
+                self.path_index += 1;
+                Some(step)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+}
