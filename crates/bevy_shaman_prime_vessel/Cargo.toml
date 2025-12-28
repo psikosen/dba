@@ -1,0 +1,18 @@
+[package]
+name = "bevy_shaman_prime_vessel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+bevy.workspace = true
+serde.workspace = true
+rand.workspace = true
+bevy_shaman_core = { path = "../bevy_shaman_core" }
+bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
+bevy_shaman_world = { path = "../bevy_shaman_world" }
+bevy_shaman_story = { path = "../bevy_shaman_story" }
+bevy_shaman_items = { path = "../bevy_shaman_items" }
+
+[dev-dependencies]
+criterion.workspace = true

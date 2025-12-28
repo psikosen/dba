@@ -17,6 +17,7 @@ members = [
     "crates/bevy_shaman_shop",
     "crates/bevy_shaman_tutorial",
     "crates/bevy_shaman_monitoring",
+    "crates/bevy_shaman_prime_vessel",
 ]
 # Exclude audio crate from default builds (requires ALSA on Linux)
 # To build with audio: cargo build -p bevy_shaman_audio
@@ -36,6 +37,7 @@ default-members = [
     "crates/bevy_shaman_shop",
     "crates/bevy_shaman_tutorial",
     "crates/bevy_shaman_monitoring",
+    "crates/bevy_shaman_prime_vessel",
 ]
 
 [workspace.package]

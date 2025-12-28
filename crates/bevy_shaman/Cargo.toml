@@ -27,6 +27,7 @@ bevy_shaman_ai = { path = "../bevy_shaman_ai" }
 bevy_shaman_shop = { path = "../bevy_shaman_shop" }
 bevy_shaman_tutorial = { path = "../bevy_shaman_tutorial" }
 bevy_shaman_monitoring = { path = "../bevy_shaman_monitoring" }
+bevy_shaman_prime_vessel = { path = "../bevy_shaman_prime_vessel" }
 
 [dev-dependencies]
 criterion.workspace = true

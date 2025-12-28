@@ -43,5 +43,7 @@ fn main() {
         .add_plugins(bevy_shaman_ai::AiPlugin)
         // Tutorial - mission-based tutorials, cutscenes, overlays
         .add_plugins(bevy_shaman_tutorial::TutorialPlugin)
+        // Prime Vessel - dynamic enemy evolution, Biological Chaos, Doomsday Clock
+        .add_plugins(bevy_shaman_prime_vessel::PrimeVesselPlugin)
         .run();
 }
