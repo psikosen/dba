@@ -1,0 +1,55 @@
+[Unit]
+Description=DragonflyDB - High-performance Redis-compatible Cache
+Documentation=https://www.dragonflydb.io/docs
+After=network.target
+
+[Service]
+Type=simple
+User=dragonfly
+Group=dragonfly
+WorkingDirectory=/var/lib/dragonfly
+
+# Execution
+ExecStart=/usr/local/bin/dragonfly \
+    --logtostderr \
+    --port 6379 \
+    --bind 127.0.0.1 \
+    --maxmemory 512mb \
+    --dbfilename dragonfly.db \
+    --dir /var/lib/dragonfly \
+    --save_schedule "*:00"
+
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dragonfly
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=1G
+CPUQuota=100%
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitInterval=5min
+StartLimitBurst=5
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dragonfly
+
+[Install]
+WantedBy=multi-user.target

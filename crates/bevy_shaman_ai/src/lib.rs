@@ -1,4 +1,5 @@
 pub mod components;
+pub mod error;
 pub mod llm_backend;
 pub mod resources;
 pub mod systems;

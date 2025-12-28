@@ -1,0 +1,54 @@
+[Unit]
+Description=Shaman's Journey - Rhythm-based Healing Game
+After=network.target dragonfly.service rabbitmq-server.service
+Wants=dragonfly.service rabbitmq-server.service
+
+[Service]
+Type=simple
+User=shaman
+Group=shaman
+WorkingDirectory=/opt/shaman-journey
+
+# Environment
+EnvironmentFile=/opt/shaman-journey/.env
+Environment="RUST_LOG=info"
+Environment="RUST_BACKTRACE=1"
+
+# Execution
+ExecStart=/opt/shaman-journey/bin/bevy_shaman
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/shaman-journey/saves /opt/shaman-journey/logs /opt/shaman-journey/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=512
+MemoryMax=2G
+CPUQuota=200%
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=5min
+StartLimitBurst=3
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=shaman-journey
+
+[Install]
+WantedBy=multi-user.target
