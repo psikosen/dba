@@ -1697,6 +1697,7 @@ pub mod systems {
                 },
                 BackgroundColor(Color::srgba(0.1, 0.1, 0.15, 0.9)),
                 BorderColor(Color::srgb(0.3, 0.4, 0.5)),
+                GlobalZIndex(3000), // Higher than inventory (2000) to always show on top
             )).with_children(|parent| {
                 // Title
                 parent.spawn((

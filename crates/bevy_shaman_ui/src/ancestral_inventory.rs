@@ -743,35 +743,168 @@ fn spawn_character_content(parent: &mut ChildBuilder) {
 }
 
 // ============================================================================
-// PLACEHOLDER CONTENT
+// SETTINGS CONTENT
 // ============================================================================
 
-fn spawn_placeholder_content(parent: &mut ChildBuilder, tab: InventoryTab) {
-    let text = match tab {
-        InventoryTab::Map => "MAP\n(Coming Soon)",
-        InventoryTab::Quests => "QUEST LOG\n(Coming Soon)",
-        InventoryTab::Settings => "SETTINGS\n(Coming Soon)",
-        _ => "CONTENT\n(Coming Soon)",
-    };
-
+fn spawn_settings_content(parent: &mut ChildBuilder) {
     parent
         .spawn(Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
+            flex_direction: FlexDirection::Column,
+            padding: UiRect::all(Val::Px(SPACING_LARGE)),
+            row_gap: Val::Px(SPACING_MEDIUM),
+            overflow: Overflow::scroll_y(),
             ..default()
         })
-        .with_children(|content| {
-            content.spawn((
-                Text::new(text),
+        .with_children(|settings_parent| {
+            // Title
+            settings_parent.spawn((
+                Text::new("GAME SETTINGS"),
                 TextFont {
-                    font_size: 24.0,
+                    font_size: 28.0,
+                    ..default()
+                },
+                TextColor(metal::GOLD),
+            ));
+
+            // Audio Section
+            spawn_settings_section(settings_parent, "AUDIO");
+            spawn_setting_row(settings_parent, "Master Volume", "100%");
+            spawn_setting_row(settings_parent, "Music Volume", "80%");
+            spawn_setting_row(settings_parent, "SFX Volume", "90%");
+            spawn_setting_row(settings_parent, "Drum Sounds", "ON");
+
+            // Visual Section
+            spawn_settings_section(settings_parent, "VISUAL");
+            spawn_setting_row(settings_parent, "Minimap Visibility", "Always Show");
+            spawn_setting_row(settings_parent, "Screen Shake", "ON");
+            spawn_setting_row(settings_parent, "Particle Effects", "HIGH");
+            spawn_setting_row(settings_parent, "UI Scale", "100%");
+
+            // Gameplay Section
+            spawn_settings_section(settings_parent, "GAMEPLAY");
+            spawn_setting_row(settings_parent, "Difficulty", "Normal");
+            spawn_setting_row(settings_parent, "Auto-Save", "ON");
+            spawn_setting_row(settings_parent, "Combat Hints", "ON");
+            spawn_setting_row(settings_parent, "Quest Markers", "ON");
+
+            // Controls Section
+            spawn_settings_section(settings_parent, "CONTROLS");
+            spawn_setting_row(settings_parent, "Movement", "WASD");
+            spawn_setting_row(settings_parent, "Inventory", "I");
+            spawn_setting_row(settings_parent, "Attack", "SPACE");
+            spawn_setting_row(settings_parent, "Interact", "E");
+
+            // Info footer
+            settings_parent
+                .spawn(Node {
+                    margin: UiRect::top(Val::Px(SPACING_LARGE)),
+                    padding: UiRect::all(Val::Px(SPACING_MEDIUM)),
+                    border: UiRect::all(Val::Px(BORDER_THIN)),
+                    ..default()
+                })
+                .with_children(|footer| {
+                    footer.spawn((
+                        Text::new("Note: Settings are currently display-only.\nFull configuration coming soon!"),
+                        TextFont {
+                            font_size: 14.0,
+                            ..default()
+                        },
+                        TextColor(earth::TERRACOTTA),
+                    ));
+                });
+        });
+}
+
+fn spawn_settings_section(parent: &mut ChildBuilder, title: &str) {
+    parent
+        .spawn(Node {
+            margin: UiRect::top(Val::Px(SPACING_MEDIUM)),
+            padding: UiRect::bottom(Val::Px(SPACING_SMALL)),
+            border: UiRect::bottom(Val::Px(BORDER_THIN)),
+            ..default()
+        })
+        .with_children(|section| {
+            section.spawn((
+                Text::new(title),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(metal::BRONZE),
+            ));
+        });
+}
+
+fn spawn_setting_row(parent: &mut ChildBuilder, setting_name: &str, setting_value: &str) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::SpaceBetween,
+            padding: UiRect::all(Val::Px(SPACING_SMALL)),
+            border: UiRect::all(Val::Px(BORDER_THIN)),
+            ..default()
+        })
+        .with_children(|row| {
+            // Setting name
+            row.spawn((
+                Text::new(setting_name),
+                TextFont {
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(wood::CARVED_LIGHT),
+            ));
+
+            // Setting value
+            row.spawn((
+                Text::new(setting_value),
+                TextFont {
+                    font_size: 16.0,
                     ..default()
                 },
                 TextColor(metal::GOLD),
             ));
         });
+}
+
+// ============================================================================
+// PLACEHOLDER CONTENT
+// ============================================================================
+
+fn spawn_placeholder_content(parent: &mut ChildBuilder, tab: InventoryTab) {
+    match tab {
+        InventoryTab::Settings => {
+            spawn_settings_content(parent);
+        }
+        _ => {
+            let text = match tab {
+                InventoryTab::Map => "MAP\n(Coming Soon)",
+                InventoryTab::Quests => "QUEST LOG\n(Coming Soon)",
+                _ => "CONTENT\n(Coming Soon)",
+            };
+
+            parent
+                .spawn(Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|content| {
+                    content.spawn((
+                        Text::new(text),
+                        TextFont {
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(metal::GOLD),
+                    ));
+                });
+        }
+    }
 }
 
 // ============================================================================
