@@ -80,6 +80,22 @@ pub struct DialogueVisible(pub bool);
 #[derive(Resource, Default)]
 pub struct CalendarVisible(pub bool);
 
+/// Developer mode toggle - enables test spawning and debug features
+#[derive(Resource, Default, Clone, Copy, Serialize, Deserialize)]
+pub struct DevMode {
+    pub enabled: bool,
+}
+
+impl DevMode {
+    pub fn toggle(&mut self) {
+        self.enabled = !self.enabled;
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+}
+
 /// Season types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Season {
