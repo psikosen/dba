@@ -26,6 +26,10 @@ impl Plugin for AiPlugin {
                 systems::boss_ai::boss_combat_dialogue,
                 systems::boss_ai::boss_phase_transitions,
             ).run_if(in_state(GameState::Playing)))
+            // Systems - Boss Combat Handlers
+            .add_systems(Update, (
+                systems::boss_combat_handlers::cleanup_minions_on_summoner_death,
+            ).run_if(in_state(GameState::Playing)))
             // Systems - NPC Dialogue
             .add_systems(Update, (
                 systems::npc_dialogue::brother_dialogue_system,
@@ -33,15 +37,55 @@ impl Plugin for AiPlugin {
                 systems::npc_dialogue::dynamic_greeting_system,
                 systems::npc_dialogue::update_conversation_context,
             ).run_if(in_state(GameState::Playing)))
+            // Systems - Dialogue Triggers
+            .add_systems(Update, (
+                systems::dialogue_triggers::detect_dialogue_proximity,
+                systems::dialogue_triggers::manual_dialogue_trigger,
+                systems::dialogue_triggers::handle_story_dialogue_triggers,
+                systems::dialogue_triggers::boss_combat_start_dialogue,
+                systems::dialogue_triggers::brother_quest_milestone_dialogue,
+                systems::dialogue_triggers::show_dialogue_indicators,
+                systems::dialogue_triggers::enforce_dialogue_cooldown,
+            ).run_if(in_state(GameState::Playing)))
+            // Systems - Spirit Guide
+            .add_systems(Update, (
+                systems::spirit_guide::handle_spirit_manifestation,
+                systems::spirit_guide::provide_spirit_guidance,
+                systems::spirit_guide::offer_spirit_quests,
+                systems::spirit_guide::apply_spirit_visual_effects,
+                systems::spirit_guide::apply_spirit_blessings,
+            ).run_if(in_state(GameState::Playing)))
             // Events - NPC Dialogue
             .add_event::<systems::npc_dialogue::PlayerDialogueRequest>()
             .add_event::<systems::npc_dialogue::NpcDialogueResponse>()
+            .add_event::<systems::dialogue_triggers::StoryDialogueTrigger>()
+            // Events - Spirit Guide
+            .add_event::<systems::spirit_guide::SpiritQuestOffered>()
+            .add_event::<systems::spirit_guide::SpiritManifestationEffect>()
+            .add_event::<systems::spirit_guide::SpiritGreetingEvent>()
             // Events - Boss Combat
             .add_event::<systems::boss_ai::SpecialMoveTriggered>()
             .add_event::<systems::boss_ai::SummonMinionEvent>()
             .add_event::<systems::boss_ai::StanceChangeEvent>()
             .add_event::<systems::boss_ai::AbilityTriggered>()
-            .add_event::<systems::boss_ai::CorruptionSpreadEvent>();
+            .add_event::<systems::boss_ai::CorruptionSpreadEvent>()
+            // Events - Boss Combat Effects
+            .add_event::<systems::boss_combat_handlers::SpawnSpecialMoveEffect>()
+            .add_event::<systems::boss_combat_handlers::SpawnSummonEffect>()
+            .add_event::<systems::boss_combat_handlers::StanceChangeEffect>()
+            .add_event::<systems::boss_combat_handlers::AbilityEffect>()
+            .add_event::<systems::boss_combat_handlers::HealEffect>()
+            .add_event::<systems::boss_combat_handlers::TeleportEffect>()
+            .add_event::<systems::boss_combat_handlers::CorruptionDamage>()
+            .add_event::<systems::boss_combat_handlers::CorruptionSpreadEffect>();
+
+        // Register observers for boss combat events
+        app
+            .add_observer(systems::boss_combat_handlers::handle_special_move)
+            .add_observer(systems::boss_combat_handlers::handle_summon_minion)
+            .add_observer(systems::boss_combat_handlers::handle_stance_change)
+            .add_observer(systems::boss_combat_handlers::handle_ability_triggered)
+            .add_observer(systems::boss_combat_handlers::handle_corruption_spread);
     }
 }
 

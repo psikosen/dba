@@ -4,6 +4,10 @@ use bevy_shaman_core::states::GameState;
 pub mod ancestral_theme;
 pub mod ancestral_hud;
 pub mod ancestral_inventory;
+pub mod ancestral_quest_tracker;
+
+#[cfg(test)]
+mod tests;
 
 pub struct UiPlugin;
 
@@ -13,6 +17,7 @@ impl Plugin for UiPlugin {
             // Ancestral UI resources
             .init_resource::<ancestral_hud::AncestralHudState>()
             .init_resource::<ancestral_inventory::AncestralInventoryState>()
+            .init_resource::<ancestral_quest_tracker::QuestLogUIState>()
 
             // Legacy UI resources
             .init_resource::<systems::bestiary::BestiaryVisible>()
@@ -35,6 +40,8 @@ impl Plugin for UiPlugin {
                 ancestral_hud::update_vitality_bars,
                 ancestral_hud::animate_health_bar,
                 ancestral_hud::animate_spirit_bar,
+                ancestral_quest_tracker::update_quest_tracker,
+                ancestral_quest_tracker::display_quest_log_full,
                 ancestral_inventory::display_ancestral_inventory,
                 ancestral_inventory::handle_tab_clicks,
                 ancestral_inventory::handle_compartment_hover,
