@@ -58,6 +58,20 @@ impl Plugin for CombatPlugin {
                 systems::rhythm_combo::apply_special_moves,
                 systems::rhythm_combo::rhythm_combo_reset,
             ).run_if(in_state(GameState::Playing)))
+            // Weapon enhancement systems
+            .add_systems(Update, (
+                systems::enhancement::spirit_merging_system,
+                systems::enhancement::plant_enhancement_system,
+                systems::enhancement::enchantment_decay_system,
+                systems::enhancement::apply_enhancement_bonuses,
+            ).run_if(in_state(GameState::Playing)))
+            // Skill tree systems
+            .add_systems(Update, (
+                systems::skill_tree::skill_unlock_system,
+                systems::skill_tree::apply_skill_bonuses,
+            ).run_if(in_state(GameState::Playing)))
+            // Resources
+            .init_resource::<systems::skill_tree::SkillDatabase>()
             // Events
             .add_event::<systems::events::HitLanded>()
             .add_event::<systems::events::StatusEffectApplied>()

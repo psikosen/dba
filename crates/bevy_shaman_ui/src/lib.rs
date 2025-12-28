@@ -5,6 +5,8 @@ pub mod ancestral_theme;
 pub mod ancestral_hud;
 pub mod ancestral_inventory;
 pub mod ancestral_quest_tracker;
+pub mod enhancement_ui;
+pub mod skill_tree_ui;
 
 #[cfg(test)]
 mod tests;
@@ -18,6 +20,8 @@ impl Plugin for UiPlugin {
             .init_resource::<ancestral_hud::AncestralHudState>()
             .init_resource::<ancestral_inventory::AncestralInventoryState>()
             .init_resource::<ancestral_quest_tracker::QuestLogUIState>()
+            .init_resource::<enhancement_ui::EnhancementUIState>()
+            .init_resource::<skill_tree_ui::SkillTreeUIState>()
 
             // Legacy UI resources
             .init_resource::<systems::bestiary::BestiaryVisible>()
@@ -50,6 +54,11 @@ impl Plugin for UiPlugin {
                 ancestral_inventory::handle_tab_clicks,
                 ancestral_inventory::handle_compartment_hover,
                 ancestral_inventory::handle_compartment_clicks,
+                enhancement_ui::toggle_enhancement_ui,
+                enhancement_ui::display_enhancement_ui,
+                skill_tree_ui::toggle_skill_tree_ui,
+                skill_tree_ui::display_skill_tree_ui,
+                skill_tree_ui::handle_skill_unlock_clicks,
             ).run_if(in_state(GameState::Playing)))
 
             // Legacy UI systems
