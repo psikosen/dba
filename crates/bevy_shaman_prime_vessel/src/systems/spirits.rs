@@ -211,7 +211,11 @@ pub fn process_player_absorption(
 
             if dx <= absorption_range && dy <= absorption_range {
                 let dist = ((dx * dx + dy * dy) as f32).sqrt();
-                if nearest.is_none() || dist < nearest.unwrap().1 {
+                let should_update = match nearest {
+                    None => true,
+                    Some((_, nearest_dist, _)) => dist < nearest_dist,
+                };
+                if should_update {
                     nearest = Some((spirit_entity, dist, spirit.power));
                 }
             }
