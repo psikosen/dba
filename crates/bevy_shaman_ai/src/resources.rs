@@ -34,9 +34,10 @@ impl Default for LlmModel {
 
         // Initialize backend
         let backend = create_backend(&model);
-        let backend_name = backend.name();
         model.backend = Some(backend);
-        info!("LLM backend initialized: {}", backend_name);
+        if let Some(backend) = &model.backend {
+            info!("LLM backend initialized: {}", backend.name());
+        }
 
         model
     }

@@ -74,14 +74,16 @@ mod world_tests {
     #[test]
     fn test_corruption_type_variants() {
         let none = CorruptionType::None;
-        let shadow = CorruptionType::Shadow;
-        let blood = CorruptionType::Blood;
+        let chaos = CorruptionType::Chaos;
+        let decay = CorruptionType::Decay;
         let void = CorruptionType::Void;
+        let ancestral = CorruptionType::Ancestral;
 
         assert!(matches!(none, CorruptionType::None));
-        assert!(matches!(shadow, CorruptionType::Shadow));
-        assert!(matches!(blood, CorruptionType::Blood));
+        assert!(matches!(chaos, CorruptionType::Chaos));
+        assert!(matches!(decay, CorruptionType::Decay));
         assert!(matches!(void, CorruptionType::Void));
+        assert!(matches!(ancestral, CorruptionType::Ancestral));
     }
 
     #[test]
