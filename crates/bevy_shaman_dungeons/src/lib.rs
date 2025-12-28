@@ -9,6 +9,7 @@ impl Plugin for DungeonsPlugin {
             .init_resource::<systems::generation::DungeonGenerator>()
             .add_systems(Update, (
                 systems::generation::trigger_dungeon_entry,
+                systems::generation::enter_dungeon_from_world,
                 systems::generation::generate_dungeon_rooms,
                 systems::encounters::spawn_encounters,
                 systems::bosses::manage_boss_fights,
@@ -93,6 +94,46 @@ pub mod systems {
                     dungeon_id: dungeon_id.clone(),
                 });
                 info!("Entering dungeon: {}", dungeon_id);
+            }
+        }
+
+        /// Enter dungeon from world tile (when player stands on DungeonEntrance)
+        pub fn enter_dungeon_from_world(
+            keyboard: Res<ButtonInput<KeyCode>>,
+            player_query: Query<&GridPosition, With<bevy_shaman_core::components::Player>>,
+            dungeon_entrances: Query<(&GridPosition, &bevy_shaman_world::components::DungeonEntrance)>,
+            mut events: EventWriter<super::events::DungeonEntered>,
+            mut dungeon_gen: ResMut<DungeonGenerator>,
+        ) {
+            // Press 'E' to enter dungeon when standing on entrance
+            if !keyboard.just_pressed(KeyCode::KeyE) {
+                return;
+            }
+
+            let Ok(player_pos) = player_query.get_single() else {
+                return;
+            };
+
+            // Check if player is standing on a dungeon entrance
+            for (entrance_pos, entrance) in dungeon_entrances.iter() {
+                if player_pos.x == entrance_pos.x && player_pos.y == entrance_pos.y {
+                    info!(
+                        "Player entering {} (Level {}) in {}",
+                        entrance.dungeon_id,
+                        entrance.difficulty_level,
+                        entrance.ecosystem.display_name()
+                    );
+
+                    // Send dungeon entered event
+                    events.send(super::events::DungeonEntered {
+                        dungeon_id: entrance.dungeon_id.clone(),
+                    });
+
+                    dungeon_gen.current_dungeon_id = entrance.dungeon_id.clone();
+                    dungeon_gen.dungeon_count += 1;
+
+                    return;
+                }
             }
         }
 
