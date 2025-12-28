@@ -13,6 +13,7 @@ bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
 bevy_shaman_world = { path = "../bevy_shaman_world" }
 bevy_shaman_story = { path = "../bevy_shaman_story" }
 bevy_shaman_items = { path = "../bevy_shaman_items" }
+bevy_shaman_dungeons = { path = "../bevy_shaman_dungeons" }
 
 [dev-dependencies]
 criterion.workspace = true

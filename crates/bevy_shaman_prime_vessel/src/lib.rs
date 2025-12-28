@@ -49,6 +49,7 @@ impl Plugin for PrimeVesselPlugin {
             .init_resource::<GlobalCorruptionIndex>()
             .init_resource::<PrimeVesselState>()
             .init_resource::<SpiritSpawnConfig>()
+            .init_resource::<systems::DungeonVesselEncounters>()
             // Register events
             .add_event::<VesselAbsorbedSpirit>()
             .add_event::<VesselShedLesserSelf>()
@@ -105,6 +106,10 @@ impl Plugin for PrimeVesselPlugin {
                     systems::check_resurrection_availability,
                     systems::process_resurrection_ritual,
                     systems::complete_resurrection,
+                    // Dungeon encounters (1% Prime Vessel, 12% Lesser Selves)
+                    systems::check_prime_vessel_dungeon_spawn,
+                    systems::spawn_lesser_selves_in_dungeon,
+                    systems::move_vessel_to_dungeon,
                 )
                     .run_if(in_state(GameState::Playing)),
             );
