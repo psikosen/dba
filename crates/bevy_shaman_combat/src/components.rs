@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 // Re-export from core to avoid circular dependency
 pub use bevy_shaman_core::components::{BloodLust, CombatDifficulty};
 
+// Focus abilities module
+pub mod focus_abilities;
+
 #[derive(Component, Default)]
 pub struct StatusEffects {
     pub effects: Vec<StatusEffect>,

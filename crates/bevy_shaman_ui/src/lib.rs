@@ -7,6 +7,7 @@ pub mod ancestral_inventory;
 pub mod ancestral_quest_tracker;
 pub mod enhancement_ui;
 pub mod skill_tree_ui;
+pub mod prime_vessel_hud;
 
 #[cfg(test)]
 mod tests;
@@ -37,7 +38,11 @@ impl Plugin for UiPlugin {
             .init_resource::<systems::combat_feedback::ScreenShake>()
 
             // Ancestral HUD systems (run when entering Playing state)
-            .add_systems(OnEnter(GameState::Playing), ancestral_hud::setup_ancestral_hud)
+            .add_systems(OnEnter(GameState::Playing), (
+                ancestral_hud::setup_ancestral_hud,
+                prime_vessel_hud::spawn_corruption_index_widget,
+                prime_vessel_hud::spawn_danger_level_widget,
+            ))
 
             // Ancestral UI update systems
             .add_systems(Update, (
@@ -59,6 +64,13 @@ impl Plugin for UiPlugin {
                 skill_tree_ui::toggle_skill_tree_ui,
                 skill_tree_ui::display_skill_tree_ui,
                 skill_tree_ui::handle_skill_unlock_clicks,
+                prime_vessel_hud::update_corruption_index_widget,
+                prime_vessel_hud::update_danger_level_widget,
+                prime_vessel_hud::spawn_vessel_encounter_notification,
+                prime_vessel_hud::update_vessel_encounter_notifications,
+                prime_vessel_hud::spawn_resurrection_ritual_widget,
+                prime_vessel_hud::update_resurrection_ritual_widget,
+                prime_vessel_hud::handle_corruption_index_revealed,
             ).run_if(in_state(GameState::Playing)))
 
             // Legacy UI systems
