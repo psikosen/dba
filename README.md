@@ -1,5 +1,9 @@
 # Shaman's Journey - Bevy ECS Architecture
 
+[![CI](https://github.com/psikosen/dba/actions/workflows/ci.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/ci.yml)
+[![Security Audit](https://github.com/psikosen/dba/actions/workflows/security.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/security.yml)
+[![Docker](https://github.com/psikosen/dba/actions/workflows/docker.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/docker.yml)
+
 A rhythm-based shaman healing game built with **Bevy 0.15.4** following strict **data-oriented design** principles.
 
 ## High Concept
