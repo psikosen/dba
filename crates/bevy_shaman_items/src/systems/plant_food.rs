@@ -31,6 +31,22 @@ pub enum BloodLustReductionSource {
     Music,
 }
 
+/// Event for feeding a blood plant (requires blood sacrifice)
+#[derive(Event)]
+pub struct FeedBloodPlant {
+    pub feeder: Entity,
+    pub plant: Entity,
+    pub plant_type: PlantType,
+}
+
+/// Event for feeding a spirit plant (requires spirit energy)
+#[derive(Event)]
+pub struct FeedSpiritPlant {
+    pub feeder: Entity,
+    pub plant: Entity,
+    pub plant_type: PlantType,
+}
+
 /// System to handle plant usage
 pub fn plant_usage(
     mut events: EventReader<UsePlant>,
@@ -102,6 +118,136 @@ pub fn plant_usage(
                         duration_remaining: 0.0,
                         strength: 25.0, // +25 max spirit
                         is_permanent: true,
+                    })
+                }
+                // Blood plant harvested effects (from consuming the yield)
+                PlantType::Mogodu => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::HealthCapacityBoost,
+                        duration_remaining: 0.0,
+                        strength: 20.0, // +20 max HP
+                        is_permanent: true,
+                    })
+                }
+                PlantType::Damu => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::HealthRegen,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 5.0, // 5 HP per second for 5 min
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Ingazi => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::StrengthBoost,
+                        duration_remaining: plant.effect_duration(),
+                        strength: plant.human_stat_boost(),
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Mwazi => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::DamageResistance,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 0.3, // 30% damage resistance
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Jini => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::VitalityBoost,
+                        duration_remaining: plant.effect_duration(),
+                        strength: plant.spirit_stat_boost(),
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Ropa => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::BloodFury,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 1.5, // 50% attack boost
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Samaki => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::StrengthBoost,
+                        duration_remaining: plant.effect_duration(),
+                        strength: plant.human_stat_boost(),
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Umthombo => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::LegendaryHealing,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 10.0, // 10 HP per second for 30 min
+                        is_permanent: false,
+                    })
+                }
+                // Spirit plant harvested effects
+                PlantType::Roho => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::SpiritCapacityBoost,
+                        duration_remaining: 0.0,
+                        strength: 30.0, // +30 max spirit
+                        is_permanent: true,
+                    })
+                }
+                PlantType::Moya => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::SpiritSight,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 1.0,
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Emi => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::WisdomBoost,
+                        duration_remaining: plant.effect_duration(),
+                        strength: plant.human_stat_boost(),
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Moyo => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::SpiritShield,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 0.4, // 40% spirit damage resistance
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Elima => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::SpiritualPower,
+                        duration_remaining: plant.effect_duration(),
+                        strength: plant.spirit_stat_boost(),
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Pepo => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::EtherealMovement,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 1.0,
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Sankofa => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::WisdomBoost,
+                        duration_remaining: plant.effect_duration(),
+                        strength: plant.human_stat_boost(),
+                        is_permanent: false,
+                    })
+                }
+                PlantType::Nommo => {
+                    Some(ActiveEffect {
+                        effect_type: EffectType::SpiritAscension,
+                        duration_remaining: plant.effect_duration(),
+                        strength: 2.0, // 100% spirit power increase
+                        is_permanent: false,
                     })
                 }
                 _ => None,
@@ -199,7 +345,7 @@ pub fn apply_active_effects(
     for (effects, mut health, mut spirit) in query.iter_mut() {
         for effect in &effects.effects {
             match effect.effect_type {
-                EffectType::HealthRegen => {
+                EffectType::HealthRegen | EffectType::LegendaryHealing => {
                     if let Some(ref mut h) = health {
                         h.heal(effect.strength * time.delta_secs());
                     }
@@ -210,11 +356,27 @@ pub fn apply_active_effects(
                     }
                 }
                 EffectType::SpiritCapacityBoost => {
-                    // This is a one-time boost, applied when the effect is first added
-                    // The system checks for permanent effects
+                    // Permanent boost applied when effect is first added
+                    if let Some(ref mut s) = spirit {
+                        // Only apply once when effect is permanent
+                        if effect.is_permanent {
+                            s.max += effect.strength;
+                            s.current = s.max; // Fill to new max
+                        }
+                    }
+                }
+                EffectType::HealthCapacityBoost => {
+                    // Permanent boost applied when effect is first added
+                    if let Some(ref mut h) = health {
+                        if effect.is_permanent {
+                            h.max += effect.strength;
+                            h.current = h.max; // Fill to new max
+                        }
+                    }
                 }
                 _ => {
                     // Other effects are passive and checked by other systems
+                    // (StrengthBoost, DamageResistance, etc.)
                 }
             }
         }
@@ -230,4 +392,218 @@ pub fn clear_permanent_effects_on_rest(
     // for mut effects in effects_query.iter_mut() {
     //     effects.remove_permanent_effects();
     // }
+}
+
+/// System to handle feeding blood plants
+pub fn feed_blood_plant(
+    mut events: EventReader<FeedBloodPlant>,
+    mut feeder_query: Query<(&mut Health, &mut BloodSacrificePenalty)>,
+    mut plant_query: Query<&mut PlantCare>,
+) {
+    for event in events.read() {
+        // Get the feeder's health and penalty tracker
+        if let Ok((mut health, mut penalty)) = feeder_query.get_mut(event.feeder) {
+            let blood_cost = event.plant_type.blood_cost();
+
+            // Check if player has enough HP
+            if health.current <= blood_cost {
+                warn!("Not enough HP to feed blood plant! Need {}, have {}",
+                    blood_cost, health.current);
+                continue;
+            }
+
+            // Take blood from player (reduce current HP)
+            health.damage(blood_cost);
+
+            // Add penalty (reduces max HP until rest)
+            penalty.add_penalty(blood_cost);
+
+            info!("Sacrificed {} HP to feed {:?} plant", blood_cost, event.plant_type);
+
+            // Feed the plant
+            if let Ok(mut plant_care) = plant_query.get_mut(event.plant) {
+                plant_care.feed();
+                info!("Blood plant {:?} has been fed!", event.plant_type);
+            }
+        }
+    }
+}
+
+/// System to handle feeding spirit plants
+pub fn feed_spirit_plant(
+    mut events: EventReader<FeedSpiritPlant>,
+    mut feeder_query: Query<&mut Spirit>,
+    mut plant_query: Query<&mut PlantCare>,
+) {
+    for event in events.read() {
+        // Get the feeder's spirit
+        if let Ok(mut spirit) = feeder_query.get_mut(event.feeder) {
+            let spirit_cost = event.plant_type.spirit_cost();
+
+            // Check if player has enough spirit
+            if spirit.current < spirit_cost {
+                warn!("Not enough spirit to feed plant! Need {}, have {}",
+                    spirit_cost, spirit.current);
+                continue;
+            }
+
+            // Take spirit from player
+            spirit.current -= spirit_cost;
+
+            info!("Sacrificed {} spirit to feed {:?} plant", spirit_cost, event.plant_type);
+
+            // Feed the plant
+            if let Ok(mut plant_care) = plant_query.get_mut(event.plant) {
+                plant_care.feed();
+                info!("Spirit plant {:?} has been fed!", event.plant_type);
+            }
+        }
+    }
+}
+
+/// System to apply blood sacrifice penalty to max HP
+pub fn apply_blood_sacrifice_penalty(
+    mut query: Query<(&mut Health, &BloodSacrificePenalty), Changed<BloodSacrificePenalty>>,
+) {
+    for (mut health, penalty) in query.iter_mut() {
+        // Temporarily reduce max HP (will be restored on rest)
+        let original_max = health.max + penalty.hp_reduction;
+        health.max = (original_max - penalty.hp_reduction).max(1.0);
+
+        // Make sure current HP doesn't exceed new max
+        if health.current > health.max {
+            health.current = health.max;
+        }
+    }
+}
+
+/// System to advance plant care days (should be called once per in-game day)
+pub fn advance_plant_care_days(
+    mut plant_query: Query<&mut PlantCare>,
+) {
+    for mut plant_care in plant_query.iter_mut() {
+        plant_care.advance_day();
+
+        if plant_care.is_withering {
+            warn!("Plant {:?} is withering! It needs feeding!", plant_care.plant_type);
+        }
+    }
+}
+
+/// System to apply passive HP regeneration from planted Umdhlebi
+pub fn apply_passive_hp_regen(
+    plant_query: Query<&PlantCare>,
+    mut player_query: Query<&mut Health>,
+    time: Res<Time>,
+) {
+    // Count healthy Umdhlebi plants
+    let umdhlebi_count = plant_query.iter()
+        .filter(|care| care.plant_type == PlantType::Umdhlebi && !care.is_withering)
+        .count();
+
+    if umdhlebi_count > 0 {
+        let total_regen = PlantType::Umdhlebi.passive_hp_regen() * umdhlebi_count as f32;
+
+        for mut health in player_query.iter_mut() {
+            health.heal(total_regen * time.delta_secs());
+        }
+    }
+}
+
+/// System to apply passive spirit regeneration from planted Baobab
+pub fn apply_passive_spirit_regen(
+    plant_query: Query<&PlantCare>,
+    mut player_query: Query<&mut Spirit>,
+    time: Res<Time>,
+) {
+    // Count healthy Baobab plants
+    let baobab_count = plant_query.iter()
+        .filter(|care| care.plant_type == PlantType::Baobab && !care.is_withering)
+        .count();
+
+    if baobab_count > 0 {
+        let total_regen = PlantType::Baobab.passive_spirit_regen() * baobab_count as f32;
+
+        for mut spirit in player_query.iter_mut() {
+            spirit.heal(total_regen * time.delta_secs());
+        }
+    }
+}
+
+/// Event for harvesting daily items from passive plants
+#[derive(Event)]
+pub struct HarvestPassivePlant {
+    pub harvester: Entity,
+    pub plant: Entity,
+}
+
+/// System to generate daily items from Umdhlebi and Baobab
+pub fn harvest_passive_plant_items(
+    mut events: EventReader<HarvestPassivePlant>,
+    mut plant_query: Query<&mut PlantCare>,
+    mut inventory_query: Query<&mut Inventory>,
+) {
+    use rand::Rng;
+
+    for event in events.read() {
+        if let Ok(mut plant_care) = plant_query.get_mut(event.plant) {
+            // Check if plant can be harvested
+            if !plant_care.can_harvest() {
+                warn!("Plant {:?} cannot be harvested yet! Days since harvest: {}, Is withering: {}",
+                    plant_care.plant_type, plant_care.days_since_harvest, plant_care.is_withering);
+                continue;
+            }
+
+            match plant_care.plant_type {
+                PlantType::Umdhlebi => {
+                    // Generate random rare item (30% chance of nothing)
+                    let mut rng = rand::thread_rng();
+                    let roll = rng.gen_range(0..100);
+
+                    let item_name = if roll < 30 {
+                        info!("Umdhlebi generated nothing today");
+                        plant_care.harvest();
+                        continue;
+                    } else if roll < 50 {
+                        "BloodCrystal"
+                    } else if roll < 70 {
+                        "LifeEssence"
+                    } else if roll < 85 {
+                        "AncestralBone"
+                    } else {
+                        "VitalSeed"
+                    };
+
+                    if let Ok(mut inventory) = inventory_query.get_mut(event.harvester) {
+                        let item = Item {
+                            id: item_name.to_string(),
+                            display_name: item_name.to_string(),
+                            item_type: ItemType::CraftingMaterial,
+                            max_stack: 10,
+                        };
+                        inventory.add_item(item, 1);
+                        info!("Umdhlebi generated: {}", item_name);
+                    }
+                }
+                PlantType::Baobab => {
+                    // Generate status cure for full party
+                    if let Ok(mut inventory) = inventory_query.get_mut(event.harvester) {
+                        let item = Item {
+                            id: "FullPartyStatusCure".to_string(),
+                            display_name: "Baobab Status Cure".to_string(),
+                            item_type: ItemType::Remedy,
+                            max_stack: 5,
+                        };
+                        inventory.add_item(item, 1);
+                        info!("Baobab generated: Full Party Status Cure");
+                    }
+                }
+                _ => {
+                    warn!("Tried to harvest non-passive plant: {:?}", plant_care.plant_type);
+                }
+            }
+
+            plant_care.harvest();
+        }
+    }
 }
