@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+#[cfg(test)]
+mod tests;
+
 pub struct SavePlugin;
 
 impl Plugin for SavePlugin {

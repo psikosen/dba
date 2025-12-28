@@ -148,12 +148,12 @@ mod dungeon_tests {
         // Last room: Always Boss
         // Middle rooms: 60% Encounter, 25% Empty, 15% Treasure
 
-        let encounter_chance = 0.6;
-        let empty_chance = 0.25;
-        let treasure_chance = 0.15;
+        let encounter_chance: f32 = 0.6;
+        let empty_chance: f32 = 0.25;
+        let treasure_chance: f32 = 0.15;
 
-        let total = encounter_chance + empty_chance + treasure_chance;
-        assert!((total - 1.0).abs() < 0.01); // Should sum to 1.0
+        let total: f32 = encounter_chance + empty_chance + treasure_chance;
+        assert!((total - 1.0_f32).abs() < 0.01); // Should sum to 1.0
 
         assert!(encounter_chance > empty_chance);
         assert!(empty_chance > treasure_chance);
@@ -231,10 +231,10 @@ mod dungeon_tests {
     #[test]
     fn test_qa_dungeon_progression() {
         // Dungeon should have linear progression with branches
-        let horizontal_preference = 0.7; // 70% horizontal
-        let vertical_chance = 0.3; // 30% vertical
+        let horizontal_preference: f32 = 0.7; // 70% horizontal
+        let vertical_chance: f32 = 0.3; // 30% vertical
 
-        assert!((horizontal_preference + vertical_chance - 1.0).abs() < 0.01);
+        assert!((horizontal_preference + vertical_chance - 1.0_f32).abs() < 0.01);
         assert!(horizontal_preference > vertical_chance);
     }
 
