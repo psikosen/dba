@@ -1,0 +1,304 @@
+# Prometheus Alerting Rules for Shaman's Journey
+# These rules define when alerts should be triggered based on metrics
+
+groups:
+  # =======================================================
+  # Critical Service Availability Alerts
+  # =======================================================
+  - name: service_availability
+    interval: 30s
+    rules:
+      - alert: ShamanJourneyDown
+        expr: up{job="shaman-journey"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: game
+        annotations:
+          summary: "Shaman's Journey game service is down"
+          description: "The main game service has been unavailable for more than 1 minute. This impacts all players."
+          runbook: "https://docs.example.com/runbooks/service-down"
+
+      - alert: DragonflyDBDown
+        expr: up{job="dragonfly"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "DragonflyDB cache service is down"
+          description: "Cache service unavailable for 2+ minutes. Performance will degrade."
+          impact: "LLM responses, dungeon generation, and session state may be slower"
+
+      - alert: RabbitMQDown
+        expr: up{job="rabbitmq"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "RabbitMQ message queue is down"
+          description: "Message queue unavailable. Background jobs and events are not being processed."
+          impact: "Offline processing, analytics, and async features disabled"
+
+  # =======================================================
+  # Performance & Resource Alerts
+  # =======================================================
+  - name: performance_alerts
+    interval: 1m
+    rules:
+      - alert: LowFrameRate
+        expr: bevy_shaman_fps < 30
+        for: 5m
+        labels:
+          severity: warning
+          component: game
+        annotations:
+          summary: "Game FPS below acceptable threshold"
+          description: "Average FPS is {{ $value }} (below 30) for 5+ minutes"
+          suggestion: "Check entity count, system performance, or hardware resources"
+
+      - alert: HighFrameTime
+        expr: bevy_shaman_frame_time_seconds > 0.033
+        for: 5m
+        labels:
+          severity: warning
+          component: game
+        annotations:
+          summary: "Frame rendering time too high"
+          description: "Frame time is {{ $value }}s (target: <33ms for 30 FPS)"
+          suggestion: "Profile systems, check for blocking operations"
+
+      - alert: HighEntityCount
+        expr: bevy_shaman_entity_count > 10000
+        for: 10m
+        labels:
+          severity: warning
+          component: game
+        annotations:
+          summary: "Unusually high entity count"
+          description: "Entity count is {{ $value }} (threshold: 10000)"
+          impact: "May cause performance degradation"
+
+  # =======================================================
+  # Cache Performance Alerts
+  # =======================================================
+  - name: cache_alerts
+    interval: 2m
+    rules:
+      - alert: HighCacheMissRate
+        expr: |
+          (
+            rate(dragonfly_keyspace_misses[5m]) /
+            (rate(dragonfly_keyspace_hits[5m]) + rate(dragonfly_keyspace_misses[5m]))
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Cache miss rate above 50%"
+          description: "Cache hit rate is below 50% for 10+ minutes (current: {{ $value | humanizePercentage }})"
+          impact: "Increased load on backend services, slower response times"
+          suggestion: "Check cache TTL settings or increase cache memory"
+
+      - alert: CacheMemoryHigh
+        expr: dragonfly_memory_usage_bytes / dragonfly_memory_limit_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "DragonflyDB memory usage above 85%"
+          description: "Cache memory usage at {{ $value | humanizePercentage }}"
+          impact: "May trigger evictions, reducing cache effectiveness"
+
+      - alert: HighCacheEvictionRate
+        expr: rate(dragonfly_evicted_keys[5m]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "High cache key eviction rate"
+          description: "Evicting {{ $value }} keys per second"
+          suggestion: "Increase cache memory limit or adjust TTL settings"
+
+  # =======================================================
+  # Message Queue Alerts
+  # =======================================================
+  - name: queue_alerts
+    interval: 2m
+    rules:
+      - alert: HighQueueDepth
+        expr: rabbitmq_queue_messages{queue="background_jobs"} > 1000
+        for: 15m
+        labels:
+          severity: warning
+          component: queue
+        annotations:
+          summary: "Background job queue is backing up"
+          description: "Queue depth: {{ $value }} messages (threshold: 1000)"
+          impact: "Job processing delays, potential memory issues"
+          suggestion: "Scale up workers or check for stuck jobs"
+
+      - alert: QueueConsumerDown
+        expr: rabbitmq_queue_consumers{queue="background_jobs"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: queue
+        annotations:
+          summary: "No consumers for background jobs queue"
+          description: "No active consumers processing background jobs"
+          impact: "Jobs will accumulate, features may break"
+
+      - alert: HighMessageRate
+        expr: rate(rabbitmq_queue_messages_published_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+          component: queue
+        annotations:
+          summary: "High message publishing rate"
+          description: "Publishing {{ $value }} messages/sec to queue"
+          note: "Ensure consumers can keep up with this rate"
+
+  # =======================================================
+  # Error Rate Alerts
+  # =======================================================
+  - name: error_alerts
+    interval: 1m
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          rate(bevy_shaman_errors_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: game
+        annotations:
+          summary: "Error rate elevated"
+          description: "{{ $value }} errors per second in the last 5 minutes"
+          suggestion: "Check logs and Sentry for error details"
+
+      - alert: CriticalErrorSpike
+        expr: |
+          rate(bevy_shaman_errors_total[1m]) > 20
+        for: 2m
+        labels:
+          severity: critical
+          component: game
+        annotations:
+          summary: "Critical error spike detected"
+          description: "{{ $value }} errors per second - immediate investigation required"
+          action: "Check application logs and Sentry dashboard immediately"
+
+  # =======================================================
+  # Resource Utilization Alerts
+  # =======================================================
+  - name: resource_alerts
+    interval: 2m
+    rules:
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_usage_bytes{container="shaman-journey-game"} /
+            container_spec_memory_limit_bytes{container="shaman-journey-game"}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Game container memory usage above 85%"
+          description: "Memory usage at {{ $value | humanizePercentage }}"
+          impact: "Risk of OOM kill, service restart"
+
+      - alert: HighCPUUsage
+        expr: |
+          rate(container_cpu_usage_seconds_total{container="shaman-journey-game"}[5m]) > 1.7
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Game container CPU usage above 85% of limit"
+          description: "CPU usage at {{ $value }} cores (limit: 2 cores)"
+          impact: "Performance degradation possible"
+
+  # =======================================================
+  # Game-Specific Alerts
+  # =======================================================
+  - name: game_alerts
+    interval: 5m
+    rules:
+      - alert: HighPlayerDeathRate
+        expr: rate(bevy_shaman_player_deaths_total[1h]) > 10
+        for: 30m
+        labels:
+          severity: info
+          component: game
+        annotations:
+          summary: "Unusually high player death rate"
+          description: "{{ $value }} player deaths per second"
+          note: "May indicate game balance issue or bug"
+
+      - alert: NoMonsterSpawns
+        expr: rate(bevy_shaman_monsters_spawned_total[10m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: game
+        annotations:
+          summary: "No monsters spawning"
+          description: "Monster spawn system may be broken"
+          impact: "Players cannot progress or engage in combat"
+
+      - alert: CorruptionLevelCritical
+        expr: bevy_shaman_corruption_level > 0.95
+        for: 5m
+        labels:
+          severity: warning
+          component: game
+        annotations:
+          summary: "World corruption level critically high"
+          description: "Corruption at {{ $value | humanizePercentage }}"
+          note: "Game may trigger end-game scenario"
+
+  # =======================================================
+  # Monitoring System Health
+  # =======================================================
+  - name: monitoring_health
+    interval: 1m
+    rules:
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "Prometheus target {{ $labels.job }} is down"
+          description: "Target has been unreachable for 5 minutes"
+
+      - alert: PrometheusHighCardinality
+        expr: count(up) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: monitoring
+        annotations:
+          summary: "High metric cardinality detected"
+          description: "{{ $value }} active targets - may impact performance"
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: monitoring
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alert notifications will not be sent"
+          impact: "No alerting until Alertmanager is restored"

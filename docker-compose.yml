@@ -6,8 +6,9 @@ services:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     container_name: shaman-dragonfly
     restart: unless-stopped
+    # Bind to localhost only for security (internal service)
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - dragonfly-data:/data
     command: >
@@ -15,6 +16,15 @@ services:
       --requirepass ${DRAGONFLY_PASSWORD:-changeme}
       --maxmemory 512mb
       --save_schedule "*:*"
+    # Resource limits to prevent resource exhaustion
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M  # 512MB + buffer for overhead
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${DRAGONFLY_PASSWORD:-changeme}", "ping"]
       interval: 10s
@@ -34,15 +44,25 @@ services:
     image: rabbitmq:3.13-management-alpine
     container_name: shaman-rabbitmq
     restart: unless-stopped
+    # Bind to localhost only for security (internal service)
     ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI
+      - "127.0.0.1:5672:5672"   # AMQP port
+      - "127.0.0.1:15672:15672" # Management UI
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
       - RABBITMQ_DEFAULT_VHOST=/
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    # Resource limits to prevent resource exhaustion
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s

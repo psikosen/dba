@@ -11,18 +11,45 @@ pub struct DragonflyCache {
 }
 
 impl DragonflyCache {
-    /// Create a new DragonflyDB cache client
+    /// Create a new DragonflyDB cache client with retry logic
     pub async fn new(url: &str) -> Result<Self> {
-        info!("Connecting to DragonflyDB at {}", url);
+        let max_retries = 5;
+        let mut attempt = 0;
 
+        loop {
+            attempt += 1;
+            info!("Connecting to DragonflyDB at {} (attempt {}/{})", url, attempt, max_retries);
+
+            match Self::try_connect(url).await {
+                Ok(client) => {
+                    info!("Successfully connected to DragonflyDB");
+                    return Ok(client);
+                }
+                Err(e) if attempt >= max_retries => {
+                    error!("Failed to connect to DragonflyDB after {} attempts: {}", max_retries, e);
+                    return Err(e);
+                }
+                Err(e) => {
+                    // Exponential backoff: 2^attempt seconds, capped at 64 seconds
+                    let backoff_secs = 2_u64.pow(attempt.min(6));
+                    warn!(
+                        "DragonflyDB connection failed (attempt {}): {}. Retrying in {} seconds...",
+                        attempt, e, backoff_secs
+                    );
+                    tokio::time::sleep(std::time::Duration::from_secs(backoff_secs)).await;
+                }
+            }
+        }
+    }
+
+    /// Internal method to attempt connection (used by retry logic)
+    async fn try_connect(url: &str) -> Result<Self> {
         let client = Client::open(url)
             .context("Failed to create Redis client for DragonflyDB")?;
 
         let connection = ConnectionManager::new(client)
             .await
             .context("Failed to connect to DragonflyDB")?;
-
-        info!("Successfully connected to DragonflyDB");
 
         Ok(Self { client: connection })
     }
