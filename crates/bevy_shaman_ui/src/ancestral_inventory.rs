@@ -7,8 +7,10 @@ use crate::ancestral_theme::*;
 /// - Tactile item icons (gourds, woven cloth, hammered metal)
 /// - Bark cloth/papyrus background with geometric Benin bronze patterns
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_shaman_core::components::Player;
 use bevy_shaman_items::components::{Inventory, ItemStack};
+use bevy_shaman_items::systems::inventory::{ItemDropped, ItemUsed};
 
 // ============================================================================
 // COMPONENTS
@@ -924,7 +926,17 @@ pub fn handle_compartment_clicks(
     mut inventory_state: ResMut<AncestralInventoryState>,
     mouse_button: Res<ButtonInput<MouseButton>>,
     compartment_query: Query<(&Interaction, &ItemCompartment)>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    player_inventory: Query<&Inventory, With<Player>>,
 ) {
+    let Ok(window) = window_query.get_single() else {
+        return;
+    };
+
+    let Ok(inventory) = player_inventory.get_single() else {
+        return;
+    };
+
     for (interaction, compartment) in compartment_query.iter() {
         if *interaction == Interaction::Hovered {
             // Left click - select/use
@@ -934,9 +946,356 @@ pub fn handle_compartment_clicks(
 
             // Right click - context menu
             if mouse_button.just_pressed(MouseButton::Right) {
-                inventory_state.show_context_menu = true;
-                inventory_state.context_menu_item = Some(compartment.index);
+                // Get item at this index
+                if let Some(item_stack) = inventory.items.get(compartment.index) {
+                    inventory_state.show_context_menu = true;
+                    inventory_state.context_menu_item = Some(compartment.index);
+                    inventory_state.tooltip_item = Some(item_stack.item.id.clone());
+
+                    // Position context menu at cursor
+                    if let Some(cursor_pos) = window.cursor_position() {
+                        inventory_state.context_menu_position = cursor_pos;
+                    }
+                }
             }
+        }
+    }
+}
+
+// ============================================================================
+// TOOLTIP SYSTEM
+// ============================================================================
+
+pub fn display_item_tooltip(
+    mut commands: Commands,
+    inventory_state: Res<AncestralInventoryState>,
+    player_inventory: Query<&Inventory, With<Player>>,
+    tooltip_query: Query<Entity, With<ItemTooltipUI>>,
+) {
+    // Despawn existing tooltips
+    for entity in tooltip_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    // Don't show tooltip if context menu is open
+    if inventory_state.show_context_menu {
+        return;
+    }
+
+    // Show tooltip for hovered item
+    if let Some(hovered_index) = inventory_state.hovered_compartment {
+        let Ok(inventory) = player_inventory.get_single() else {
+            return;
+        };
+
+        if let Some(item_stack) = inventory.items.get(hovered_index) {
+            spawn_tooltip(&mut commands, item_stack);
+        }
+    }
+}
+
+fn spawn_tooltip(commands: &mut Commands, item_stack: &ItemStack) {
+    let description = get_item_description(&item_stack.item.id);
+    let item_type_text = format!("{:?}", item_stack.item.item_type);
+
+    commands
+        .spawn((
+            ItemTooltipUI,
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(900.0),
+                top: Val::Px(200.0),
+                width: Val::Px(300.0),
+                padding: UiRect::all(Val::Px(SPACING_MEDIUM)),
+                border: UiRect::all(Val::Px(BORDER_MEDIUM)),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(SPACING_SMALL),
+                ..default()
+            },
+            BackgroundColor(wood::MAHOGANY),
+            BorderColor(metal::GOLD),
+            GlobalZIndex(2100), // Above inventory
+        ))
+        .with_children(|tooltip| {
+            // Item name
+            tooltip.spawn((
+                TooltipTitle,
+                Text::new(&item_stack.item.display_name),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(metal::GOLD),
+            ));
+
+            // Item type
+            tooltip.spawn((
+                Text::new(&item_type_text),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(metal::BRONZE),
+            ));
+
+            // Divider
+            tooltip.spawn(Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(2.0),
+                margin: UiRect::vertical(Val::Px(SPACING_SMALL)),
+                ..default()
+            });
+
+            // Description
+            tooltip.spawn((
+                TooltipDescription,
+                Text::new(description),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(bone::AGED_BONE),
+            ));
+
+            // Quantity
+            if item_stack.quantity > 1 {
+                tooltip.spawn((
+                    Text::new(format!("Quantity: {}", item_stack.quantity)),
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
+                    TextColor(metal::COPPER),
+                ));
+            }
+        });
+}
+
+fn get_item_description(item_id: &str) -> &'static str {
+    match item_id {
+        id if id.contains("spirit_orb") => "Restores Spirit and Stamina when consumed",
+        id if id.contains("health") || id.contains("remedy") => "Restores health when consumed",
+        id if id.contains("herb") => "A medicinal herb with healing properties",
+        id if id.contains("bread") || id.contains("meat") => "Nutritious food that reduces blood lust",
+        id if id.contains("plant") => "A mystical plant with special properties",
+        _ => "A valuable item",
+    }
+}
+
+// ============================================================================
+// CONTEXT MENU SYSTEM
+// ============================================================================
+
+pub fn display_context_menu(
+    mut commands: Commands,
+    inventory_state: Res<AncestralInventoryState>,
+    player_inventory: Query<&Inventory, With<Player>>,
+    context_menu_query: Query<Entity, With<ContextMenuUI>>,
+) {
+    // Despawn existing context menus
+    for entity in context_menu_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    if !inventory_state.show_context_menu {
+        return;
+    }
+
+    let Some(item_index) = inventory_state.context_menu_item else {
+        return;
+    };
+
+    let Ok(inventory) = player_inventory.get_single() else {
+        return;
+    };
+
+    let Some(item_stack) = inventory.items.get(item_index) else {
+        return;
+    };
+
+    let is_consumable = matches!(
+        item_stack.item.item_type,
+        bevy_shaman_items::components::ItemType::SpiritOrb(_)
+            | bevy_shaman_items::components::ItemType::Herb
+            | bevy_shaman_items::components::ItemType::Remedy
+            | bevy_shaman_items::components::ItemType::Plant(_)
+            | bevy_shaman_items::components::ItemType::Food(_)
+    );
+
+    spawn_context_menu(
+        &mut commands,
+        inventory_state.context_menu_position,
+        item_index,
+        is_consumable,
+        item_stack.quantity > 1,
+    );
+}
+
+fn spawn_context_menu(
+    commands: &mut Commands,
+    position: Vec2,
+    item_index: usize,
+    is_consumable: bool,
+    has_multiple: bool,
+) {
+    commands
+        .spawn((
+            ContextMenuUI,
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(position.x),
+                top: Val::Px(position.y),
+                width: Val::Px(150.0),
+                padding: UiRect::all(Val::Px(SPACING_SMALL)),
+                border: UiRect::all(Val::Px(BORDER_MEDIUM)),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(4.0),
+                ..default()
+            },
+            BackgroundColor(wood::EBONY),
+            BorderColor(metal::GOLD),
+            GlobalZIndex(2200), // Above tooltip
+        ))
+        .with_children(|menu| {
+            // Use button (only for consumables)
+            if is_consumable {
+                spawn_context_button(menu, "Use", ItemAction::Use, item_index);
+            }
+
+            // Examine button
+            spawn_context_button(menu, "Examine", ItemAction::Examine, item_index);
+
+            // Drop single
+            spawn_context_button(menu, "Drop (1)", ItemAction::Drop, item_index);
+
+            // Drop stack (only if quantity > 1)
+            if has_multiple {
+                spawn_context_button(menu, "Drop All", ItemAction::DropStack, item_index);
+            }
+        });
+}
+
+fn spawn_context_button(
+    parent: &mut ChildBuilder,
+    label: &str,
+    action: ItemAction,
+    item_index: usize,
+) {
+    parent
+        .spawn((
+            ContextButton {
+                action,
+                item_index,
+            },
+            Button,
+            Node {
+                width: Val::Percent(100.0),
+                padding: UiRect::all(Val::Px(SPACING_SMALL)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BackgroundColor(wood::CARVED_LIGHT),
+        ))
+        .with_children(|button| {
+            button.spawn((
+                Text::new(label),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(metal::GOLD),
+            ));
+        });
+}
+
+// ============================================================================
+// CONTEXT MENU INTERACTION
+// ============================================================================
+
+pub fn handle_context_menu_clicks(
+    mut inventory_state: ResMut<AncestralInventoryState>,
+    button_query: Query<(&Interaction, &ContextButton), Changed<Interaction>>,
+    player_query: Query<Entity, With<Player>>,
+    player_inventory: Query<&Inventory, With<Player>>,
+    mut use_events: EventWriter<ItemUsed>,
+    mut drop_events: EventWriter<ItemDropped>,
+) {
+    let Ok(player_entity) = player_query.get_single() else {
+        return;
+    };
+
+    let Ok(inventory) = player_inventory.get_single() else {
+        return;
+    };
+
+    for (interaction, button) in button_query.iter() {
+        if *interaction == Interaction::Pressed {
+            let Some(item_stack) = inventory.items.get(button.item_index) else {
+                continue;
+            };
+
+            match button.action {
+                ItemAction::Use => {
+                    use_events.send(ItemUsed {
+                        player: player_entity,
+                        item_id: item_stack.item.id.clone(),
+                    });
+                    inventory_state.show_context_menu = false;
+                }
+                ItemAction::Drop => {
+                    drop_events.send(ItemDropped {
+                        player: player_entity,
+                        item_id: item_stack.item.id.clone(),
+                        quantity: 1,
+                    });
+                    inventory_state.show_context_menu = false;
+                }
+                ItemAction::DropStack => {
+                    drop_events.send(ItemDropped {
+                        player: player_entity,
+                        item_id: item_stack.item.id.clone(),
+                        quantity: item_stack.quantity,
+                    });
+                    inventory_state.show_context_menu = false;
+                }
+                ItemAction::Examine => {
+                    // Show detailed tooltip
+                    inventory_state.show_tooltip = true;
+                    inventory_state.tooltip_item = Some(item_stack.item.id.clone());
+                    inventory_state.show_context_menu = false;
+                }
+                ItemAction::Equip => {
+                    // TODO: Implement equipment system
+                    inventory_state.show_context_menu = false;
+                }
+            }
+        }
+    }
+}
+
+// ============================================================================
+// CLOSE CONTEXT MENU ON OUTSIDE CLICK
+// ============================================================================
+
+pub fn close_context_menu_on_click(
+    mut inventory_state: ResMut<AncestralInventoryState>,
+    mouse_button: Res<ButtonInput<MouseButton>>,
+    context_menu_query: Query<&Interaction, With<ContextMenuUI>>,
+) {
+    if !inventory_state.show_context_menu {
+        return;
+    }
+
+    // Check if user clicked outside context menu
+    if mouse_button.just_pressed(MouseButton::Left) || mouse_button.just_pressed(MouseButton::Right)
+    {
+        let clicked_on_menu = context_menu_query
+            .iter()
+            .any(|interaction| matches!(interaction, Interaction::Hovered | Interaction::Pressed));
+
+        if !clicked_on_menu {
+            inventory_state.show_context_menu = false;
         }
     }
 }
