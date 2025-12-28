@@ -113,6 +113,12 @@ impl Plugin for PrimeVesselPlugin {
                     systems::check_prime_vessel_dungeon_spawn,
                     systems::spawn_lesser_selves_in_dungeon,
                     systems::move_vessel_to_dungeon,
+                    // Vessel combat (health tracking and defeat)
+                    systems::initialize_vessel_health,
+                    systems::initialize_lesser_self_health,
+                    systems::check_vessel_defeat,
+                    systems::check_lesser_self_defeat,
+                    systems::apply_mutation_effects,
                 )
                     .run_if(in_state(GameState::Playing)),
             );

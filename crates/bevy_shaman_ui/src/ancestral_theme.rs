@@ -80,7 +80,32 @@ pub mod dye {
 
     /// Deep red ochre (for health/blood)
     pub const RED_OCHRE: Color = Color::srgb(0.70, 0.13, 0.13);
+
+    /// Blood red (for danger/corruption)
+    pub const BLOOD_RED: Color = Color::srgb(0.85, 0.10, 0.10);
 }
+
+// ============================================================================
+// PUBLIC RE-EXPORTS - For convenience in UI components
+// ============================================================================
+
+// Wood tones
+pub use wood::{EBONY, MAHOGANY, CARVED_LIGHT, GRAIN_HIGHLIGHT};
+
+// Metal tones
+pub use metal::{BRONZE, BRONZE_PATINA, COPPER, GOLD, GOLD_SHINE};
+
+// Earth tones
+pub use earth::{OCHRE_RED, BURNT_ORANGE, SOIL_BROWN, CHARCOAL, TERRACOTTA};
+
+// Natural dyes
+pub use dye::{INDIGO, FOREST_GREEN, TURMERIC, RED_OCHRE, BLOOD_RED};
+
+// Bone tones
+pub use bone::{IVORY, AGED_BONE, BONE_SHADOW};
+
+// Fabric tones
+pub use fabric::{LEATHER, LEATHER_TOOLED, WOVEN_DARK, MUD_CLOTH};
 
 /// Ivory and bone tones
 pub mod bone {

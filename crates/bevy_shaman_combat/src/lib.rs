@@ -71,6 +71,18 @@ impl Plugin for CombatPlugin {
                 systems::skill_tree::apply_skill_bonuses,
                 systems::skill_tree::award_skill_points_on_level_up,
             ).run_if(in_state(GameState::Playing)))
+            // Focus ability systems
+            .add_systems(Update, (
+                systems::focus_abilities::regenerate_shaman_focus,
+                systems::focus_abilities::handle_focus_ability_input,
+                systems::focus_abilities::process_focus_ability_casting,
+                systems::focus_abilities::update_focus_ability_casting,
+                systems::focus_abilities::apply_focus_ability_effects,
+                systems::focus_abilities::update_ability_cooldowns,
+                systems::focus_abilities::update_spirit_infusion,
+                systems::focus_abilities::apply_object_manipulation,
+                systems::focus_abilities::check_object_breaking,
+            ).run_if(in_state(GameState::Playing)))
             // Resources
             .init_resource::<systems::skill_tree::SkillDatabase>()
             // Events
@@ -79,6 +91,9 @@ impl Plugin for CombatPlugin {
             .add_event::<systems::wheel::WheelTriggered>()
             .add_event::<systems::monster_control::AttemptMonsterControl>()
             .add_event::<systems::monster_control::ReleaseMonsterControl>()
-            .add_event::<systems::rhythm_combo::SpecialMoveExecuted>();
+            .add_event::<systems::rhythm_combo::SpecialMoveExecuted>()
+            .add_event::<components::focus_abilities::FocusAbilityCast>()
+            .add_event::<components::focus_abilities::FocusAbilityCompleted>()
+            .add_event::<components::focus_abilities::ObjectManipulated>();
     }
 }

@@ -10,3 +10,4 @@ pub mod monster_control;
 pub mod rhythm_combo;
 pub mod enhancement;
 pub mod skill_tree;
+pub mod focus_abilities;
