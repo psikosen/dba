@@ -33,6 +33,7 @@ impl Plugin for CorePlugin {
             .init_resource::<settings::GameSettings>()
             .init_resource::<systems::player::PlayerSpawned>()
             .init_resource::<systems::assets::AssetLoadingState>()
+            .init_resource::<systems::input::ConnectedGamepads>()
             // Register events
             .add_event::<events::DialogueRequested>()
             .add_event::<events::PlayerDied>()
@@ -50,6 +51,7 @@ impl Plugin for CorePlugin {
             ))
             // Core gameplay systems
             .add_systems(Update, (
+                systems::input::gamepad_connections,
                 systems::input::handle_player_input,
                 systems::input::handle_inventory_toggle,
                 systems::input::handle_interaction_input,
