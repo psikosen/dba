@@ -173,6 +173,154 @@ pub struct UnderPlayerControl {
 }
 
 // ============================================================================
+// WEAPON ENHANCEMENT SYSTEM
+// ============================================================================
+
+/// Weapon enhancement through spirit merging and plant infusion
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
+pub struct WeaponEnhancement {
+    pub level: u32,
+    pub infused_spirit_energy: f32,
+    pub active_enchantments: Vec<Enchantment>,
+    pub permanent_bonuses: EnhancementBonuses,
+}
+
+impl Default for WeaponEnhancement {
+    fn default() -> Self {
+        Self {
+            level: 0,
+            infused_spirit_energy: 0.0,
+            active_enchantments: Vec::new(),
+            permanent_bonuses: EnhancementBonuses::default(),
+        }
+    }
+}
+
+impl WeaponEnhancement {
+    pub const MAX_LEVEL: u32 = 10;
+
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Calculate cost for next level enhancement
+    pub fn next_level_cost(&self) -> EnhancementCost {
+        let base_spirit = 50.0;
+        let base_blood = 20.0;
+
+        EnhancementCost {
+            spirit_orbs: base_spirit * (self.level as f32 + 1.0) * 1.5,
+            blood_plants: (self.level / 2) as u32 + 1,
+            spirit_plants: (self.level / 2) as u32 + 1,
+        }
+    }
+
+    /// Apply permanent upgrade when leveling up
+    pub fn apply_upgrade(&mut self, weapon: &mut EquippedWeapon) {
+        if self.level >= Self::MAX_LEVEL {
+            return;
+        }
+
+        self.level += 1;
+
+        // Increase permanent bonuses
+        self.permanent_bonuses.damage_percent += 5.0 + (self.level as f32 * 0.5);
+        self.permanent_bonuses.spirit_efficiency += 2.0;
+
+        // Restore durability and increase max
+        weapon.max_durability += 10.0;
+        weapon.durability = weapon.max_durability;
+
+        // Every 3 levels, unlock special ability
+        if self.level % 3 == 0 {
+            self.unlock_special_ability();
+        }
+    }
+
+    /// Apply temporary enchantment from plants
+    pub fn apply_temporary_enchantment(
+        &mut self,
+        enchantment_type: EnchantmentType,
+        duration: f32,
+        strength: f32,
+    ) {
+        // Remove existing enchantment of same type
+        self.active_enchantments.retain(|e| e.enchantment_type != enchantment_type);
+
+        self.active_enchantments.push(Enchantment {
+            enchantment_type,
+            duration_remaining: duration,
+            strength,
+        });
+    }
+
+    /// Update enchantments (remove expired ones)
+    pub fn update_enchantments(&mut self, delta: f32) {
+        for enchantment in &mut self.active_enchantments {
+            enchantment.duration_remaining -= delta;
+        }
+        self.active_enchantments.retain(|e| e.duration_remaining > 0.0);
+    }
+
+    /// Get total damage bonus percentage
+    pub fn damage_bonus(&self) -> f32 {
+        self.permanent_bonuses.damage_percent
+    }
+
+    /// Get spirit efficiency (reduces spirit cost)
+    pub fn spirit_cost_multiplier(&self) -> f32 {
+        let reduction = self.permanent_bonuses.spirit_efficiency;
+        (100.0 - reduction).max(20.0) / 100.0  // Minimum 20% cost
+    }
+
+    fn unlock_special_ability(&mut self) {
+        // Unlocked abilities tracked in permanent bonuses
+        match self.level {
+            3 => self.permanent_bonuses.critical_chance += 10.0,
+            6 => self.permanent_bonuses.lifesteal_percent += 5.0,
+            9 => self.permanent_bonuses.ancestral_strike_unlocked = true,
+            _ => {}
+        }
+    }
+
+    /// Check if weapon can use ancestral strike (special attack)
+    pub fn has_ancestral_strike(&self) -> bool {
+        self.permanent_bonuses.ancestral_strike_unlocked
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct EnhancementCost {
+    pub spirit_orbs: f32,
+    pub blood_plants: u32,
+    pub spirit_plants: u32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EnhancementBonuses {
+    pub damage_percent: f32,
+    pub spirit_efficiency: f32,
+    pub critical_chance: f32,
+    pub lifesteal_percent: f32,
+    pub ancestral_strike_unlocked: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Enchantment {
+    pub enchantment_type: EnchantmentType,
+    pub duration_remaining: f32,
+    pub strength: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum EnchantmentType {
+    BloodFury,          // Temporary damage boost from blood plants
+    SpiritInfusion,     // Reduced spirit cost from spirit plants
+    VenomCoating,       // Poison damage from poison plants
+    AncestralBlessing,  // Blessing from rare plants
+}
+
+// ============================================================================
 // RHYTHM COMBOS
 // ============================================================================
 
