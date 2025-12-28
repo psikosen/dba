@@ -1,8 +1,10 @@
+pub mod circuit_breaker;
 pub mod dragonfly;
 pub mod llm_cache;
 pub mod dungeon_cache;
 pub mod session_cache;
 
+pub use circuit_breaker::{CircuitBreaker, CircuitState};
 pub use dragonfly::DragonflyCache;
 pub use llm_cache::LlmResponseCache;
 pub use dungeon_cache::DungeonSeedCache;

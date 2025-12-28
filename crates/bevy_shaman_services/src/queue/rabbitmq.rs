@@ -4,12 +4,16 @@ use lapin::{
     types::FieldTable,
     Channel, Connection, ConnectionProperties,
 };
+use std::time::Duration;
 use tracing::{error, info, warn};
 
-/// RabbitMQ client for message queue operations
+use crate::cache::CircuitBreaker;
+
+/// RabbitMQ client for message queue operations with circuit breaker protection
 #[derive(Clone)]
 pub struct RabbitMqClient {
     channel: Channel,
+    circuit_breaker: CircuitBreaker,
 }
 
 impl RabbitMqClient {
@@ -55,7 +59,18 @@ impl RabbitMqClient {
             .await
             .context("Failed to create RabbitMQ channel")?;
 
-        Ok(Self { channel })
+        // Create circuit breaker: trip after 5 failures, wait 60s before testing recovery
+        let circuit_breaker = CircuitBreaker::new(5, Duration::from_secs(60));
+
+        Ok(Self {
+            channel,
+            circuit_breaker,
+        })
+    }
+
+    /// Get circuit breaker reference for monitoring
+    pub fn circuit_breaker(&self) -> &CircuitBreaker {
+        &self.circuit_breaker
     }
 
     /// Declare a queue

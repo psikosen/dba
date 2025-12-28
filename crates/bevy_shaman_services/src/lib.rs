@@ -1,9 +1,13 @@
 pub mod cache;
+pub mod config;
 pub mod queue;
 
 pub use cache::{
-    DragonflyCache, LlmResponseCache, DungeonSeedCache, SessionStateCache,
+    CircuitBreaker, CircuitState, DragonflyCache, LlmResponseCache,
+    DungeonSeedCache, SessionStateCache,
 };
+
+pub use config::ServiceConfig;
 
 pub use queue::{
     RabbitMqClient, BackgroundJobQueue, EventBus, OfflineProcessor,
@@ -14,26 +18,12 @@ pub use queue::{
 use anyhow::Result;
 use tracing::info;
 
-/// Service configuration
-pub struct ServiceConfig {
-    pub dragonfly_url: String,
-    pub rabbitmq_url: String,
-}
-
-impl ServiceConfig {
-    pub fn from_env() -> Self {
-        Self {
-            dragonfly_url: std::env::var("DRAGONFLY_URL")
-                .unwrap_or_else(|_| "redis://localhost:6379".to_string()),
-            rabbitmq_url: std::env::var("RABBITMQ_URL")
-                .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string()),
-        }
-    }
-}
-
-/// Initialize all services
+/// Initialize all services with validated configuration
 pub async fn initialize_services(config: ServiceConfig) -> Result<Services> {
     info!("Initializing DragonflyDB and RabbitMQ services...");
+
+    // Validate TLS is enabled in production
+    config.ensure_tls_enabled()?;
 
     // Initialize DragonflyDB
     let dragonfly = DragonflyCache::new(&config.dragonfly_url).await?;
@@ -100,6 +90,14 @@ impl Services {
             overall: dragonfly_ok && rabbitmq_ok,
         })
     }
+
+    /// Get circuit breaker states for monitoring
+    pub async fn get_circuit_breaker_states(&self) -> CircuitBreakerStates {
+        CircuitBreakerStates {
+            dragonfly: self.dragonfly.circuit_breaker().get_state().await,
+            rabbitmq: self.rabbitmq.circuit_breaker().get_state().await,
+        }
+    }
 }
 
 /// Health status for services
@@ -108,6 +106,13 @@ pub struct HealthStatus {
     pub dragonfly: bool,
     pub rabbitmq: bool,
     pub overall: bool,
+}
+
+/// Circuit breaker states for monitoring
+#[derive(Debug, Clone)]
+pub struct CircuitBreakerStates {
+    pub dragonfly: CircuitState,
+    pub rabbitmq: CircuitState,
 }
 
 #[cfg(test)]

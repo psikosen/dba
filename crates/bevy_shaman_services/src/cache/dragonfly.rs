@@ -3,11 +3,14 @@ use redis::{aio::ConnectionManager, AsyncCommands, Client};
 use std::time::Duration;
 use tracing::{debug, error, info, warn};
 
-/// DragonflyDB cache client
+use super::circuit_breaker::CircuitBreaker;
+
+/// DragonflyDB cache client with circuit breaker protection
 /// DragonflyDB is a modern, high-performance Redis replacement
 #[derive(Clone)]
 pub struct DragonflyCache {
     client: ConnectionManager,
+    circuit_breaker: CircuitBreaker,
 }
 
 impl DragonflyCache {
@@ -51,45 +54,79 @@ impl DragonflyCache {
             .await
             .context("Failed to connect to DragonflyDB")?;
 
-        Ok(Self { client: connection })
+        // Create circuit breaker: trip after 5 failures, wait 60s before testing recovery
+        let circuit_breaker = CircuitBreaker::new(5, Duration::from_secs(60));
+
+        Ok(Self {
+            client: connection,
+            circuit_breaker,
+        })
     }
 
-    /// Set a key-value pair with optional TTL
+    /// Set a key-value pair with optional TTL (with circuit breaker protection)
     pub async fn set(&self, key: &str, value: &str, ttl: Option<Duration>) -> Result<()> {
+        // Check circuit breaker
+        if self.circuit_breaker.is_open().await {
+            return Err(anyhow::anyhow!(
+                "Circuit breaker is OPEN - DragonflyDB unavailable (fail fast)"
+            ));
+        }
+
         let mut conn = self.client.clone();
 
-        match ttl {
+        let result = match ttl {
             Some(duration) => {
                 conn.set_ex(key, value, duration.as_secs())
                     .await
-                    .context(format!("Failed to set key '{}' with TTL", key))?;
+                    .context(format!("Failed to set key '{}' with TTL", key))
             }
             None => {
                 conn.set(key, value)
                     .await
-                    .context(format!("Failed to set key '{}'", key))?;
+                    .context(format!("Failed to set key '{}'", key))
+            }
+        };
+
+        match result {
+            Ok(_) => {
+                self.circuit_breaker.record_success().await;
+                debug!("Set cache key: {}", key);
+                Ok(())
+            }
+            Err(e) => {
+                self.circuit_breaker.record_failure().await;
+                error!("Failed to set key '{}': {}", key, e);
+                Err(e)
             }
         }
-
-        debug!("Set cache key: {}", key);
-        Ok(())
     }
 
-    /// Get a value by key
+    /// Get a value by key (with circuit breaker protection)
     pub async fn get(&self, key: &str) -> Result<Option<String>> {
-        let mut conn = self.client.clone();
-
-        let value: Option<String> = conn
-            .get(key)
-            .await
-            .context(format!("Failed to get key '{}'", key))?;
-
-        match &value {
-            Some(_) => debug!("Cache hit for key: {}", key),
-            None => debug!("Cache miss for key: {}", key),
+        // Check circuit breaker
+        if self.circuit_breaker.is_open().await {
+            return Err(anyhow::anyhow!(
+                "Circuit breaker is OPEN - DragonflyDB unavailable (fail fast)"
+            ));
         }
 
-        Ok(value)
+        let mut conn = self.client.clone();
+
+        match conn.get(key).await {
+            Ok(value) => {
+                self.circuit_breaker.record_success().await;
+                match &value {
+                    Some(_) => debug!("Cache hit for key: {}", key),
+                    None => debug!("Cache miss for key: {}", key),
+                }
+                Ok(value)
+            }
+            Err(e) => {
+                self.circuit_breaker.record_failure().await;
+                error!("Failed to get key '{}': {}", key, e);
+                Err(e.into())
+            }
+        }
     }
 
     /// Delete a key
@@ -189,6 +226,11 @@ impl DragonflyCache {
             .context("Failed to get cache stats")?;
 
         Ok(CacheStats::parse(&info))
+    }
+
+    /// Get circuit breaker reference for monitoring
+    pub fn circuit_breaker(&self) -> &CircuitBreaker {
+        &self.circuit_breaker
     }
 }
 
