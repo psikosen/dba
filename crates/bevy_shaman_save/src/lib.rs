@@ -125,6 +125,15 @@ pub mod systems {
         }
 
         #[derive(Serialize, Deserialize, Clone)]
+        pub struct DungeonEntranceSaveData {
+            pub position: (i32, i32),
+            pub dungeon_id: String,
+            pub ecosystem: String,
+            pub difficulty_level: u8,
+            pub is_discovered: bool,
+        }
+
+        #[derive(Serialize, Deserialize, Clone)]
         pub struct SaveData {
             pub player_position: (i32, i32),
             pub player_health: (f32, f32),
@@ -142,6 +151,8 @@ pub mod systems {
             pub npcs: Vec<NpcSaveData>,
             #[serde(default)]
             pub minion_entities: Vec<String>, // Monster IDs that are tamed minions
+            #[serde(default)]
+            pub dungeon_entrances: Vec<DungeonEntranceSaveData>,
             pub timestamp: f64,
             pub save_version: u32,
         }
@@ -179,6 +190,7 @@ pub mod systems {
                 Option<&bevy_shaman_story::components::HeadShaman>,
                 Option<&bevy_shaman_story::components::PlayerBrother>,
             )>,
+            dungeon_entrances: Query<(&GridPosition, &bevy_shaman_world::components::DungeonEntrance)>,
             time: Res<Time>,
             mut pending_load: ResMut<PendingLoadData>,
             mut loading_flag: ResMut<bevy_shaman_core::resources::LoadingFromSave>,
@@ -248,6 +260,20 @@ pub mod systems {
                         .map(|(monster_id, _, _, _, _)| monster_id.0.clone())
                         .collect();
 
+                    // Extract dungeon entrance data
+                    let dungeon_entrance_data: Vec<DungeonEntranceSaveData> = dungeon_entrances
+                        .iter()
+                        .map(|(pos, entrance)| {
+                            DungeonEntranceSaveData {
+                                position: (pos.x, pos.y),
+                                dungeon_id: entrance.dungeon_id.clone(),
+                                ecosystem: format!("{:?}", entrance.ecosystem),
+                                difficulty_level: entrance.difficulty_level,
+                                is_discovered: entrance.is_discovered,
+                            }
+                        })
+                        .collect();
+
                     let save_data = SaveData {
                         player_position: (pos.x, pos.y),
                         player_health: (health.current, health.max),
@@ -264,6 +290,7 @@ pub mod systems {
                         monsters: monster_data,
                         npcs: npc_data,
                         minion_entities,
+                        dungeon_entrances: dungeon_entrance_data,
                         timestamp: time.elapsed_secs_f64(),
                         save_version: 1,
                     };
@@ -667,6 +694,38 @@ pub mod systems {
                     }
                 }
                 info!("Spawned {} NPCs from save data", save_data.npcs.len());
+
+                // Spawn dungeon entrances from save data (NOTE: World tiles should already exist)
+                // We need to query existing world tiles and add DungeonEntrance component to them
+                for entrance_data in &save_data.dungeon_entrances {
+                    use bevy_shaman_world::components::{BiomeType, DungeonEntrance};
+
+                    // Parse ecosystem type
+                    let ecosystem = match entrance_data.ecosystem.as_str() {
+                        "Jungle" => BiomeType::Jungle,
+                        "Desert" => BiomeType::Desert,
+                        "Forest" => BiomeType::Forest,
+                        "Safari" => BiomeType::Safari,
+                        "DeadRealm" => BiomeType::DeadRealm,
+                        _ => BiomeType::Forest,
+                    };
+
+                    // Spawn dungeon entrance marker (or find existing tile and add component)
+                    // For now, we'll just spawn a new entity
+                    commands.spawn((
+                        DungeonEntrance {
+                            dungeon_id: entrance_data.dungeon_id.clone(),
+                            ecosystem,
+                            difficulty_level: entrance_data.difficulty_level,
+                            is_discovered: entrance_data.is_discovered,
+                        },
+                        GridPosition {
+                            x: entrance_data.position.0,
+                            y: entrance_data.position.1,
+                        },
+                    ));
+                }
+                info!("Restored {} dungeon entrances from save data", save_data.dungeon_entrances.len());
 
                 // TODO: Tutorial progress restoration will be handled by tutorial crate
                 // listening to save data events to avoid circular dependency

@@ -8,5 +8,6 @@ license.workspace = true
 bevy.workspace = true
 bevy_shaman_core = { path = "../bevy_shaman_core" }
 bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
+bevy_shaman_world = { path = "../bevy_shaman_world" }
 serde.workspace = true
 rand.workspace = true

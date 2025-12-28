@@ -59,10 +59,56 @@ pub struct WorldTile {
     pub walkable: bool,
 }
 
+/// Marks a tile as a dungeon entrance
+#[derive(Component, Clone)]
+pub struct DungeonEntrance {
+    pub dungeon_id: String,
+    pub ecosystem: BiomeType,
+    pub difficulty_level: u8,  // 1-5
+    pub is_discovered: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BiomeType {
+    // Central hub
     Village,
+
+    // 5 Ecosystems (each contains dungeons)
+    Jungle,
+    Desert,
     Forest,
+    Safari,
+    DeadRealm,
+
+    // Legacy/Special
     Mountains,
     SpiritRealm,
+}
+
+impl BiomeType {
+    /// Returns true if this biome can contain dungeon entrances
+    pub fn can_have_dungeons(&self) -> bool {
+        matches!(
+            self,
+            BiomeType::Jungle
+                | BiomeType::Desert
+                | BiomeType::Forest
+                | BiomeType::Safari
+                | BiomeType::DeadRealm
+        )
+    }
+
+    /// Returns the name of this biome for display
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            BiomeType::Village => "Village",
+            BiomeType::Jungle => "Jungle",
+            BiomeType::Desert => "Desert",
+            BiomeType::Forest => "Forest",
+            BiomeType::Safari => "Safari",
+            BiomeType::DeadRealm => "Dead Realm",
+            BiomeType::Mountains => "Mountains",
+            BiomeType::SpiritRealm => "Spirit Realm",
+        }
+    }
 }

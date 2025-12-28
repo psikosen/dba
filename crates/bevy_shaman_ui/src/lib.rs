@@ -1732,9 +1732,13 @@ pub mod systems {
                                 for (tile_pos, world_tile) in tile_query.iter() {
                                     if tile_pos.x == world_x && tile_pos.y == world_y {
                                         found_color = match world_tile.biome {
-                                            BiomeType::Forest => Color::srgb(0.1, 0.4, 0.1),
-                                            BiomeType::Mountains => Color::srgb(0.5, 0.5, 0.5),
                                             BiomeType::Village => Color::srgb(0.8, 0.6, 0.4),
+                                            BiomeType::Jungle => Color::srgb(0.0, 0.5, 0.2),
+                                            BiomeType::Desert => Color::srgb(0.9, 0.8, 0.5),
+                                            BiomeType::Forest => Color::srgb(0.1, 0.4, 0.1),
+                                            BiomeType::Safari => Color::srgb(0.7, 0.7, 0.3),
+                                            BiomeType::DeadRealm => Color::srgb(0.3, 0.1, 0.3),
+                                            BiomeType::Mountains => Color::srgb(0.5, 0.5, 0.5),
                                             BiomeType::SpiritRealm => Color::srgb(0.4, 0.2, 0.8),
                                         };
                                         break;
