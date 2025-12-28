@@ -32,6 +32,17 @@ pub fn init_metrics() {
         return;
     }
 
+    // Internal initialization that can fail
+    if let Err(e) = try_init_metrics() {
+        error!(
+            "Failed to initialize Prometheus metrics: {} - metrics disabled",
+            e
+        );
+    }
+}
+
+/// Internal function that performs the actual initialization with error handling
+fn try_init_metrics() -> Result<(), Box<dyn std::error::Error>> {
     let registry = Registry::new();
 
     // Register performance metrics
@@ -39,90 +50,70 @@ pub fn init_metrics() {
         HistogramOpts::new("bevy_shaman_frame_time_seconds", "Frame rendering time").buckets(vec![
             0.001, 0.005, 0.010, 0.016, 0.033, 0.050, 0.100, 0.250, 0.500, 1.0,
         ]),
-    )
-    .unwrap();
-    registry.register(Box::new(frame_time.clone())).unwrap();
+    )?;
+    registry.register(Box::new(frame_time.clone()))?;
 
-    let fps = Gauge::with_opts(Opts::new("bevy_shaman_fps", "Current frames per second")).unwrap();
-    registry.register(Box::new(fps.clone())).unwrap();
+    let fps = Gauge::with_opts(Opts::new("bevy_shaman_fps", "Current frames per second"))?;
+    registry.register(Box::new(fps.clone()))?;
 
     let entity_count =
-        IntGauge::with_opts(Opts::new("bevy_shaman_entity_count", "Total entity count")).unwrap();
-    registry.register(Box::new(entity_count.clone())).unwrap();
+        IntGauge::with_opts(Opts::new("bevy_shaman_entity_count", "Total entity count"))?;
+    registry.register(Box::new(entity_count.clone()))?;
 
     let system_count =
-        IntGauge::with_opts(Opts::new("bevy_shaman_system_count", "Active system count")).unwrap();
-    registry.register(Box::new(system_count.clone())).unwrap();
+        IntGauge::with_opts(Opts::new("bevy_shaman_system_count", "Active system count"))?;
+    registry.register(Box::new(system_count.clone()))?;
 
     // Register game metrics
     let monsters_spawned = IntCounter::with_opts(Opts::new(
         "bevy_shaman_monsters_spawned_total",
         "Total monsters spawned",
-    ))
-    .unwrap();
-    registry
-        .register(Box::new(monsters_spawned.clone()))
-        .unwrap();
+    ))?;
+    registry.register(Box::new(monsters_spawned.clone()))?;
 
     let monsters_defeated = IntCounter::with_opts(Opts::new(
         "bevy_shaman_monsters_defeated_total",
         "Total monsters defeated",
-    ))
-    .unwrap();
-    registry
-        .register(Box::new(monsters_defeated.clone()))
-        .unwrap();
+    ))?;
+    registry.register(Box::new(monsters_defeated.clone()))?;
 
     let player_deaths = IntCounter::with_opts(Opts::new(
         "bevy_shaman_player_deaths_total",
         "Total player deaths",
-    ))
-    .unwrap();
-    registry.register(Box::new(player_deaths.clone())).unwrap();
+    ))?;
+    registry.register(Box::new(player_deaths.clone()))?;
 
     let corruption_level = Gauge::with_opts(Opts::new(
         "bevy_shaman_corruption_level",
         "Current world corruption level",
-    ))
-    .unwrap();
-    registry
-        .register(Box::new(corruption_level.clone()))
-        .unwrap();
+    ))?;
+    registry.register(Box::new(corruption_level.clone()))?;
 
     let purification_count = IntCounter::with_opts(Opts::new(
         "bevy_shaman_purification_total",
         "Total purifications performed",
-    ))
-    .unwrap();
-    registry
-        .register(Box::new(purification_count.clone()))
-        .unwrap();
+    ))?;
+    registry.register(Box::new(purification_count.clone()))?;
 
     let combat_encounters = IntCounter::with_opts(Opts::new(
         "bevy_shaman_combat_encounters_total",
         "Total combat encounters",
-    ))
-    .unwrap();
-    registry
-        .register(Box::new(combat_encounters.clone()))
-        .unwrap();
+    ))?;
+    registry.register(Box::new(combat_encounters.clone()))?;
 
     let boss_encounters = IntCounter::with_opts(Opts::new(
         "bevy_shaman_boss_encounters_total",
         "Total boss encounters",
-    ))
-    .unwrap();
-    registry
-        .register(Box::new(boss_encounters.clone()))
-        .unwrap();
+    ))?;
+    registry.register(Box::new(boss_encounters.clone()))?;
 
     // Set registry (thread-safe one-time initialization)
-    if REGISTRY.set(Arc::new(registry)).is_err() {
-        error!("Failed to initialize Prometheus registry - already set");
-        return;
-    }
+    REGISTRY
+        .set(Arc::new(registry))
+        .map_err(|_| "Registry already initialized")?;
 
     info!("Prometheus metrics initialized");
+    Ok(())
 }
 
 /// Get the Prometheus registry
@@ -176,8 +167,18 @@ pub fn export_metrics() -> String {
         let encoder = prometheus::TextEncoder::new();
         let metric_families = registry.gather();
         let mut buffer = Vec::new();
-        encoder.encode(&metric_families, &mut buffer).unwrap();
-        String::from_utf8(buffer).unwrap()
+
+        // Encode metrics, gracefully handling errors
+        if let Err(e) = encoder.encode(&metric_families, &mut buffer) {
+            error!("Failed to encode Prometheus metrics: {}", e);
+            return String::new();
+        }
+
+        // Convert to UTF-8, gracefully handling errors
+        String::from_utf8(buffer).unwrap_or_else(|e| {
+            error!("Failed to convert metrics to UTF-8: {}", e);
+            String::new()
+        })
     } else {
         String::new()
     }
