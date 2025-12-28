@@ -194,6 +194,7 @@ pub enum PlantType {
     Ropa,               // (Shona: blood) - Grants blood fury potion (attack boost)
     Samaki,             // (blood flower) - Increases both human and spirit stats
     Umthombo,           // (Zulu: life source) - Legendary healing elixir
+    Umdhlebi,           // (Zulu: legendary tree) - Passive HP regen, generates rare items daily
 
     // Spirit energy plants - require spirit energy, mystical effects
     // Named with traditional African words for spirit/soul
@@ -205,6 +206,7 @@ pub enum PlantType {
     Pepo,               // (Swahili: spirit/wind) - Grants ethereal movement potion
     Sankofa,            // (Akan: spiritual wisdom) - Increases both human and spirit wisdom
     Nommo,              // (Dogon: life force) - Legendary spirit ascension elixir
+    Baobab,             // (African tree of life) - Passive spirit regen, produces status cures
 }
 
 impl PlantType {
@@ -231,6 +233,7 @@ impl PlantType {
             self,
             PlantType::Mogodu | PlantType::Damu | PlantType::Ingazi | PlantType::Mwazi
             | PlantType::Jini | PlantType::Ropa | PlantType::Samaki | PlantType::Umthombo
+            | PlantType::Umdhlebi
         )
     }
 
@@ -240,6 +243,7 @@ impl PlantType {
             self,
             PlantType::Roho | PlantType::Moya | PlantType::Emi | PlantType::Moyo
             | PlantType::Elima | PlantType::Pepo | PlantType::Sankofa | PlantType::Nommo
+            | PlantType::Baobab
         )
     }
 
@@ -254,6 +258,7 @@ impl PlantType {
             PlantType::Ropa => 20.0,
             PlantType::Samaki => 35.0,      // High cost, rare
             PlantType::Umthombo => 40.0,    // Legendary, highest cost
+            PlantType::Umdhlebi => 45.0,    // Ultimate legendary, passive regen
             _ => 0.0,
         }
     }
@@ -269,6 +274,7 @@ impl PlantType {
             PlantType::Pepo => 35.0,
             PlantType::Sankofa => 50.0,     // High cost
             PlantType::Nommo => 60.0,       // Legendary, highest cost
+            PlantType::Baobab => 65.0,      // Ultimate legendary, passive regen
             _ => 0.0,
         }
     }
@@ -285,6 +291,7 @@ impl PlantType {
             PlantType::Ropa => 4,
             PlantType::Samaki => 8,
             PlantType::Umthombo => 9,
+            PlantType::Umdhlebi => 7,       // Legendary, feeds every week
             // Spirit plants - feed every 3-9 days
             PlantType::Roho => 3,
             PlantType::Moya => 6,
@@ -294,7 +301,32 @@ impl PlantType {
             PlantType::Pepo => 4,
             PlantType::Sankofa => 9,
             PlantType::Nommo => 9,
+            PlantType::Baobab => 7,         // Legendary, feeds every week
             _ => 0,
+        }
+    }
+
+    /// Returns true if this plant provides passive benefits when planted (not consumed)
+    pub fn is_passive_plant(&self) -> bool {
+        matches!(
+            self,
+            PlantType::Umdhlebi | PlantType::Baobab
+        )
+    }
+
+    /// Passive HP regeneration rate (HP per second when planted, not consumed)
+    pub fn passive_hp_regen(&self) -> f32 {
+        match self {
+            PlantType::Umdhlebi => 0.5,     // 1 HP per 2 seconds
+            _ => 0.0,
+        }
+    }
+
+    /// Passive spirit regeneration rate (spirit per second when planted, not consumed)
+    pub fn passive_spirit_regen(&self) -> f32 {
+        match self {
+            PlantType::Baobab => 1.0,       // 1 spirit per second
+            _ => 0.0,
         }
     }
 
@@ -509,6 +541,7 @@ pub struct PlantCare {
     pub days_since_feeding: u32,
     pub feeding_interval: u32,  // Days between feedings
     pub is_withering: bool,     // True if overdue for feeding
+    pub days_since_harvest: u32, // Days since last item generation (for passive plants)
 }
 
 impl PlantCare {
@@ -518,6 +551,7 @@ impl PlantCare {
             days_since_feeding: 0,
             feeding_interval: plant_type.feeding_interval_days(),
             is_withering: false,
+            days_since_harvest: 0,
         }
     }
 
@@ -532,8 +566,53 @@ impl PlantCare {
 
     pub fn advance_day(&mut self) {
         self.days_since_feeding += 1;
+        self.days_since_harvest += 1;
         if self.needs_feeding() {
             self.is_withering = true;
         }
     }
+
+    pub fn can_harvest(&self) -> bool {
+        self.days_since_harvest >= 1 && !self.is_withering
+    }
+
+    pub fn harvest(&mut self) {
+        self.days_since_harvest = 0;
+    }
+}
+
+// ============================================================================
+// PASSIVE PLANT BENEFITS
+// ============================================================================
+
+/// Component for plants that provide passive HP regeneration (like Umdhlebi)
+#[derive(Component)]
+pub struct PassiveHpRegen {
+    pub regen_rate: f32,  // HP per second
+}
+
+/// Component for plants that provide passive spirit regeneration (like Baobab)
+#[derive(Component)]
+pub struct PassiveSpiritRegen {
+    pub regen_rate: f32,  // Spirit per second
+}
+
+// ============================================================================
+// PLANT ITEM GENERATION
+// ============================================================================
+
+/// Rare items that can be generated by Umdhlebi
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UmdhlebiRareItem {
+    BloodCrystal,       // Powerful crafting material
+    LifeEssence,        // Legendary potion ingredient
+    AncestralBone,      // Spirit communication item
+    VitalSeed,          // Plant a new blood plant
+    Nothing,            // Sometimes generates nothing
+}
+
+/// Status effects that Baobab cures can remove
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StatusCureType {
+    FullPartyAlignment, // Cures all status effects for full party
 }
