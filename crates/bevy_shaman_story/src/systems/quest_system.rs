@@ -143,6 +143,7 @@ pub enum ObjectiveType {
 pub struct QuestRewards {
     pub gold: u32,
     pub xp: u32,
+    pub skill_points: u32,
     pub items: Vec<(String, u32)>, // (item_id, quantity)
     pub reputation: Vec<(String, i32)>, // (faction, amount)
 }
@@ -155,6 +156,11 @@ impl QuestRewards {
 
     pub fn with_xp(mut self, xp: u32) -> Self {
         self.xp = xp;
+        self
+    }
+
+    pub fn with_skill_points(mut self, skill_points: u32) -> Self {
+        self.skill_points = skill_points;
         self
     }
 
@@ -176,6 +182,9 @@ impl QuestRewards {
         }
         if self.xp > 0 {
             rewards.push(format!("{} XP", self.xp));
+        }
+        if self.skill_points > 0 {
+            rewards.push(format!("{} skill points", self.skill_points));
         }
         for (item, qty) in &self.items {
             rewards.push(format!("{} x{}", item, qty));
@@ -375,6 +384,7 @@ pub fn handle_quest_completed(
     mut player_level: ResMut<bevy_shaman_core::resources::PlayerLevel>,
     mut currency: ResMut<bevy_shaman_shop::resources::Currency>,
     mut player_inventory: Query<&mut bevy_shaman_items::components::Inventory, With<bevy_shaman_core::components::Player>>,
+    mut skill_tree_query: Query<&mut bevy_shaman_combat::systems::skill_tree::SkillTree, With<bevy_shaman_core::components::Player>>,
     mut reputation: ResMut<super::dialogue_tree::DialogueReputation>,
 ) {
     for event in events.read() {
@@ -397,6 +407,15 @@ pub fn handle_quest_completed(
             if quest.rewards.gold > 0 {
                 currency.gold += quest.rewards.gold;
                 info!("Granted {} gold", quest.rewards.gold);
+            }
+
+            // Grant skill points
+            if quest.rewards.skill_points > 0 {
+                if let Ok(mut skill_tree) = skill_tree_query.get_single_mut() {
+                    skill_tree.award_points(quest.rewards.skill_points);
+                    info!("Granted {} skill points (Total: {})",
+                        quest.rewards.skill_points, skill_tree.skill_points);
+                }
             }
 
             // Grant items
@@ -470,6 +489,7 @@ pub fn create_brother_cleansing_quest() -> Quest {
     .with_reward(
         QuestRewards::default()
             .with_xp(500)
+            .with_skill_points(2)
             .with_reputation("village".to_string(), 25)
     )
     .with_location_hint("Ritual Arena".to_string())
@@ -508,6 +528,7 @@ pub fn create_tutorial_quest() -> Quest {
     .with_reward(
         QuestRewards::default()
             .with_xp(100)
+            .with_skill_points(1)
             .with_item("Beginner's Staff".to_string(), 1)
     )
 }
@@ -539,6 +560,7 @@ pub fn create_village_corruption_quest() -> Quest {
         QuestRewards::default()
             .with_xp(300)
             .with_gold(100)
+            .with_skill_points(1)
             .with_reputation("village".to_string(), 15)
     )
     .with_location_hint("Village Center".to_string())

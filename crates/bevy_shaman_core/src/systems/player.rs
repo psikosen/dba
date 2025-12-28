@@ -52,6 +52,11 @@ pub fn spawn_player(
         BlocksMovement,
         CameraTarget,
 
+        // Progression components
+        bevy_shaman_combat::components::WeaponEnhancement::new(),
+        bevy_shaman_combat::components::EquippedWeapon::default(),
+        bevy_shaman_combat::systems::skill_tree::SkillTree::new(),
+
         // Collider for grid occupancy
         GlobalTransform::default(),
         Visibility::default(),

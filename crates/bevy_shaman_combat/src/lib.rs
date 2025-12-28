@@ -69,6 +69,7 @@ impl Plugin for CombatPlugin {
             .add_systems(Update, (
                 systems::skill_tree::skill_unlock_system,
                 systems::skill_tree::apply_skill_bonuses,
+                systems::skill_tree::award_skill_points_on_level_up,
             ).run_if(in_state(GameState::Playing)))
             // Resources
             .init_resource::<systems::skill_tree::SkillDatabase>()

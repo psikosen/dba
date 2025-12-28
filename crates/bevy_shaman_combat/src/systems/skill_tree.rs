@@ -574,3 +574,38 @@ pub fn apply_skill_bonuses(
         }
     }
 }
+
+/// System to award skill points when player levels up
+/// Awards 1 skill point per level, with bonus points at milestone levels
+pub fn award_skill_points_on_level_up(
+    player_level: Res<bevy_shaman_core::resources::PlayerLevel>,
+    mut skill_tree_query: Query<&mut SkillTree, With<bevy_shaman_core::components::Player>>,
+    mut last_level: Local<u8>,
+) {
+    let current_level = player_level.current;
+
+    // Check if player just leveled up
+    if current_level > *last_level && *last_level > 0 {
+        let levels_gained = current_level - *last_level;
+
+        if let Ok(mut skill_tree) = skill_tree_query.get_single_mut() {
+            // Award 1 skill point per level
+            let mut points_to_award = levels_gained as u32;
+
+            // Bonus points at milestone levels (every 5 levels)
+            for level in (*last_level + 1)..=current_level {
+                if level % 5 == 0 {
+                    points_to_award += 1;
+                    info!("Milestone level {}! Awarding bonus skill point", level);
+                }
+            }
+
+            skill_tree.award_points(points_to_award);
+            info!("Player leveled up to level {}! Awarded {} skill points (Total: {})",
+                current_level, points_to_award, skill_tree.skill_points);
+        }
+    }
+
+    // Update tracked level
+    *last_level = current_level;
+}
