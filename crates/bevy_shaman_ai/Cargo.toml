@@ -14,9 +14,14 @@ serde.workspace = true
 serde_json = "1.0"
 rand.workspace = true
 
+# Async runtime for non-blocking LLM generation
+tokio = { version = "1.0", features = ["rt-multi-thread", "sync"], optional = true }
+async-channel = { version = "2.0", optional = true }
+
 # LLM inference using llama.cpp bindings
 llama-cpp-2 = { version = "0.1", optional = true }
 
 [features]
 default = []
 llm = ["llama-cpp-2"]
+async-llm = ["tokio", "async-channel"]  # Async LLM support (prevents frame drops)

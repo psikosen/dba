@@ -46,9 +46,10 @@ pub fn combat_wheel_trigger(
 }
 
 /// System to apply wheel outcomes
+/// OPTIMIZED: Now filters to only affect the attacker's attack instead of all attacks
 pub fn apply_wheel_outcome(
     mut wheel_events: EventReader<WheelTriggered>,
-    mut attack_query: Query<&mut Attack>,
+    mut attack_query: Query<(Entity, &mut Attack)>,
     mut blood_lust_query: Query<&mut BloodLust>,
     mut monster_query: Query<&mut MonsterState, With<bevy_shaman_monsters::components::Tamed>>,
     weapon_query: Query<&EquippedWeapon>,
@@ -56,24 +57,29 @@ pub fn apply_wheel_outcome(
     for event in wheel_events.read() {
         match event.outcome {
             WheelOutcome::CriticalHit => {
-                // Double physical damage for all current attacks
-                for mut attack in attack_query.iter_mut() {
-                    attack.damage *= 2.0;
+                // OPTIMIZATION: Only modify attacks from the triggering entity
+                for (entity, mut attack) in attack_query.iter_mut() {
+                    if entity == event.attacker {
+                        attack.damage *= 2.0;
+                        info!("Wheel triggered: Critical Hit! Damage doubled!");
+                        break; // Only one attack per attacker
+                    }
                 }
-                info!("Wheel triggered: Critical Hit! Damage doubled!");
             }
 
             WheelOutcome::DoubleSpellDamage => {
-                // Double spell damage for staff attacks
-                for (mut attack, weapon) in attack_query
-                    .iter_mut()
-                    .filter_map(|a| weapon_query.get(event.attacker).ok().map(|w| (a, w)))
-                {
+                // OPTIMIZATION: Only check weapon of triggering attacker
+                if let Ok(weapon) = weapon_query.get(event.attacker) {
                     if weapon.weapon_type.can_cast_spells() {
-                        attack.damage *= 2.0;
+                        for (entity, mut attack) in attack_query.iter_mut() {
+                            if entity == event.attacker {
+                                attack.damage *= 2.0;
+                                info!("Wheel triggered: Double Spell Damage!");
+                                break;
+                            }
+                        }
                     }
                 }
-                info!("Wheel triggered: Double Spell Damage!");
             }
 
             WheelOutcome::SelfCorruption => {
