@@ -222,6 +222,18 @@ impl GameCalendar {
             .find(|f| f.season == self.season && f.day == self.day)
     }
 
+    /// Get the total number of days elapsed since game start
+    /// Used for systems that need absolute day tracking (e.g., spirit decay)
+    pub fn current_day(&self) -> u32 {
+        let season_index = match self.season {
+            Season::Spring => 0,
+            Season::Summer => 1,
+            Season::Autumn => 2,
+            Season::Winter => 3,
+        };
+        ((self.year - 1) * 4 * 30) + (season_index * 30) + self.day
+    }
+
     /// Get default festivals
     fn default_festivals() -> Vec<Festival> {
         vec![
