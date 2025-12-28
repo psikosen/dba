@@ -1,0 +1,128 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run benchmarks weekly on Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    # Allow manual triggering
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-benchmark-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libudev-dev \
+            pkg-config \
+            libx11-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxfixes-dev
+
+      - name: Run benchmarks
+        run: cargo bench --workspace --exclude bevy_shaman_audio -- --output-format bencher | tee benchmark_output.txt
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'cargo'
+          output-file-path: benchmark_output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Show alert with commit comment on detecting possible performance regression
+          alert-threshold: '200%'
+          comment-on-alert: true
+          fail-on-alert: false
+          # Enable Job Summary for pull requests
+          summary-always: true
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            target/criterion/
+            benchmark_output.txt
+          retention-days: 30
+
+  profiling:
+    name: CPU Profiling
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-flamegraph
+        run: cargo install flamegraph
+
+      - name: Install perf
+        run: sudo apt-get update && sudo apt-get install -y linux-tools-common linux-tools-generic
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libudev-dev \
+            pkg-config \
+            libx11-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libxcursor-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxfixes-dev
+
+      - name: Build with profiling
+        run: cargo build --release --workspace --exclude bevy_shaman_audio
+
+      - name: Upload profiling data
+        uses: actions/upload-artifact@v4
+        with:
+          name: profiling-data
+          path: target/release/
+          retention-days: 7

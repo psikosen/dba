@@ -1,5 +1,10 @@
 # Shaman's Journey - Bevy ECS Architecture
 
+[![CI](https://github.com/psikosen/dba/actions/workflows/ci.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/ci.yml)
+[![Security Audit](https://github.com/psikosen/dba/actions/workflows/security.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/security.yml)
+[![Docker](https://github.com/psikosen/dba/actions/workflows/docker.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/docker.yml)
+[![Benchmarks](https://github.com/psikosen/dba/actions/workflows/benchmarks.yml/badge.svg)](https://github.com/psikosen/dba/actions/workflows/benchmarks.yml)
+
 A rhythm-based shaman healing game built with **Bevy 0.15.4** following strict **data-oriented design** principles.
 
 ## High Concept
@@ -23,18 +28,19 @@ This codebase follows **data-oriented design** and **composition over inheritanc
 The game is organized into **isolated, composable plugins**:
 
 ```
-bevy_shaman/               # Main binary
-├── bevy_shaman_core/      # Grid, movement, camera, animation, state machines
-├── bevy_shaman_combat/    # Hit resolution, rhythm-based damage, status effects
-├── bevy_shaman_audio/     # Beat clock, song manager, rhythm evaluation
-├── bevy_shaman_monsters/  # State machine, corruption, sprite swapping, AI
-├── bevy_shaman_minions/   # Taming, formation, commands
-├── bevy_shaman_world/     # Tiles, corruption spread, purification
-├── bevy_shaman_dungeons/  # Generation, encounters, bosses
-├── bevy_shaman_items/     # Inventory, Spirit Orbs, crafting
-├── bevy_shaman_ui/        # HUD, bestiary, rhythm visualizer
-├── bevy_shaman_story/     # NPC sickness, dialogue, quests, instrument choice
-└── bevy_shaman_save/      # Serialization, autosave, save/load
+bevy_shaman/                # Main binary
+├── bevy_shaman_core/       # Grid, movement, camera, animation, state machines
+├── bevy_shaman_combat/     # Hit resolution, rhythm-based damage, status effects
+├── bevy_shaman_audio/      # Beat clock, song manager, rhythm evaluation
+├── bevy_shaman_monsters/   # State machine, corruption, sprite swapping, AI
+├── bevy_shaman_minions/    # Taming, formation, commands
+├── bevy_shaman_world/      # Tiles, corruption spread, purification
+├── bevy_shaman_dungeons/   # Generation, encounters, bosses
+├── bevy_shaman_items/      # Inventory, Spirit Orbs, crafting
+├── bevy_shaman_ui/         # HUD, bestiary, rhythm visualizer
+├── bevy_shaman_story/      # NPC sickness, dialogue, quests, instrument choice
+├── bevy_shaman_save/       # Serialization, autosave, save/load
+└── bevy_shaman_monitoring/ # Prometheus metrics, Sentry error tracking, tracing
 ```
 
 Each plugin is **self-contained** with:
@@ -302,6 +308,80 @@ cargo test --workspace
 
 # Run tests without audio crate (no ALSA required)
 cargo test --workspace --exclude bevy_shaman_audio
+
+# Run benchmarks
+cargo bench --workspace --exclude bevy_shaman_audio
+```
+
+## Monitoring and Observability
+
+The project includes comprehensive monitoring and performance profiling:
+
+### Metrics and Dashboards
+
+**Prometheus + Grafana stack** for real-time monitoring:
+
+```bash
+# Start monitoring stack
+docker-compose -f docker-compose.monitoring.yml up -d
+
+# Access Grafana dashboards
+open http://localhost:3000  # admin/admin
+```
+
+**Available metrics:**
+- FPS and frame time
+- Entity/system counts
+- Game metrics (monsters, corruption, encounters)
+- Custom event tracking
+
+See [docs/MONITORING.md](docs/MONITORING.md) for detailed setup.
+
+### Error Tracking
+
+**Sentry integration** for crash reporting:
+
+```bash
+export SENTRY_DSN="your-sentry-dsn"
+cargo run --release
+```
+
+### Performance Profiling
+
+**Criterion benchmarks** for regression detection:
+
+```bash
+# Run all benchmarks
+cargo bench
+
+# View HTML reports
+open target/criterion/report/index.html
+```
+
+**CI automatically tracks** benchmark results on every push.
+
+### Load Testing
+
+**k6 scripts** for stress testing:
+
+```bash
+# Install k6
+brew install k6  # macOS
+
+# Run load test
+k6 run loadtests/game_load_test.js
+```
+
+### Staging Environment
+
+**Full staging stack** with monitoring:
+
+```bash
+# Start staging
+docker-compose -f docker-compose.staging.yml up -d
+
+# Run smoke tests
+cargo test --test smoke
 ```
 
 ## Project Structure Details
