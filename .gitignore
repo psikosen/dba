@@ -25,3 +25,15 @@ Thumbs.db
 
 # Test artifacts
 *.profraw
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+*.pem
+*.key
+secrets/
+credentials.json
