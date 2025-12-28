@@ -264,3 +264,38 @@ pub fn mark_village_tiles(
         }
     }
 }
+
+// ============================================================================
+// DEV MODE TEST SPAWNING
+// ============================================================================
+
+/// Spawn a test brother NPC near the player for testing dialogue
+pub fn spawn_test_brother(
+    mut commands: Commands,
+    names_db: Res<AfricanNamesDB>,
+    player_query: Query<&GridPosition, With<bevy_shaman_core::components::Player>>,
+) {
+    if let Ok(player_pos) = player_query.get_single() {
+        // Get a random brother name
+        let brother_names: Vec<String> = names_db.names.iter()
+            .filter(|(_, (char_type, _, _))| *char_type == CharacterType::Brother)
+            .map(|(name, _)| name.clone())
+            .collect();
+
+        let name = brother_names.first()
+            .cloned()
+            .unwrap_or_else(|| "Test Brother".to_string());
+
+        // Spawn near player (2 tiles away)
+        spawn_brother(
+            &mut commands,
+            name.clone(),
+            player_pos.x + 2,
+            player_pos.y,
+        );
+
+        info!("DEV: Spawned test brother '{}' at ({}, {})", name, player_pos.x + 2, player_pos.y);
+    } else {
+        warn!("DEV: Cannot spawn test brother - player not found");
+    }
+}

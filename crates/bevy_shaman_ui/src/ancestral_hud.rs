@@ -69,6 +69,18 @@ pub struct GriotScroll;
 #[derive(Component)]
 pub struct ScrollPin;
 
+#[derive(Component)]
+pub struct DevModeToggleButton;
+
+#[derive(Component)]
+pub struct DevModePanel;
+
+#[derive(Component)]
+pub struct SpawnBrotherButton;
+
+#[derive(Component)]
+pub struct SpawnBossButton;
+
 // ============================================================================
 // RESOURCES
 // ============================================================================
@@ -162,6 +174,11 @@ pub fn setup_ancestral_hud(
             // MID RIGHT: GRIOT'S SCROLL (Quest Tracker)
             // ================================================================
             spawn_griot_scroll(parent);
+
+            // ================================================================
+            // TOP RIGHT (BELOW MINIMAP): DEV MODE TOGGLE
+            // ================================================================
+            spawn_dev_mode_toggle(parent);
         });
 }
 
@@ -594,5 +611,212 @@ pub fn animate_spirit_bar(
             (base_color.to_srgba().green * intensity).min(1.0),
             (base_color.to_srgba().blue * intensity).min(1.0),
         );
+    }
+}
+
+// ============================================================================
+// DEV MODE TOGGLE & SPAWN PANEL
+// ============================================================================
+
+fn spawn_dev_mode_toggle(parent: &mut ChildBuilder) {
+    parent
+        .spawn((
+            DevModeToggleButton,
+            Button,
+            Node {
+                position_type: PositionType::Absolute,
+                right: Val::Px(SPACING_LARGE),
+                top: Val::Px(SPACING_LARGE + 180.0), // Below minimap
+                width: Val::Px(120.0),
+                height: Val::Px(40.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border: UiRect::all(Val::Px(BORDER_MEDIUM)),
+                ..default()
+            },
+            BackgroundColor(wood::EBONY),
+            BorderColor(metal::GOLD),
+        ))
+        .with_children(|button_parent| {
+            button_parent.spawn((
+                Text::new("DEV MODE"),
+                TextFont {
+                    font_size: 14.0,
+                    ..default()
+                },
+                TextColor(metal::GOLD),
+            ));
+        });
+}
+
+/// System to spawn the dev mode panel when dev mode is enabled
+pub fn update_dev_mode_panel(
+    mut commands: Commands,
+    dev_mode: Res<bevy_shaman_core::resources::DevMode>,
+    panel_query: Query<Entity, With<DevModePanel>>,
+) {
+    if dev_mode.is_enabled() {
+        // Spawn panel if it doesn't exist
+        if panel_query.is_empty() {
+            commands
+                .spawn((
+                    DevModePanel,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        right: Val::Px(SPACING_LARGE),
+                        top: Val::Px(SPACING_LARGE + 230.0), // Below dev mode toggle
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(SPACING_SMALL),
+                        padding: UiRect::all(Val::Px(SPACING_MEDIUM)),
+                        border: UiRect::all(Val::Px(BORDER_MEDIUM)),
+                        ..default()
+                    },
+                    BackgroundColor(wood::EBONY),
+                    BorderColor(metal::GOLD),
+                    GlobalZIndex(1001),
+                ))
+                .with_children(|panel_parent| {
+                    // Title
+                    panel_parent.spawn((
+                        Text::new("DEV SPAWNS"),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(metal::GOLD),
+                    ));
+
+                    // Spawn Brother Button
+                    panel_parent
+                        .spawn((
+                            SpawnBrotherButton,
+                            Button,
+                            Node {
+                                width: Val::Px(160.0),
+                                height: Val::Px(35.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(BORDER_THIN)),
+                                ..default()
+                            },
+                            BackgroundColor(dye::RED_OCHRE),
+                            BorderColor(metal::BRONZE),
+                        ))
+                        .with_children(|btn_parent| {
+                            btn_parent.spawn((
+                                Text::new("Spawn Brother"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(bone::IVORY),
+                            ));
+                        });
+
+                    // Spawn Boss Button
+                    panel_parent
+                        .spawn((
+                            SpawnBossButton,
+                            Button,
+                            Node {
+                                width: Val::Px(160.0),
+                                height: Val::Px(35.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(BORDER_THIN)),
+                                ..default()
+                            },
+                            BackgroundColor(metal::GOLD),
+                            BorderColor(metal::BRONZE),
+                        ))
+                        .with_children(|btn_parent| {
+                            btn_parent.spawn((
+                                Text::new("Spawn Boss"),
+                                TextFont {
+                                    font_size: 14.0,
+                                    ..default()
+                                },
+                                TextColor(wood::EBONY),
+                            ));
+                        });
+                });
+        }
+    } else {
+        // Remove panel if it exists
+        for entity in panel_query.iter() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
+
+/// Handle dev mode toggle button clicks
+pub fn handle_dev_mode_toggle(
+    mut dev_mode: ResMut<bevy_shaman_core::resources::DevMode>,
+    mut toggle_query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<DevModeToggleButton>)>,
+) {
+    for (interaction, mut bg_color) in toggle_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                dev_mode.toggle();
+                // Update button color based on state
+                *bg_color = if dev_mode.is_enabled() {
+                    BackgroundColor(dye::RED_OCHRE)
+                } else {
+                    BackgroundColor(wood::EBONY)
+                };
+            }
+            Interaction::Hovered => {
+                if !dev_mode.is_enabled() {
+                    *bg_color = BackgroundColor(Color::srgb(0.15, 0.1, 0.08));
+                }
+            }
+            Interaction::None => {
+                if !dev_mode.is_enabled() {
+                    *bg_color = BackgroundColor(wood::EBONY);
+                }
+            }
+        }
+    }
+}
+
+/// Handle spawn brother button clicks
+pub fn handle_spawn_brother_button(
+    commands: Commands,
+    button_query: Query<&Interaction, (Changed<Interaction>, With<SpawnBrotherButton>)>,
+    names_db: Res<bevy_shaman_story::resources::AfricanNamesDB>,
+    player_query: Query<&bevy_shaman_core::components::GridPosition, With<bevy_shaman_core::components::Player>>,
+) {
+    for interaction in button_query.iter() {
+        if *interaction == Interaction::Pressed {
+            // Call the spawn function as a nested system call
+            bevy_shaman_story::systems::npc_spawning::spawn_test_brother(
+                commands,
+                names_db,
+                player_query,
+            );
+            // Only process the first click
+            break;
+        }
+    }
+}
+
+/// Handle spawn boss button clicks
+pub fn handle_spawn_boss_button(
+    commands: Commands,
+    button_query: Query<&Interaction, (Changed<Interaction>, With<SpawnBossButton>)>,
+    template_db: Res<bevy_shaman_monsters::resources::MonsterTemplateDB>,
+    player_query: Query<&bevy_shaman_core::components::GridPosition, With<bevy_shaman_core::components::Player>>,
+) {
+    for interaction in button_query.iter() {
+        if *interaction == Interaction::Pressed {
+            // Call the spawn function as a nested system call
+            bevy_shaman_monsters::systems::spawning::spawn_test_boss(
+                commands,
+                template_db,
+                player_query,
+            );
+            // Only process the first click
+            break;
+        }
     }
 }
