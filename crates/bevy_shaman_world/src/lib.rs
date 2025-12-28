@@ -1,6 +1,9 @@
 pub mod components;
+mod error;
 pub mod resources;
 pub mod systems;
+
+pub use error::WorldGenerationError;
 
 #[cfg(test)]
 mod tests;

@@ -1,7 +1,14 @@
 use bevy::prelude::*;
 
+mod error;
+
+pub use error::{LoadError, SaveError};
+
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod tests_error;
 
 pub struct SavePlugin;
 
@@ -20,6 +27,7 @@ impl Plugin for SavePlugin {
     }
 }
 
+// Make systems module public for integration tests
 pub mod systems {
     pub mod events {
         use bevy::prelude::*;

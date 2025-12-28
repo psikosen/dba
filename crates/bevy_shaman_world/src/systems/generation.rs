@@ -361,8 +361,12 @@ impl Default for WorldSeed {
         use std::time::{SystemTime, UNIX_EPOCH};
         let seed = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+            .map(|d| d.as_secs())
+            .unwrap_or_else(|e| {
+                // If system time is before UNIX_EPOCH or unavailable, use a fixed seed
+                bevy::log::warn!("Failed to get system time for seed: {}. Using fallback seed.", e);
+                12345678901234567890_u64
+            });
         Self(seed)
     }
 }

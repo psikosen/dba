@@ -1,6 +1,6 @@
 # Shaman's Journey - Bevy ECS Architecture
 
-A rhythm-based shaman healing game built with **Bevy 0.15** following strict **data-oriented design** principles.
+A rhythm-based shaman healing game built with **Bevy 0.15.4** following strict **data-oriented design** principles.
 
 ## High Concept
 
@@ -207,8 +207,73 @@ Corrupt/Chaos monsters emit **CorruptionInfluence**:
 
 ### Prerequisites
 
+**Rust Toolchain:**
 ```bash
-cargo --version  # Requires Rust 1.75+
+cargo --version  # Requires Rust 1.75+ (tested with 1.91.1)
+rustc --version
+```
+
+**System Dependencies (Linux):**
+
+The game requires several system libraries for graphics, audio, and input handling:
+
+**Debian/Ubuntu:**
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    libasound2-dev \
+    libudev-dev \
+    pkg-config \
+    build-essential \
+    libx11-dev \
+    libxi-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    libxcursor-dev \
+    libxinerama-dev \
+    libxrandr-dev
+```
+
+**Fedora/RHEL:**
+```bash
+sudo dnf install -y \
+    alsa-lib-devel \
+    systemd-devel \
+    pkgconfig \
+    gcc gcc-c++ \
+    libX11-devel \
+    libXi-devel \
+    mesa-libGL-devel \
+    mesa-libGLU-devel \
+    libXcursor-devel \
+    libXinerama-devel \
+    libXrandr-devel
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -Syu --noconfirm \
+    alsa-lib \
+    systemd \
+    pkgconf \
+    base-devel \
+    libx11 libxi mesa \
+    libxcursor \
+    libxinerama \
+    libxrandr
+```
+
+**Automated Setup:**
+```bash
+# Run the setup script (automatically detects your package manager)
+bash setup_linux.sh
+```
+
+**Docker Alternative:**
+If you prefer not to install system dependencies, use Docker:
+```bash
+docker build -t shaman-journey .
+docker run -it shaman-journey
 ```
 
 ### Build
@@ -232,8 +297,11 @@ cargo run
 # Check all crates
 cargo check --workspace
 
-# Run tests
+# Run tests (requires system dependencies)
 cargo test --workspace
+
+# Run tests without audio crate (no ALSA required)
+cargo test --workspace --exclude bevy_shaman_audio
 ```
 
 ## Project Structure Details
