@@ -7,6 +7,13 @@
 
 A rhythm-based shaman healing game built with **Bevy 0.15.4** following strict **data-oriented design** principles.
 
+## Quick Links
+
+🚀 **[Quick Start Guide](QUICKSTART.md)** - Get up and running in 5 minutes
+📦 **[Production Deployment Guide](PRODUCTION_DEPLOYMENT_GUIDE.md)** - Complete deployment documentation
+🏗️ **[Services Architecture](SERVICES_ARCHITECTURE.md)** - DragonflyDB & RabbitMQ setup
+📊 **[Production Readiness](PRODUCTION_READINESS_IMPROVEMENTS_2025-12-28.md)** - Latest improvements
+
 ## High Concept
 
 Play as a young apprentice shaman healing a cursed land through rhythm-based combat. Your music doesn't just attack—it stabilizes, corrupts, and purifies spirits, monsters, and the world itself.

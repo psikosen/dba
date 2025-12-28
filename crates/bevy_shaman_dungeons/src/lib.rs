@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_shaman_core::states::GameState;
 
+pub mod error;
+
 #[cfg(test)]
 mod tests;
 
