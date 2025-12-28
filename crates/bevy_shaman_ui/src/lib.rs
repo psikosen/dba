@@ -86,6 +86,7 @@ impl Plugin for UiPlugin {
                 systems::quick_wins::display_death_screen,
                 systems::quick_wins::display_combo_counter,
                 systems::quick_wins::display_settings_panel,
+                systems::quick_wins::handle_settings_interactions,
                 systems::calendar_ui::display_calendar,
                 systems::calendar_ui::display_calendar_button,
             ).run_if(in_state(GameState::Playing)))
@@ -93,6 +94,7 @@ impl Plugin for UiPlugin {
             .add_systems(Update, (
                 systems::main_menu::display_main_menu,
                 systems::quick_wins::display_settings_panel,
+                systems::quick_wins::handle_settings_interactions,
             ).run_if(in_state(GameState::MainMenu)));
     }
 }
@@ -3203,6 +3205,43 @@ pub mod systems {
         #[derive(Component)]
         pub struct SettingsPanelUI;
 
+        // Settings UI component markers
+        #[derive(Component)]
+        pub struct MasterVolumeSlider;
+
+        #[derive(Component)]
+        pub struct MusicVolumeSlider;
+
+        #[derive(Component)]
+        pub struct SfxVolumeSlider;
+
+        #[derive(Component)]
+        pub struct DifficultyButton;
+
+        #[derive(Component)]
+        pub struct ControlSchemeButton;
+
+        #[derive(Component)]
+        pub struct GamepadToggleButton;
+
+        #[derive(Component)]
+        pub struct DeadzoneSlider;
+
+        #[derive(Component)]
+        pub struct ScreenShakeToggle;
+
+        #[derive(Component)]
+        pub struct DamageNumbersToggle;
+
+        #[derive(Component)]
+        pub struct AutoSaveToggle;
+
+        #[derive(Component)]
+        pub struct SettingsCloseButton;
+
+        #[derive(Component)]
+        pub struct SettingLabel(pub String);
+
         #[derive(Component)]
         pub struct ResumeButton;
 
@@ -3575,6 +3614,7 @@ pub mod systems {
             keyboard: Res<ButtonInput<KeyCode>>,
             mut settings_state: ResMut<SettingsUIState>,
             settings_ui_query: Query<Entity, With<SettingsPanelUI>>,
+            settings: Res<bevy_shaman_core::settings::GameSettings>,
         ) {
             // Toggle with F1 key
             if keyboard.just_pressed(KeyCode::F1) {
@@ -3599,14 +3639,16 @@ pub mod systems {
                 SettingsPanelUI,
                 Node {
                     position_type: PositionType::Absolute,
-                    left: Val::Percent(30.0),
-                    top: Val::Percent(20.0),
-                    width: Val::Px(500.0),
+                    left: Val::Percent(15.0),
+                    top: Val::Percent(10.0),
+                    width: Val::Px(700.0),
                     height: Val::Auto,
+                    max_height: Val::Percent(80.0),
                     padding: UiRect::all(Val::Px(30.0)),
                     flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(15.0),
+                    row_gap: Val::Px(12.0),
                     border: UiRect::all(Val::Px(2.0)),
+                    overflow: Overflow::scroll_y(),
                     ..default()
                 },
                 BackgroundColor(Color::srgba(0.1, 0.1, 0.12, 0.95)),
@@ -3626,7 +3668,26 @@ pub mod systems {
                     },
                 ));
 
-                // Controls section
+                // === AUDIO SECTION ===
+                parent.spawn((
+                    Text::new("=== AUDIO ==="),
+                    TextFont {
+                        font_size: 20.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.7, 0.8, 0.9)),
+                    Node {
+                        margin: UiRect::vertical(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+
+                // Master Volume
+                spawn_slider_setting(parent, "Master Volume", settings.audio.master_volume, MasterVolumeSlider);
+                spawn_slider_setting(parent, "Music Volume", settings.audio.music_volume, MusicVolumeSlider);
+                spawn_slider_setting(parent, "SFX Volume", settings.audio.sfx_volume, SfxVolumeSlider);
+
+                // === CONTROLS SECTION ===
                 parent.spawn((
                     Text::new("=== CONTROLS ==="),
                     TextFont {
@@ -3640,33 +3701,71 @@ pub mod systems {
                     },
                 ));
 
-                let controls = vec![
-                    ("WASD / Arrow Keys", "Move"),
-                    ("Space", "Attack (on beat)"),
-                    ("E", "Interact / Tame"),
-                    ("Q", "Quest Log"),
-                    ("I", "Inventory"),
-                    ("B", "Bestiary"),
-                    ("S", "Shop"),
-                    ("C", "Calendar & Time"),
-                    ("ESC", "Pause Menu"),
-                    ("F1", "Settings (this panel)"),
-                ];
+                // Control Scheme
+                spawn_button_setting(parent, "Control Scheme", settings.controls.scheme.name(), ControlSchemeButton);
 
-                for (key, action) in controls {
-                    parent.spawn((
-                        Text::new(format!("{:20} - {}", key, action)),
-                        TextFont {
-                            font_size: 14.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.8, 0.8, 0.8)),
-                    ));
-                }
+                // Gamepad Enabled
+                spawn_toggle_setting(parent, "Gamepad Enabled", settings.controls.gamepad_enabled, GamepadToggleButton);
+
+                // Deadzone
+                spawn_percentage_slider(parent, "Gamepad Deadzone", settings.controls.gamepad_deadzone, DeadzoneSlider);
+
+                // === GAMEPLAY SECTION ===
+                parent.spawn((
+                    Text::new("=== GAMEPLAY ==="),
+                    TextFont {
+                        font_size: 20.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.7, 0.8, 0.9)),
+                    Node {
+                        margin: UiRect::vertical(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+
+                // Difficulty
+                let difficulty_text = match settings.gameplay.difficulty {
+                    bevy_shaman_core::settings::Difficulty::Easy => "Easy",
+                    bevy_shaman_core::settings::Difficulty::Normal => "Normal",
+                    bevy_shaman_core::settings::Difficulty::Hard => "Hard",
+                };
+                spawn_button_setting(parent, "Difficulty", difficulty_text, DifficultyButton);
+
+                // Gameplay toggles
+                spawn_toggle_setting(parent, "Show Damage Numbers", settings.gameplay.show_damage_numbers, DamageNumbersToggle);
+                spawn_toggle_setting(parent, "Screen Shake", settings.gameplay.screen_shake, ScreenShakeToggle);
+                spawn_toggle_setting(parent, "Auto Save", settings.gameplay.auto_save, AutoSaveToggle);
+
+                // === CONTROLS INFO ===
+                parent.spawn((
+                    Text::new("=== CONTROLS INFO ==="),
+                    TextFont {
+                        font_size: 20.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.7, 0.8, 0.9)),
+                    Node {
+                        margin: UiRect::vertical(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+
+                parent.spawn((
+                    Text::new(format!("Movement: {} keys", settings.controls.scheme.name())),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                ));
+
+                parent.spawn((
+                    Text::new("Gamepad: Left Stick/D-Pad to move, RB/RT to dash"),
+                    TextFont { font_size: 14.0, ..default() },
+                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                ));
 
                 // Footer
                 parent.spawn((
-                    Text::new("\nPress F1 to close"),
+                    Text::new("\nPress F1 to close • Use buttons to change settings"),
                     TextFont {
                         font_size: 14.0,
                         ..default()
@@ -3678,6 +3777,323 @@ pub mod systems {
                     },
                 ));
             });
+        }
+
+        /// Helper to spawn a slider setting row
+        fn spawn_slider_setting<T: Component>(parent: &mut ChildBuilder, label: &str, value: f32, marker: T) {
+            parent.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                width: Val::Percent(100.0),
+                margin: UiRect::vertical(Val::Px(5.0)),
+                ..default()
+            }).with_children(|row| {
+                // Label
+                row.spawn((
+                    Text::new(format!("{}: {:.0}%", label, value * 100.0)),
+                    TextFont { font_size: 16.0, ..default() },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    SettingLabel(label.to_string()),
+                ));
+
+                // Slider buttons
+                row.spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Val::Px(5.0),
+                    ..default()
+                }).with_children(|buttons| {
+                    // Decrease button
+                    buttons.spawn((
+                        marker,
+                        Button,
+                        Node {
+                            width: Val::Px(100.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
+                    )).with_children(|btn| {
+                        btn.spawn((
+                            Text::new("◄"),
+                            TextFont { font_size: 18.0, ..default() },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+                });
+            });
+        }
+
+        /// Helper to spawn a percentage slider (0-100)
+        fn spawn_percentage_slider<T: Component>(parent: &mut ChildBuilder, label: &str, value: u8, marker: T) {
+            parent.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                width: Val::Percent(100.0),
+                margin: UiRect::vertical(Val::Px(5.0)),
+                ..default()
+            }).with_children(|row| {
+                // Label
+                row.spawn((
+                    Text::new(format!("{}: {}%", label, value)),
+                    TextFont { font_size: 16.0, ..default() },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    SettingLabel(label.to_string()),
+                ));
+
+                // Slider buttons
+                row.spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Val::Px(5.0),
+                    ..default()
+                }).with_children(|buttons| {
+                    buttons.spawn((
+                        marker,
+                        Button,
+                        Node {
+                            width: Val::Px(100.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
+                    )).with_children(|btn| {
+                        btn.spawn((
+                            Text::new("◄ / ►"),
+                            TextFont { font_size: 14.0, ..default() },
+                            TextColor(Color::WHITE),
+                        ));
+                    });
+                });
+            });
+        }
+
+        /// Helper to spawn a button setting row
+        fn spawn_button_setting<T: Component>(parent: &mut ChildBuilder, label: &str, value: &str, marker: T) {
+            parent.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                width: Val::Percent(100.0),
+                margin: UiRect::vertical(Val::Px(5.0)),
+                ..default()
+            }).with_children(|row| {
+                // Label
+                row.spawn((
+                    Text::new(format!("{}: {}", label, value)),
+                    TextFont { font_size: 16.0, ..default() },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    SettingLabel(label.to_string()),
+                ));
+
+                // Change button
+                row.spawn((
+                    marker,
+                    Button,
+                    Node {
+                        width: Val::Px(100.0),
+                        height: Val::Px(30.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
+                )).with_children(|btn| {
+                    btn.spawn((
+                        Text::new("Change"),
+                        TextFont { font_size: 14.0, ..default() },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+            });
+        }
+
+        /// Helper to spawn a toggle setting row
+        fn spawn_toggle_setting<T: Component>(parent: &mut ChildBuilder, label: &str, value: bool, marker: T) {
+            parent.spawn(Node {
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                width: Val::Percent(100.0),
+                margin: UiRect::vertical(Val::Px(5.0)),
+                ..default()
+            }).with_children(|row| {
+                // Label
+                row.spawn((
+                    Text::new(format!("{}: {}", label, if value { "ON" } else { "OFF" })),
+                    TextFont { font_size: 16.0, ..default() },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    SettingLabel(label.to_string()),
+                ));
+
+                // Toggle button
+                row.spawn((
+                    marker,
+                    Button,
+                    Node {
+                        width: Val::Px(100.0),
+                        height: Val::Px(30.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(if value {
+                        Color::srgb(0.2, 0.6, 0.3)
+                    } else {
+                        Color::srgb(0.6, 0.2, 0.2)
+                    }),
+                )).with_children(|btn| {
+                    btn.spawn((
+                        Text::new("Toggle"),
+                        TextFont { font_size: 14.0, ..default() },
+                        TextColor(Color::WHITE),
+                    ));
+                });
+            });
+        }
+
+        /// Handle settings interactions
+        pub fn handle_settings_interactions(
+            mut settings: ResMut<bevy_shaman_core::settings::GameSettings>,
+            mut interaction_query: Query<
+                (&Interaction, Option<&MasterVolumeSlider>, Option<&MusicVolumeSlider>,
+                 Option<&SfxVolumeSlider>, Option<&DifficultyButton>, Option<&ControlSchemeButton>,
+                 Option<&GamepadToggleButton>, Option<&DeadzoneSlider>, Option<&ScreenShakeToggle>,
+                 Option<&DamageNumbersToggle>, Option<&AutoSaveToggle>),
+                (Changed<Interaction>, With<Button>),
+            >,
+            mut label_query: Query<(&mut Text, &SettingLabel)>,
+            mut button_query: Query<(&mut BackgroundColor, Option<&GamepadToggleButton>, Option<&ScreenShakeToggle>,
+                                     Option<&DamageNumbersToggle>, Option<&AutoSaveToggle>)>,
+        ) {
+            for (interaction, master_vol, music_vol, sfx_vol, difficulty, control_scheme,
+                 gamepad_toggle, deadzone, screen_shake, damage_numbers, auto_save) in interaction_query.iter() {
+
+                if *interaction != Interaction::Pressed {
+                    continue;
+                }
+
+                // Handle volume sliders
+                if master_vol.is_some() {
+                    settings.audio.master_volume = (settings.audio.master_volume - 0.1).max(0.0);
+                    update_label(&mut label_query, "Master Volume", &format!("{:.0}%", settings.audio.master_volume * 100.0));
+                }
+                if music_vol.is_some() {
+                    settings.audio.music_volume = (settings.audio.music_volume - 0.1).max(0.0);
+                    update_label(&mut label_query, "Music Volume", &format!("{:.0}%", settings.audio.music_volume * 100.0));
+                }
+                if sfx_vol.is_some() {
+                    settings.audio.sfx_volume = (settings.audio.sfx_volume - 0.1).max(0.0);
+                    update_label(&mut label_query, "SFX Volume", &format!("{:.0}%", settings.audio.sfx_volume * 100.0));
+                }
+
+                // Handle difficulty
+                if difficulty.is_some() {
+                    settings.gameplay.difficulty = match settings.gameplay.difficulty {
+                        bevy_shaman_core::settings::Difficulty::Easy => bevy_shaman_core::settings::Difficulty::Normal,
+                        bevy_shaman_core::settings::Difficulty::Normal => bevy_shaman_core::settings::Difficulty::Hard,
+                        bevy_shaman_core::settings::Difficulty::Hard => bevy_shaman_core::settings::Difficulty::Easy,
+                    };
+                    let difficulty_text = match settings.gameplay.difficulty {
+                        bevy_shaman_core::settings::Difficulty::Easy => "Easy",
+                        bevy_shaman_core::settings::Difficulty::Normal => "Normal",
+                        bevy_shaman_core::settings::Difficulty::Hard => "Hard",
+                    };
+                    update_label(&mut label_query, "Difficulty", difficulty_text);
+                }
+
+                // Handle control scheme
+                if control_scheme.is_some() {
+                    settings.controls.scheme = settings.controls.scheme.next();
+                    update_label(&mut label_query, "Control Scheme", settings.controls.scheme.name());
+                }
+
+                // Handle gamepad toggle
+                if gamepad_toggle.is_some() {
+                    settings.controls.gamepad_enabled = !settings.controls.gamepad_enabled;
+                    update_label(&mut label_query, "Gamepad Enabled", if settings.controls.gamepad_enabled { "ON" } else { "OFF" });
+
+                    // Update button color
+                    for (mut bg_color, is_gamepad, _, _, _) in button_query.iter_mut() {
+                        if is_gamepad.is_some() {
+                            *bg_color = if settings.controls.gamepad_enabled {
+                                BackgroundColor(Color::srgb(0.2, 0.6, 0.3))
+                            } else {
+                                BackgroundColor(Color::srgb(0.6, 0.2, 0.2))
+                            };
+                        }
+                    }
+                }
+
+                // Handle deadzone
+                if deadzone.is_some() {
+                    settings.controls.gamepad_deadzone = ((settings.controls.gamepad_deadzone + 5) % 55).max(5);
+                    update_label(&mut label_query, "Gamepad Deadzone", &format!("{}%", settings.controls.gamepad_deadzone));
+                }
+
+                // Handle screen shake toggle
+                if screen_shake.is_some() {
+                    settings.gameplay.screen_shake = !settings.gameplay.screen_shake;
+                    update_label(&mut label_query, "Screen Shake", if settings.gameplay.screen_shake { "ON" } else { "OFF" });
+
+                    for (mut bg_color, _, is_shake, _, _) in button_query.iter_mut() {
+                        if is_shake.is_some() {
+                            *bg_color = if settings.gameplay.screen_shake {
+                                BackgroundColor(Color::srgb(0.2, 0.6, 0.3))
+                            } else {
+                                BackgroundColor(Color::srgb(0.6, 0.2, 0.2))
+                            };
+                        }
+                    }
+                }
+
+                // Handle damage numbers toggle
+                if damage_numbers.is_some() {
+                    settings.gameplay.show_damage_numbers = !settings.gameplay.show_damage_numbers;
+                    update_label(&mut label_query, "Show Damage Numbers", if settings.gameplay.show_damage_numbers { "ON" } else { "OFF" });
+
+                    for (mut bg_color, _, _, is_damage, _) in button_query.iter_mut() {
+                        if is_damage.is_some() {
+                            *bg_color = if settings.gameplay.show_damage_numbers {
+                                BackgroundColor(Color::srgb(0.2, 0.6, 0.3))
+                            } else {
+                                BackgroundColor(Color::srgb(0.6, 0.2, 0.2))
+                            };
+                        }
+                    }
+                }
+
+                // Handle auto save toggle
+                if auto_save.is_some() {
+                    settings.gameplay.auto_save = !settings.gameplay.auto_save;
+                    update_label(&mut label_query, "Auto Save", if settings.gameplay.auto_save { "ON" } else { "OFF" });
+
+                    for (mut bg_color, _, _, _, is_auto_save) in button_query.iter_mut() {
+                        if is_auto_save.is_some() {
+                            *bg_color = if settings.gameplay.auto_save {
+                                BackgroundColor(Color::srgb(0.2, 0.6, 0.3))
+                            } else {
+                                BackgroundColor(Color::srgb(0.6, 0.2, 0.2))
+                            };
+                        }
+                    }
+                }
+
+                // Save settings after any change
+                settings.save();
+            }
+        }
+
+        fn update_label(label_query: &mut Query<(&mut Text, &SettingLabel)>, setting_name: &str, new_value: &str) {
+            for (mut text, label) in label_query.iter_mut() {
+                if label.0 == setting_name {
+                    **text = format!("{}: {}", setting_name, new_value);
+                }
+            }
         }
     }
 
