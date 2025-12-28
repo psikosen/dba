@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  shaman-journey:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Cache dependencies for faster rebuilds
+      cache_from:
+        - shaman-journey:latest
+    image: shaman-journey:latest
+    container_name: shaman-journey-game
+
+    # Restart policy for production
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+
+    # Volume mounts for persistent data
+    volumes:
+      # Persist save files
+      - ./saves:/app/saves
+      # Optional: Mount assets directory for development
+      - ./assets:/app/assets:ro
+
+    # Environment variables
+    environment:
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Read-only root filesystem (except for volumes)
+    read_only: true
+
+    # Temporary filesystem for writable directories
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "bevy_shaman"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Named volumes for better management
+volumes:
+  saves:
+    driver: local
+
+# Networks (optional - for future multiplayer or services)
+networks:
+  default:
+    driver: bridge

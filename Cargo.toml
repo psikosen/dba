@@ -59,3 +59,49 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rand = "0.8"
 criterion = { version = "0.5", features = ["html_reports"] }
+
+# Optimized release profile for production builds
+[profile.release]
+# Maximum optimization level
+opt-level = 3
+# Thin LTO (Link-Time Optimization) for better optimization with reasonable compile times
+lto = "thin"
+# Reduce number of codegen units for better optimization (slower compile, faster runtime)
+codegen-units = 1
+# Strip debug symbols from binary to reduce size
+strip = true
+# Abort on panic instead of unwinding (smaller binary, faster panic)
+panic = "abort"
+# Enable overflow checks even in release (safety over performance)
+overflow-checks = true
+
+# Development profile with faster compile times
+[profile.dev]
+# Minimal optimization for faster compilation
+opt-level = 0
+# No LTO in development
+lto = false
+# More codegen units for faster parallel compilation
+codegen-units = 256
+# Keep debug info for debugging
+debug = true
+# Unwind on panic for better error messages
+panic = "unwind"
+
+# Profile for testing with some optimizations
+[profile.test]
+# Light optimization for faster test execution
+opt-level = 1
+# Inherit from dev profile
+inherits = "dev"
+
+# Profile for benchmarks (similar to release but with debug info)
+[profile.bench]
+# Maximum optimization
+opt-level = 3
+# Thin LTO
+lto = "thin"
+# Keep some debug info for profiling
+debug = true
+# Same as release
+codegen-units = 1

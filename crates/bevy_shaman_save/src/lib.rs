@@ -7,6 +7,9 @@ pub use error::{LoadError, SaveError};
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+mod tests_error;
+
 pub struct SavePlugin;
 
 impl Plugin for SavePlugin {

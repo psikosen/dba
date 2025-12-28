@@ -1,0 +1,61 @@
+# Ignore build artifacts
+target/
+**/target/
+
+# Ignore dependency directories
+**/.cargo/
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Ignore git files
+.git/
+.gitignore
+.github/
+
+# Ignore documentation that's not needed in container
+*.md
+!README.md
+docs/
+
+# Ignore test coverage reports
+coverage/
+*.profdata
+*.profraw
+
+# Ignore CI/CD files
+.gitlab-ci.yml
+azure-pipelines.yml
+
+# Ignore temporary files
+*.tmp
+*.log
+*.bak
+
+# Ignore OS-specific files
+Thumbs.db
+.DS_Store
+
+# Ignore development scripts
+setup_linux.sh
+scripts/
+
+# Keep Cargo files needed for build
+!Cargo.toml
+!Cargo.lock
+!**/Cargo.toml
+
+# Keep source files
+!crates/
+!tests/
+
+# Keep assets
+!assets/
+
+# Ignore saves directory (created at runtime)
+saves/

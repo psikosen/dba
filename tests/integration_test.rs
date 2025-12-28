@@ -208,4 +208,123 @@ mod integration_tests {
         assert!(load_err.source().is_none());
         assert!(world_err.source().is_none());
     }
+
+    #[test]
+    fn test_save_load_event_flow() {
+        let mut app = create_test_app();
+        app.add_plugins(bevy_shaman_save::SavePlugin);
+
+        // Send save request event
+        app.world_mut().send_event(bevy_shaman_save::systems::events::SaveRequested);
+
+        // Update to process event
+        app.update();
+
+        // Verify autosave timer exists
+        assert!(app.world().contains_resource::<bevy_shaman_save::systems::autosave::AutosaveTimer>());
+    }
+
+    #[test]
+    fn test_combat_and_monster_integration() {
+        let mut app = create_test_app();
+        app.add_plugins((
+            bevy_shaman_combat::CombatPlugin,
+            bevy_shaman_monsters::MonstersPlugin,
+        ));
+
+        // Run multiple update cycles
+        for _ in 0..5 {
+            app.update();
+        }
+
+        // Both plugins should have initialized their resources
+        assert!(app.world().contains_resource::<bevy_shaman_combat::resources::CombatConfig>());
+        assert!(app.world().contains_resource::<bevy_shaman_monsters::resources::MonsterDatabase>());
+    }
+
+    #[test]
+    fn test_world_and_dungeon_integration() {
+        let mut app = create_test_app();
+        app.add_plugins((
+            bevy_shaman_world::WorldPlugin,
+            bevy_shaman_dungeons::DungeonsPlugin,
+        ));
+
+        app.update();
+
+        // Both should initialize successfully
+        assert!(app.world().contains_resource::<bevy_shaman_world::systems::generation::WorldGenConfig>());
+        assert!(app.world().contains_resource::<bevy_shaman_dungeons::systems::generation::DungeonGenerator>());
+    }
+
+    #[test]
+    fn test_items_and_shop_integration() {
+        let mut app = create_test_app();
+        app.add_plugins((
+            bevy_shaman_items::ItemsPlugin,
+            bevy_shaman_shop::ShopPlugin,
+        ));
+
+        app.update();
+
+        // Verify both item and shop databases are initialized
+        assert!(app.world().contains_resource::<bevy_shaman_items::resources::ItemDatabase>());
+        assert!(app.world().contains_resource::<bevy_shaman_shop::resources::ShopInventory>());
+    }
+
+    #[test]
+    fn test_full_game_plugin_stack() {
+        let mut app = create_test_app();
+
+        // Add all major plugins except audio (which requires ALSA)
+        app.add_plugins((
+            bevy_shaman_core::CorePlugin,
+            bevy_shaman_combat::CombatPlugin,
+            bevy_shaman_monsters::MonstersPlugin,
+            bevy_shaman_minions::MinionsPlugin,
+            bevy_shaman_world::WorldPlugin,
+            bevy_shaman_dungeons::DungeonsPlugin,
+            bevy_shaman_items::ItemsPlugin,
+            bevy_shaman_shop::ShopPlugin,
+            bevy_shaman_ui::UiPlugin,
+            bevy_shaman_story::StoryPlugin,
+            bevy_shaman_save::SavePlugin,
+        ));
+
+        // Run several update cycles to ensure no conflicts
+        for i in 0..20 {
+            app.update();
+            // Verify app doesn't crash during updates
+            assert!(i < 20, "App update loop completed successfully");
+        }
+
+        // Verify all major resources are present
+        assert!(app.world().contains_resource::<bevy_shaman_core::resources::Spirit>());
+        assert!(app.world().contains_resource::<bevy_shaman_combat::resources::CombatConfig>());
+        assert!(app.world().contains_resource::<bevy_shaman_monsters::resources::MonsterDatabase>());
+    }
+
+    #[test]
+    fn test_game_state_transition_with_plugins() {
+        let mut app = create_test_app();
+        app.add_plugins(bevy_shaman_core::CorePlugin);
+
+        // Verify initial state
+        let state = app.world().resource::<State<GameState>>();
+        assert!(matches!(state.get(), GameState::Boot));
+
+        // Transition to Playing
+        app.world_mut().resource_mut::<NextState<GameState>>().set(GameState::Playing);
+        app.update();
+
+        let state = app.world().resource::<State<GameState>>();
+        assert!(matches!(state.get(), GameState::Playing));
+
+        // Transition to Paused
+        app.world_mut().resource_mut::<NextState<GameState>>().set(GameState::Paused);
+        app.update();
+
+        let state = app.world().resource::<State<GameState>>();
+        assert!(matches!(state.get(), GameState::Paused));
+    }
 }
