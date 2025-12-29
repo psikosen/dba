@@ -47,10 +47,8 @@ pub fn spawn_player(
         MovementQueue::default(),
         BlocksMovement,
         CameraTarget,
-        // Progression components
-        bevy_shaman_combat::components::WeaponEnhancement::new(),
-        bevy_shaman_combat::components::EquippedWeapon::default(),
-        bevy_shaman_combat::systems::skill_tree::SkillTree::new(),
+        // Note: Combat-related components (WeaponEnhancement, EquippedWeapon, SkillTree)
+        // are added by bevy_shaman_combat plugin to avoid circular dependency
         // Collider for grid occupancy
         GlobalTransform::default(),
         Visibility::default(),

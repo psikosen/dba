@@ -1,7 +1,7 @@
 use super::rabbitmq::RabbitMqClient;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info};
+use tracing::info;
 
 /// Offline processing queue for long-running tasks
 pub struct OfflineProcessor {
