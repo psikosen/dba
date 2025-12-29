@@ -348,19 +348,19 @@ fn apply_spirit_infusion(
 ) {
     let infusion = SpiritInfused::new_random();
 
+    // Capture values before moving infusion
+    let duration = infusion.duration_remaining;
+    let cooldown_override = infusion.cooldown_override;
+
     // Add cooldown for next spirit infusion use
-    cooldowns.add_cooldown(FocusAbilityType::SpiritInfusion, infusion.cooldown_override);
+    cooldowns.add_cooldown(FocusAbilityType::SpiritInfusion, cooldown_override);
 
     // Apply infusion to caster
     commands.entity(caster).insert(infusion);
 
     info!(
         "Spirit infusion active! Duration: {:.1}s, Next cooldown: {:.1}s",
-        commands
-            .entity(caster)
-            .get::<SpiritInfused>()
-            .map(|si| si.duration_remaining)
-            .unwrap_or(0.0),
+        duration,
         cooldowns.get_remaining(FocusAbilityType::SpiritInfusion)
     );
 }
