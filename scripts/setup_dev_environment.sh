@@ -2,8 +2,25 @@
 # Comprehensive Development Environment Setup for Shaman's Journey
 # Sets up everything needed to run the game locally on Ubuntu/Linux (no Docker required)
 # Supports: Ubuntu 20.04+, Debian 11+, Fedora 35+, Arch Linux
+#
+# Usage: ./setup_dev_environment.sh [-y|--yes]
+#   -y, --yes    Non-interactive mode, auto-confirm all prompts
 
 set -e  # Exit on error
+
+# Parse command line arguments
+AUTO_CONFIRM=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -y|--yes)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
 
 # Color codes
 RED='\033[0;31m'
@@ -537,8 +554,14 @@ main() {
     echo ""
 
     log_info "This will install system packages and configure services."
-    read -p "Continue? (y/n) " -n 1 -r
-    echo ""
+
+    if [ "$AUTO_CONFIRM" = true ]; then
+        log_info "Auto-confirming (running with -y flag)..."
+        REPLY="y"
+    else
+        read -p "Continue? (y/n) " -n 1 -r
+        echo ""
+    fi
 
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_warning "Installation cancelled."

@@ -2,8 +2,25 @@
 # macOS M4 (Apple Silicon) Setup Script for Shaman's Journey
 # Installs dependencies and sets up the development environment
 # Skips already installed components
+#
+# Usage: ./setup_macos_m4.sh [-y|--yes]
+#   -y, --yes    Non-interactive mode, auto-confirm all prompts
 
 set -e  # Exit on error
+
+# Parse command line arguments
+AUTO_CONFIRM=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -y|--yes)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
 
 # Color codes
 RED='\033[0;31m'
@@ -162,8 +179,13 @@ install_optional_services() {
     echo "  • RabbitMQ - Message queue for async processing"
     echo ""
 
-    read -p "Install optional services? (y/n) " -n 1 -r
-    echo ""
+    if [ "$AUTO_CONFIRM" = true ]; then
+        log_info "Auto-confirming optional services (running with -y flag)..."
+        REPLY="y"
+    else
+        read -p "Install optional services? (y/n) " -n 1 -r
+        echo ""
+    fi
 
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log_skip "Skipping optional services"
@@ -553,6 +575,13 @@ main() {
 
     # Ask if user wants to build and run now
     echo ""
+    if [ "$AUTO_CONFIRM" = true ]; then
+        log_info "Skipping build prompt (running with -y flag)..."
+        log_info "Setup complete! Build the game with: cargo build --release"
+        log_info "Then run it with: cargo run --release"
+        return 0
+    fi
+
     read -p "Build and run the game now? (y/n) " -n 1 -r
     echo ""
 

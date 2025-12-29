@@ -1,8 +1,25 @@
 #!/bin/bash
 # Linux Build Setup Script for Shaman's Journey
 # This script installs all necessary dependencies and enables audio support
+#
+# Usage: ./setup_linux.sh [-y|--yes]
+#   -y, --yes    Non-interactive mode, auto-confirm all prompts
 
 set -e  # Exit on error
+
+# Parse command line arguments
+AUTO_CONFIRM=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -y|--yes)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
 
 echo "================================================"
 echo "Shaman's Journey - Linux Build Setup"
@@ -172,8 +189,14 @@ main() {
     echo "  3. Enable AudioPlugin in the game"
     echo "  4. Create assets directory structure"
     echo ""
-    read -p "Continue? (y/n) " -n 1 -r
-    echo ""
+
+    if [ "$AUTO_CONFIRM" = true ]; then
+        echo "Auto-confirming (running with -y flag)..."
+        REPLY="y"
+    else
+        read -p "Continue? (y/n) " -n 1 -r
+        echo ""
+    fi
 
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo "Setup cancelled."

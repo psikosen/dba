@@ -10,4 +10,5 @@ bevy_shaman_core = { path = "../bevy_shaman_core" }
 bevy_shaman_monsters = { path = "../bevy_shaman_monsters" }
 bevy_shaman_world = { path = "../bevy_shaman_world" }
 serde.workspace = true
+serde_json.workspace = true
 rand.workspace = true
