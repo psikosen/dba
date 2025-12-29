@@ -320,34 +320,22 @@ pub fn free_trapped_spirits(
 /// PERFORMANCE OPTIMIZATION: Limit number of visible spirits on screen
 /// This prevents lag while keeping background processing active
 /// - Normal: Max 10 visible spirits
-/// - With boss: Max 6 visible spirits
-/// - Final boss: Max 15 visible spirits
+/// - With Prime Vessel boss: Max 15 visible spirits
 pub fn manage_visible_spirits(
     mut commands: Commands,
     player_query: Query<&GridPosition, With<bevy_shaman_core::components::Player>>,
     spirit_query: Query<(Entity, &GridPosition, &WorldSpirit), Without<VisibleSpirit>>,
     visible_spirits: Query<(Entity, &GridPosition), With<VisibleSpirit>>,
-    boss_query: Query<&bevy_shaman_monsters::components::MonsterType>,
+    prime_vessel_query: Query<Entity, With<PrimeVessel>>,
 ) {
     let Ok(player_pos) = player_query.get_single() else {
         return;
     };
 
-    // Determine max visible spirits based on boss presence
-    let max_visible = if boss_query.iter().any(|monster_type| {
-        matches!(
-            monster_type,
-            bevy_shaman_monsters::components::MonsterType::PrimeVessel
-        )
-    }) {
-        // Final boss present - allow 15 spirits
+    // Determine max visible spirits based on Prime Vessel presence
+    let max_visible = if !prime_vessel_query.is_empty() {
+        // Prime Vessel boss present - allow 15 spirits
         15
-    } else if boss_query
-        .iter()
-        .any(|_| true /* any other boss present */)
-    {
-        // Regular boss present - limit to 6 spirits
-        6
     } else {
         // No boss - normal limit of 10 spirits
         10

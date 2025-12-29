@@ -76,45 +76,79 @@ impl Plugin for PrimeVesselPlugin {
                 OnEnter(GameState::Playing),
                 (systems::spawn_initial_spirits,),
             )
-            // Core gameplay systems
+            // Vessel spawning and AI systems
             .add_systems(
                 Update,
                 (
-                    // Vessel spawning and AI
                     systems::delayed_vessel_spawn,
                     systems::spawn_prime_vessel,
                     systems::update_vessel_behavior,
                     systems::move_vessel,
                     systems::check_player_encounter,
-                    // Spirit mechanics
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            // Spirit mechanics systems
+            .add_systems(
+                Update,
+                (
                     systems::process_vessel_absorption,
                     systems::process_player_absorption,
                     systems::process_spirit_purification,
                     systems::free_trapped_spirits,
-                    systems::manage_visible_spirits, // PERFORMANCE: Limit visible spirits
-                    // Metabolic decay
+                    systems::manage_visible_spirits,
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            // Metabolic and evolution systems
+            .add_systems(
+                Update,
+                (
                     systems::process_metabolic_decay,
                     systems::check_tier_downgrade,
-                    // Evolution and shedding
                     systems::check_evolution,
                     systems::process_shedding_recovery,
                     systems::update_lesser_self_patrol,
-                    // Corruption index
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            // Corruption index systems
+            .add_systems(
+                Update,
+                (
                     systems::update_soul_alignments,
                     systems::monitor_corruption_changes,
                     systems::check_total_collapse,
                     systems::check_ui_reveal,
                     systems::apply_corruption_world_effects,
-                    // Resurrection
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            // Resurrection systems
+            .add_systems(
+                Update,
+                (
                     systems::handle_vessel_defeat,
                     systems::check_resurrection_availability,
                     systems::process_resurrection_ritual,
                     systems::complete_resurrection,
-                    // Dungeon encounters (1% Prime Vessel, 12% Lesser Selves)
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            // Dungeon encounter systems
+            .add_systems(
+                Update,
+                (
                     systems::check_prime_vessel_dungeon_spawn,
                     systems::spawn_lesser_selves_in_dungeon,
                     systems::move_vessel_to_dungeon,
-                    // Vessel combat (health tracking and defeat)
+                )
+                    .run_if(in_state(GameState::Playing)),
+            )
+            // Vessel combat systems
+            .add_systems(
+                Update,
+                (
                     systems::initialize_vessel_health,
                     systems::initialize_lesser_self_health,
                     systems::check_vessel_defeat,

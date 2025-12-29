@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use bevy_shaman_combat::components::StatusEffectType;
 use bevy_shaman_core::components::{GridPosition, Health, Player};
-use rand::Rng;
 
 use crate::components::{LesserSelf, PrimeVessel, VesselMutation, VesselRoamingState};
 use crate::events::{LesserSelfDefeated, VesselDefeated};
@@ -260,7 +258,7 @@ fn apply_mutation_passive_effect(
 
 /// Calculate damage reduction from defensive mutations
 pub fn calculate_mutation_damage_reduction(mutations: &[VesselMutation]) -> f32 {
-    let mut reduction = 0.0;
+    let mut reduction: f32 = 0.0;
 
     for mutation in mutations {
         match mutation {
