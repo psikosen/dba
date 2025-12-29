@@ -105,7 +105,7 @@ impl RabbitMqClient {
         self.channel
             .exchange_declare(
                 exchange_name,
-                lapin::ExchangeKind::from(exchange_type),
+                exchange_kind_from_str(exchange_type),
                 ExchangeDeclareOptions {
                     durable,
                     ..Default::default()
@@ -208,14 +208,13 @@ impl RabbitMqClient {
     }
 }
 
-impl From<&str> for lapin::ExchangeKind {
-    fn from(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "direct" => lapin::ExchangeKind::Direct,
-            "fanout" => lapin::ExchangeKind::Fanout,
-            "topic" => lapin::ExchangeKind::Topic,
-            "headers" => lapin::ExchangeKind::Headers,
-            _ => lapin::ExchangeKind::Direct,
-        }
+/// Convert a string to ExchangeKind
+fn exchange_kind_from_str(s: &str) -> lapin::ExchangeKind {
+    match s.to_lowercase().as_str() {
+        "direct" => lapin::ExchangeKind::Direct,
+        "fanout" => lapin::ExchangeKind::Fanout,
+        "topic" => lapin::ExchangeKind::Topic,
+        "headers" => lapin::ExchangeKind::Headers,
+        _ => lapin::ExchangeKind::Direct,
     }
 }

@@ -87,11 +87,12 @@ impl DungeonSeedCache {
 
     /// Preload dungeon seeds for faster loading
     pub async fn preload_seeds(&self, seeds: Vec<DungeonSeed>) -> Result<()> {
+        let count = seeds.len();
         for seed in seeds {
             self.cache_seed(&seed).await?;
         }
 
-        info!("Preloaded {} dungeon seeds", seeds.len());
+        info!("Preloaded {} dungeon seeds", count);
         Ok(())
     }
 }

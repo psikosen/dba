@@ -81,7 +81,7 @@ pub fn handle_player_input(
 
     // Handle gamepad input if enabled
     if settings.controls.gamepad_enabled && !connected_gamepads.gamepads.is_empty() {
-        let gamepad = connected_gamepads.gamepads[0];
+        let _gamepad = connected_gamepads.gamepads[0];
         let deadzone = settings.controls.gamepad_deadzone as f32 / 100.0;
 
         // Left stick for movement

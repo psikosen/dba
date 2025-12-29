@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use prometheus::{Counter, Gauge, Histogram, HistogramOpts, IntCounter, IntGauge, Opts, Registry};
+use prometheus::{Gauge, Histogram, HistogramOpts, IntCounter, IntGauge, Opts, Registry};
 use std::sync::{Arc, OnceLock};
 
 /// Global Prometheus registry (thread-safe one-time initialization)
@@ -123,10 +123,10 @@ pub fn get_registry() -> Option<Arc<Registry>> {
 
 /// System to update performance metrics
 pub fn update_performance_metrics(
-    time: Res<Time>,
+    _time: Res<Time>,
     diagnostics: Res<bevy::diagnostic::DiagnosticsStore>,
 ) {
-    if let Some(registry) = get_registry() {
+    if let Some(_registry) = get_registry() {
         // Update frame time
         if let Some(frame_time_diagnostic) =
             diagnostics.get(&bevy::diagnostic::FrameTimeDiagnosticsPlugin::FRAME_TIME)

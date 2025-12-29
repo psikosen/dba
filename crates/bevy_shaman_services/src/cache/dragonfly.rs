@@ -76,12 +76,12 @@ impl DragonflyCache {
 
         let result = match ttl {
             Some(duration) => {
-                conn.set_ex(key, value, duration.as_secs())
+                conn.set_ex::<_, _, ()>(key, value, duration.as_secs())
                     .await
                     .context(format!("Failed to set key '{}' with TTL", key))
             }
             None => {
-                conn.set(key, value)
+                conn.set::<_, _, ()>(key, value)
                     .await
                     .context(format!("Failed to set key '{}'", key))
             }
@@ -133,7 +133,7 @@ impl DragonflyCache {
     pub async fn delete(&self, key: &str) -> Result<()> {
         let mut conn = self.client.clone();
 
-        conn.del(key)
+        conn.del::<_, ()>(key)
             .await
             .context(format!("Failed to delete key '{}'", key))?;
 
@@ -158,7 +158,7 @@ impl DragonflyCache {
         let mut conn = self.client.clone();
 
         for (key, value) in pairs {
-            conn.set(&key, &value)
+            conn.set::<_, _, ()>(&key, &value)
                 .await
                 .context(format!("Failed to set key '{}' in batch", key))?;
         }
@@ -208,7 +208,7 @@ impl DragonflyCache {
         let mut conn = self.client.clone();
 
         redis::cmd("PING")
-            .query_async(&mut conn)
+            .query_async::<()>(&mut conn)
             .await
             .context("Failed to ping DragonflyDB")?;
 

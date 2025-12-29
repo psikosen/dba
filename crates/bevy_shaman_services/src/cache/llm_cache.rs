@@ -44,7 +44,7 @@ impl LlmResponseCache {
         if let Some(value) = self.cache.get(&key).await? {
             match serde_json::from_str::<LlmResponse>(&value) {
                 Ok(response) => {
-                    info!("LLM cache hit for prompt hash: {:x}", key.split(':').last().unwrap_or(""));
+                    info!("LLM cache hit for prompt hash: {}", key.split(':').last().unwrap_or(""));
                     Ok(Some(response))
                 }
                 Err(e) => {

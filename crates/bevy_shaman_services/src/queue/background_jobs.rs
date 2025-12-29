@@ -1,7 +1,7 @@
 use super::rabbitmq::RabbitMqClient;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info};
+use tracing::info;
 
 /// Background job queue for async processing
 pub struct BackgroundJobQueue {
